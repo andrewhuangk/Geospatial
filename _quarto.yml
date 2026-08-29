@@ -1,0 +1,31 @@
+project:
+  type: website
+  render:
+    - "*.qmd"
+    - "Hands-on_Ex/**/*.qmd"
+
+website:
+  title: "Huang Kang-Chih | Geospatial"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+
+      - text: "Hands-on Exercise"
+        menu:
+          - href: Hands-on_Ex/Hands-on_Ex01/Hands-on_Ex01.qmd
+            text: "Ex01: Geospatial Data Science with R"
+          - href: Hands-on_Ex/Hands-on_Ex02/Hands-on_Ex02.qmd
+            text: "Ex02: Thematic Mapping & GeoVisualisation"
+
+      - href: about.qmd
+        text: About
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    css: styles.css
+
+execute:
+  freeze: auto

@@ -1,0 +1,392 @@
+---
+title: "Hands-on Exercise 1: Geospatial Data Science with R"
+subtitle: "Importing, projecting, and analysing geospatial data with the sf package"
+author: "Andrew Huang"
+date: "2026-08-27"
+date-modified: "last-modified"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: false
+    code-copy: true
+execute:
+  eval: true      # run the code
+  echo: true      # show the code
+  warning: false  # hide warnings to keep the page clean
+  message: false  # hide package-loading messages
+  freeze: auto    # cache rendered results so re-rendering is faster
+---
+
+# Overview
+
+The goal of this exercise is to get familiar with **sf (simple features)**, R's core package for handling geospatial data. Specifically, we will:
+
+1. Set up an R environment for geospatial analysis.
+2. Import three different geospatial data formats: **GeoJSON** (polygons), **KML** (points), and **ESRI Shapefile** (lines).
+3. Import a plain tabular dataset with latitude/longitude columns and convert it into a spatial layer.
+4. Inspect the data and assign/transform its coordinate reference system (CRS).
+5. Run basic GIS geoprocessing: buffering and point-in-polygon counting.
+6. Use `ggplot2` for exploratory data analysis (EDA).
+
+Coming from Python, a few of the R equivalents I kept looking up: `geopandas.read_file()` is `sf::st_read()`, a `GeoDataFrame` is basically an `sf` object (a data frame with an extra geometry column), `gdf.crs`/`gdf.to_crs()` map to `st_crs()`/`st_transform()`, `gdf.buffer(5)` is `st_buffer(x, dist = 5)`, and the `%>%` pipe does roughly what method chaining does in pandas.
+
+---
+
+# Getting Started
+
+## Packages used
+
+- **sf**: reads/writes geospatial data and handles geometric operations and coordinate systems.
+- **tidyverse**: a collection of data-wrangling packages, including `readr` (read CSV), `dplyr` (data manipulation), `ggplot2` (plotting), etc.
+- **rvest**: HTML parsing. Some GeoJSON exports from data.gov.sg pack all attribute fields into a single HTML table, so this is needed to pull them out.
+
+Using `pacman::p_load()` instead of `install.packages()` + `library()` — it installs a package if it's missing and just loads it otherwise, so it's one line instead of two.
+
+```{r}
+pacman::p_load(sf, tidyverse, rvest)
+```
+
+## Confirm where the data files are
+
+Before reading anything in, worth checking the files are actually where I expect. Quarto runs each R chunk with the working directory set to wherever the .qmd file lives (`Hands-on_Ex/Hands-on_Ex01/` here), so the relative path `data/...` below works as-is.
+
+```{r}
+list.files("data/geospatial")
+list.files("data/aspatial")
+```
+
+The file names used below need to match what `list.files()` printed exactly (case and extension included) — if not, just edit the strings.
+
+---
+
+# Importing Geospatial Data
+
+File formats and attribute structures aren't consistent across data.gov.sg downloads, so it's worth reading each file and glancing at its columns before writing any processing code, rather than assuming it matches whatever a tutorial used.
+
+## Import the Master Plan 2014 Subzone Boundary (GeoJSON, polygons)
+
+GeoJSON only needs a single file path, unlike Shapefile which needs a `dsn` folder + `layer` name.
+
+```{r}
+mpsz <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryNoSea.geojson")
+```
+
+```{r}
+glimpse(mpsz)
+```
+
+`SUBZONE_N`, `PLN_AREA_N`, `REGION_N` and the rest of the columns are already usable directly, no extra parsing needed here. (Some data.gov.sg exports instead pack everything into a single HTML table inside a `Description` column — that happens below with the pre-school data, but this particular boundary file isn't one of them.)
+
+## Import pre-school locations (GeoJSON, points)
+
+```{r}
+preschool <- st_read("data/geospatial/PreSchoolsLocation.geojson")
+```
+
+```{r}
+glimpse(preschool)
+```
+
+This one only has `Name` and `Description` — the actual name, code, etc. are packed into an HTML table inside `Description`. Since this exercise only needs the pre-schools' geometry to do a point-in-polygon count and never touches the name/code fields, I skipped parsing that out and went straight to the analysis below.
+
+If I wanted `CENTRE_NAME` later (e.g. to label pre-schools on a map), the same rvest approach used in Hands-on Exercise 2 would work here too:
+
+```r
+extract_kml_field <- function(html_text, field_name) {
+  if (is.na(html_text) || html_text == "") return(NA_character_)
+  page  <- read_html(html_text)
+  rows  <- page %>% html_elements("tr")
+  value <- rows %>%
+    keep(~ html_text2(html_element(.x, "th")) == field_name) %>%
+    html_element("td") %>%
+    html_text2()
+  if (length(value) == 0) NA_character_ else value
+}
+
+preschool <- preschool %>%
+  mutate(CENTRE_NAME = map_chr(Description, extract_kml_field, "CENTRE_NAME")) %>%
+  select(-Name, -Description) %>%
+  relocate(geometry, .after = last_col())
+```
+
+## Import the cycling path network (Shapefile, lines)
+
+A Shapefile is actually a set of files (.shp/.shx/.dbf/.prj…), so it's read with `dsn` (folder) + `layer` (file name without extension) instead of a single path.
+
+```{r}
+cyclingpath <- st_read(dsn = "data/geospatial", layer = "CyclingPathGazette")
+```
+
+# Inspecting an sf Object
+
+An `sf` object is fundamentally a data frame, so the usual data-frame inspection functions work on it.
+
+## View the geometry
+
+```{r}
+st_geometry(mpsz)
+```
+
+## View the attribute data
+
+```{r}
+head(mpsz, n = 5)
+```
+
+## Quick plotting
+
+By default `plot()` draws one map per attribute column:
+
+```{r}
+plot(mpsz)
+```
+
+Just the outline geometry:
+
+```{r}
+plot(st_geometry(mpsz))
+```
+
+A thematic plot for one specific column:
+
+```{r}
+plot(mpsz["PLN_AREA_N"])
+```
+
+---
+
+# Coordinate Reference System (CRS)
+
+Everything here eventually gets transformed to EPSG:3414. The short reason: EPSG:4326 (WGS84) is in degrees — fine for lat/long but useless for calculating distance or area — while EPSG:3414 (SVY21) is Singapore's official projected system in metres, which buffering/area/distance calculations actually need. So the routine is: check the CRS right after importing, transform to 3414, then start analysing.
+
+## Check each layer's current CRS
+
+```{r}
+st_crs(mpsz)
+```
+
+```{r}
+st_crs(preschool)
+```
+
+```{r}
+st_crs(cyclingpath)
+```
+
+## Assigning vs. transforming CRS
+
+`st_set_crs()` and `st_transform()` do very different things despite sounding similar. `st_set_crs()` just applies a label — it tells R "this data was already in this CRS", without touching the coordinate values. Use it when a file's CRS is missing or mislabelled. `st_transform()` actually re-projects the data, recalculating the coordinates — use it when the current CRS is known and correct, and the goal is to convert to a different one.
+
+GeoJSON and KML are WGS84 (EPSG:4326) by convention, so `st_transform()` is the right call here:
+
+```{r}
+mpsz3414      <- st_transform(mpsz, crs = 3414)
+preschool3414 <- st_transform(preschool, crs = 3414)
+```
+
+The cycling path Shapefile is usually already in SVY21, but its .prj file often doesn't encode the EPSG code correctly (`st_crs()` may show NA or 9001 for the EPSG). In that case it just needs the correct label applied:
+
+```{r}
+# if st_crs(cyclingpath) above shows an EPSG other than 3414, run this to apply the correct label
+cyclingpath3414 <- st_set_crs(cyclingpath, 3414)
+
+st_crs(cyclingpath3414)$epsg
+```
+
+A quick way to tell which function is needed: look at the coordinate values. Small decimals like `103.8, 1.35` are lat/long, so `st_transform()`; six-digit numbers like `28000, 33000` are already SVY21, so just `st_set_crs()` to label it.
+
+Confirm the three layers line up:
+
+```{r}
+plot(st_geometry(mpsz3414))
+plot(st_geometry(preschool3414), add = TRUE, col = "red", pch = 20, cex = 0.3)
+```
+
+---
+
+# Aspatial Data: Importing and Converting to a Spatial Layer
+
+## Read the Airbnb listings.csv
+
+`read_csv()` comes from `readr` — faster than base `read.csv()` and doesn't coerce strings to factors automatically.
+
+```{r}
+listings <- read_csv("data/aspatial/listings.csv")
+```
+
+Check the columns to confirm `latitude` and `longitude` are present:
+
+```{r}
+glimpse(listings)
+```
+
+## Turn a table into a map layer with st_as_sf()
+
+```{r}
+listings_sf <- st_as_sf(
+  listings,
+  coords = c("longitude", "latitude"),  # order matters: X (longitude) first, then Y (latitude)
+  crs = 4326                            # the raw data is WGS84 lat/long
+) %>%
+  st_transform(crs = 3414)              # transform to SVY21 right away for later analysis
+```
+
+Worth flagging: the order in `coords` has to be `c(longitude, latitude)`, i.e. (X, Y). Get it backwards and every point ends up off the coast of Africa — I mixed this up on a different dataset once and spent a while wondering why nothing plotted where it should.
+
+```{r}
+glimpse(listings_sf)
+```
+
+Look at the spatial distribution of Airbnb listings:
+
+```{r}
+plot(st_geometry(mpsz3414))
+plot(st_geometry(listings_sf), add = TRUE, col = "steelblue", pch = 20, cex = 0.2)
+```
+
+---
+
+# Geoprocessing
+
+## Scenario 1: Land area needed to widen the cycling paths
+
+Suppose the government wants to widen every existing cycling path by 5 metres on each side — how much land would need to be acquired?
+
+**Step 1: Create a 5-metre buffer.**
+
+```{r}
+buffer_cycling <- st_buffer(
+  cyclingpath3414,
+  dist = 5,        # units are metres (since the CRS is 3414)
+  nQuadSegs = 30   # 30 line segments approximate each quarter-circle — higher means smoother corners
+)
+```
+
+**Step 2: Calculate the area of each buffer polygon and add it as a column.**
+
+```{r}
+buffer_cycling <- buffer_cycling %>%
+  mutate(AREA = st_area(geometry))
+```
+
+**Step 3: Sum up the total area.**
+
+```{r}
+sum(buffer_cycling$AREA)
+```
+
+Convert to the more readable square kilometres:
+
+```{r}
+sum(buffer_cycling$AREA) %>%
+  units::set_units(km^2)
+```
+
+## Scenario 2: Count pre-schools per subzone
+
+`st_intersects(A, B)` returns a list where the i-th element tells you which points of B fall inside the i-th polygon of A. `lengths()` then gets the length of each element, which is exactly the count I want per subzone.
+
+```{r}
+mpsz3414$`PreSch Count` <- lengths(st_intersects(mpsz3414, preschool3414))
+```
+
+(Note the `s` — `length()` would just return "how many elements in the whole list", one number; `lengths()` returns the length of every element, i.e. a vector — that's the one needed here.)
+
+View the summary statistics:
+
+```{r}
+summary(mpsz3414$`PreSch Count`)
+```
+
+Find the subzone with the most pre-schools:
+
+```{r}
+top_n(mpsz3414, 1, `PreSch Count`)
+```
+
+## Scenario 3: Calculate pre-school density
+
+**Step 1: Calculate the area of each subzone.**
+
+```{r}
+mpsz3414$Area <- mpsz3414 %>%
+  st_area()
+```
+
+**Step 2: Density = count / area.** Area comes out in square metres, so multiplying by 1,000,000 converts it to per square kilometre.
+
+```{r}
+mpsz3414 <- mpsz3414 %>%
+  mutate(`PreSch Density` = `PreSch Count` / Area * 1000000)
+```
+
+```{r}
+summary(as.numeric(mpsz3414$`PreSch Density`))
+```
+
+---
+
+# Exploratory Data Analysis (EDA)
+
+## A quick look with base hist()
+
+```{r}
+hist(mpsz3414$`PreSch Density`)
+```
+
+Base `hist()` is fast but not very customisable, so `ggplot2` is what I actually used for the real plots.
+
+## A density histogram with ggplot2
+
+```{r}
+ggplot(data = mpsz3414,
+       aes(x = as.numeric(`PreSch Density`))) +
+  geom_histogram(bins = 20,
+                 color = "black",
+                 fill = "light blue") +
+  labs(title = "Are pre-schools evenly distributed in Singapore?",
+       subtitle = "There are many planning subzones with a single pre-school; on the other hand,\nthere are subzones with 30 or more pre-schools.",
+       x = "Pre-school density (per km sq)",
+       y = "Frequency") +
+  theme_minimal()
+```
+
+The `as.numeric()` is needed because `st_area()` returns a `units` object carrying physical units, and `ggplot2` can't plot that directly on an axis — it has to be stripped down to a plain number first.
+
+Looking at the histogram: most subzones sit at a similar low density, with a handful of outliers with a much higher concentration of pre-schools — makes sense given some subzones are far smaller/more residential than others.
+
+## Scatterplot: density vs. count
+
+```{r}
+ggplot(data = mpsz3414,
+       aes(y = `PreSch Count`,
+           x = as.numeric(`PreSch Density`))) +
+  geom_point(color = "black",
+             fill = "light blue") +
+  xlim(0, 40) +
+  ylim(0, 40) +
+  labs(title = "Relationship between pre-school density and count",
+       x = "Pre-school density (per km sq)",
+       y = "Pre-school count") +
+  theme_minimal()
+```
+
+---
+
+# Summary
+
+A few things I want to remember from this exercise:
+
+- `st_read()` handles three formats differently: GeoJSON and KML take a single path, Shapefile needs `dsn` + `layer`.
+- Some data.gov.sg files hide their attributes inside an HTML table in `Description` — that needs rvest to pull out, but not always (MP14 here didn't need it, the pre-school file technically did but I didn't end up needing those fields).
+- `st_set_crs()` labels, `st_transform()` actually re-projects — easy to mix these up. Everything gets transformed to EPSG:3414 before any distance/area work.
+- `st_as_sf()` turns a lat/long CSV into a spatial layer; `coords` order is (longitude, latitude), not the other way round.
+- `st_buffer()` + `st_area()` for buffering/area; `st_intersects()` + `lengths()` for point-in-polygon counts.
+- `st_area()` output carries units, so `as.numeric()` before plotting.
+
+## Data sources
+
+- Master Plan 2014 Subzone Boundary (No Sea), Pre-Schools Location, Cycling Path Gazette: [data.gov.sg](https://data.gov.sg/)
+- Singapore Airbnb listings: [Inside Airbnb](http://insideairbnb.com/get-the-data/)
