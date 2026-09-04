@@ -1,0 +1,188 @@
+---
+title: "Hands-on Exercise 3: Point Pattern Analysis"
+author: "Huang Kang-Chih"
+date: last-modified
+format: html
+execute:
+  warning: false
+  freeze: auto
+---
+
+## Getting started
+
+This exercise moves on from mapping points to actually testing whether a set of points is clustered, dispersed, or effectively random. We reuse two files from Hands-on Exercise 1: `PreSchoolsLocation.geojson` (the points we're testing) and `MasterPlan2014SubzoneBoundaryNoSea.geojson` (used here as the study area boundary rather than an administrative map).
+
+The new package is `spatstat`, which does point pattern analysis. It expects its own `ppp` (planar point pattern) object rather than an `sf` object, so a chunk of this exercise is just converting formats.
+
+```{r}
+pacman::p_load(sf, spatstat, tmap, tidyverse)
+```
+
+## Importing and preparing the data
+
+```{r}
+preschool <- st_read("data/geospatial/PreSchoolsLocation.geojson") %>%
+  st_transform(crs = 3414)
+
+mpsz <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryNoSea.geojson") %>%
+  st_transform(crs = 3414)
+```
+
+The original textbook uses a dedicated coastal outline shapefile as the study area. We don't have that file, so instead we dissolve all the subzone polygons into one single outline with `st_union()`. It's a reasonable stand-in: the result is still "all of Singapore's land area," just derived a different way.
+
+```{r}
+sg_sf <- mpsz %>%
+  st_union() %>%
+  st_sf()
+
+plot(st_geometry(sg_sf))
+```
+
+## Converting to spatstat's ppp format
+
+`spatstat` needs a planar point pattern (`ppp`) plus an observation window (`owin`). The window comes from the dissolved outline; the points come from the preschool coordinates.
+
+The dissolved outline inherits every vertex from the original 323 subzone polygons, which makes for a very detailed coastline (thousands of points). That level of detail isn't actually needed just to define a study-area boundary, and it makes the distance-based calculations later in this exercise (especially the F-function envelope) extremely slow. So the window gets simplified first, with a small tolerance that doesn't visibly change the shape at Singapore's scale.
+
+```{r}
+sg_sf_simplified <- sg_sf %>%
+  st_simplify(dTolerance = 20, preserveTopology = TRUE)
+
+sg_owin <- as.owin(sg_sf_simplified)
+
+preschool_ppp <- as.ppp(st_coordinates(preschool), W = sg_owin)
+
+plot(preschool_ppp)
+```
+
+```{r}
+summary(preschool_ppp)
+```
+
+A common warning at this point is about duplicated points (two preschools sitting at effectively the same coordinate, e.g. in the same building). It's worth checking before running any test that assumes unique locations.
+
+```{r}
+any(duplicated(preschool_ppp))
+```
+
+If that's `TRUE`, one option is to jitter the duplicates apart by a tiny random amount so they no longer sit exactly on top of each other:
+
+```{r}
+preschool_ppp_jit <- rjitter(preschool_ppp, retry = TRUE, nsim = 1, drop = TRUE)
+any(duplicated(preschool_ppp_jit))
+```
+
+## Part 1 — First-order analysis: where are preschools concentrated?
+
+First-order analysis asks a simple question: where is the density of points higher or lower across the study area? The tool for this is kernel density estimation (KDE) — instead of looking at exact points, we smear each point out into a little "bump" and add all the bumps up into a continuous surface.
+
+### Fixed bandwidth
+
+`sigma` controls how wide that bump is (the bandwidth). A fixed value is the simplest starting point.
+
+```{r}
+kde_fixed <- density(preschool_ppp_jit,
+                      sigma = 500,
+                      edge = TRUE,
+                      kernel = "gaussian")
+plot(kde_fixed, main = "Fixed bandwidth (sigma = 500m)")
+```
+
+### Automatic bandwidth selection
+
+Picking `sigma` by eye is a bit arbitrary. `spatstat` has a few automatic selectors that pick a bandwidth based on the data itself:
+
+```{r}
+bw.diggle(preschool_ppp_jit)
+bw.CvL(preschool_ppp_jit)
+bw.scott(preschool_ppp_jit)
+bw.ppl(preschool_ppp_jit)
+```
+
+These rarely agree exactly — they're optimising for different things (`bw.diggle` for detecting clusters, `bw.CvL` and `bw.scott` more for a smooth overall estimate). Worth plotting a couple of them side by side to see how much the choice actually changes the picture:
+
+```{r}
+kde_diggle <- density(preschool_ppp_jit, sigma = bw.diggle, edge = TRUE)
+kde_ppl <- density(preschool_ppp_jit, sigma = bw.ppl, edge = TRUE)
+
+par(mfrow = c(1, 2))
+plot(kde_diggle, main = "bw.diggle")
+plot(kde_ppl, main = "bw.ppl")
+par(mfrow = c(1, 1))
+```
+
+### Clark-Evans test
+
+KDE gives a picture; the Clark-Evans test gives a number and a p-value. It compares the average distance between each point and its nearest neighbour to what we'd expect under complete spatial randomness (CSR). A ratio below 1 suggests clustering, above 1 suggests a more even/dispersed spread.
+
+```{r}
+clarkevans.test(preschool_ppp_jit,
+                 correction = "none",
+                 clipregion = sg_owin,
+                 alternative = "clustered",
+                 nsim = 99)
+```
+
+## Part 2 — Second-order analysis: is the clustering statistically real?
+
+First-order analysis describes the overall density surface but doesn't really tell us whether an apparent cluster is meaningful or just noise. Second-order analysis looks at pairs of points and asks whether, at a given distance, points tend to have more or fewer neighbours than a random pattern would.
+
+The general approach for all four functions below is the same: compute the observed statistic, then simulate many random point patterns (Monte Carlo) inside the same window and see whether the observed line sits outside the range the random simulations produce.
+
+### G-function — nearest neighbour distance
+
+```{r}
+G <- Gest(preschool_ppp_jit)
+plot(G, main = "G-function")
+```
+
+```{r}
+G.csr <- envelope(preschool_ppp_jit, Gest, nsim = 39)
+plot(G.csr, main = "G-function vs CSR envelope")
+```
+
+### F-function — empty space distance
+
+```{r}
+F <- Fest(preschool_ppp_jit)
+plot(F, main = "F-function")
+```
+
+```{r}
+F.csr <- envelope(preschool_ppp_jit, Fest, nsim = 39)
+plot(F.csr, main = "F-function vs CSR envelope")
+```
+
+### K-function — points within a given radius
+
+Unlike G and F, the K-function looks at every pair of points, which is inherently a heavier computation. By default `spatstat` also applies isotropic edge correction, which involves extra geometric work against the window boundary and gets noticeably slow on a window made up of many separate pieces (Singapore's mainland plus its various small islands). Border correction is a simpler, much faster alternative that still gives a valid estimate, so it's used explicitly here.
+
+```{r}
+K <- Kest(preschool_ppp_jit, correction = "border")
+plot(K, . - r ~ r, main = "K-function")
+```
+
+```{r}
+K.csr <- envelope(preschool_ppp_jit, Kest, nsim = 39, correction = "border")
+plot(K.csr, . - r ~ r, main = "K-function vs CSR envelope")
+```
+
+### L-function — a rescaled, easier-to-read version of K
+
+```{r}
+L <- Lest(preschool_ppp_jit, correction = "border")
+plot(L, . - r ~ r, main = "L-function")
+```
+
+```{r}
+L.csr <- envelope(preschool_ppp_jit, Lest, nsim = 39, correction = "border")
+plot(L.csr, . - r ~ r, main = "L-function vs CSR envelope")
+```
+
+## Reading the envelope plots
+
+For all four functions, the grey band is the range produced by 99 simulations of a completely random pattern in the same window. If the observed (black) line climbs above the grey band, points are more clustered than random at that distance; if it drops below, they're more dispersed than random; if it stays inside the band, we can't tell the pattern apart from CSR at that scale.
+
+## Notes and open questions
+
+This exercise reuses Hands-on Ex01's preschool and subzone data rather than the childcare-centre dataset the textbook chapter uses, and substitutes a dissolved subzone outline for the missing coastal-outline shapefile — worth stating plainly rather than pretending it's the original dataset. A natural next step, if time allows, is repeating the analysis on a single planning area rather than the whole island, since CSR across all of Singapore is a fairly blunt test — preschool placement almost certainly depends on where people live, not on land area alone.
