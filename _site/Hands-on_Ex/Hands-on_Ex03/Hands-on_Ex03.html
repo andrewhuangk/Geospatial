@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Huang Kang-Chih">
-<meta name="dcterms.date" content="2026-09-04">
+<meta name="dcterms.date" content="2026-09-05">
 
 <title>Hands-on Exercise 3: Point Pattern Analysis – Huang Kang-Chih | Geospatial</title>
 <style>
@@ -82,7 +82,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-172ba59bd5e0b52282274ba0c0cc16fc.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-e5f91ad3aecf1eb9d35c53ff38ad6c57.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -218,7 +218,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 4, 2026</p>
+      <p class="date">September 5, 2026</p>
     </div>
   </div>
   
@@ -232,8 +232,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="getting-started" class="level2">
 <h2 class="anchored" data-anchor-id="getting-started">Getting started</h2>
-<p>This exercise moves on from mapping points to actually testing whether a set of points is clustered, dispersed, or effectively random. We reuse two files from Hands-on Exercise 1: <code>PreSchoolsLocation.geojson</code> (the points we’re testing) and <code>MasterPlan2014SubzoneBoundaryNoSea.geojson</code> (used here as the study area boundary rather than an administrative map).</p>
-<p>The new package is <code>spatstat</code>, which does point pattern analysis. It expects its own <code>ppp</code> (planar point pattern) object rather than an <code>sf</code> object, so a chunk of this exercise is just converting formats.</p>
+<p>Ex01 and Ex02 were both basically about mapping — where things are, how to make the map look decent. This one’s different: are these points actually clustered, or does it just look that way to the eye? Reusing the same two files from Ex01, <code>PreSchoolsLocation.geojson</code> and <code>MasterPlan2014SubzoneBoundaryNoSea.geojson</code>, except the subzone file isn’t for drawing an administrative map this time, it’s just standing in for “the boundary of Singapore.”</p>
+<p>New package: <code>spatstat</code>. It doesn’t understand <code>sf</code> objects at all, it wants its own format called <code>ppp</code>. So a good chunk of what follows is just converting things into a shape spatstat will actually accept.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spatstat, tmap, tidyverse)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -267,7 +267,7 @@ Bounding box:  xmin: 103.6057 ymin: 1.158699 xmax: 104.0885 ymax: 1.470775
 Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
-<p>The original textbook uses a dedicated coastal outline shapefile as the study area. We don’t have that file, so instead we dissolve all the subzone polygons into one single outline with <code>st_union()</code>. It’s a reasonable stand-in: the result is still “all of Singapore’s land area,” just derived a different way.</p>
+<p>The textbook version uses a proper coastline shapefile as the study area. Don’t have that file, so instead all 323 subzone polygons get dissolved into one shape with <code>st_union()</code> — same land area in the end, just built a different way.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sg_sf <span class="ot">&lt;-</span> mpsz <span class="sc">%&gt;%</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_union</span>() <span class="sc">%&gt;%</span></span>
@@ -285,8 +285,7 @@ Geodetic CRS:  WGS 84</code></pre>
 </section>
 <section id="converting-to-spatstats-ppp-format" class="level2">
 <h2 class="anchored" data-anchor-id="converting-to-spatstats-ppp-format">Converting to spatstat’s ppp format</h2>
-<p><code>spatstat</code> needs a planar point pattern (<code>ppp</code>) plus an observation window (<code>owin</code>). The window comes from the dissolved outline; the points come from the preschool coordinates.</p>
-<p>The dissolved outline inherits every vertex from the original 323 subzone polygons, which makes for a very detailed coastline (thousands of points). That level of detail isn’t actually needed just to define a study-area boundary, and it makes the distance-based calculations later in this exercise (especially the F-function envelope) extremely slow. So the window gets simplified first, with a small tolerance that doesn’t visibly change the shape at Singapore’s scale.</p>
+<p><code>spatstat</code> wants two things: a <code>ppp</code> for the points, an <code>owin</code> for the window they live in. Sounds simple enough, except the dissolved outline from earlier still carries every single vertex from all 323 original polygons — thousands of points just to describe a coastline. Didn’t think this would matter until later steps just sat there not finishing. Simplifying the outline first with <code>st_simplify()</code> (20m tolerance, invisible at Singapore’s scale) fixed it — several of the point pattern functions later do real geometric work against the window boundary, and an unnecessarily detailed polygon makes all of that painfully slow.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sg_sf_simplified <span class="ot">&lt;-</span> sg_sf <span class="sc">%&gt;%</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_simplify</span>(<span class="at">dTolerance =</span> <span class="dv">20</span>, <span class="at">preserveTopology =</span> <span class="cn">TRUE</span>)</span>
@@ -409,14 +408,14 @@ Window area = 781571000 square units
 Fraction of frame area: 0.422</code></pre>
 </div>
 </div>
-<p>A common warning at this point is about duplicated points (two preschools sitting at effectively the same coordinate, e.g.&nbsp;in the same building). It’s worth checking before running any test that assumes unique locations.</p>
+<p>Worth checking for duplicate points before going further — two preschools can easily sit at the exact same coordinate if they’re in the same building, and some of the tests coming up assume unique locations.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">any</span>(<span class="fu">duplicated</span>(preschool_ppp))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
 </div>
-<p>If that’s <code>TRUE</code>, one option is to jitter the duplicates apart by a tiny random amount so they no longer sit exactly on top of each other:</p>
+<p>Turned out to be <code>TRUE</code> here, so the duplicates get jittered apart with <code>rjitter()</code> — nudges them a tiny random distance so they’re not stacked exactly on top of each other:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>preschool_ppp_jit <span class="ot">&lt;-</span> <span class="fu">rjitter</span>(preschool_ppp, <span class="at">retry =</span> <span class="cn">TRUE</span>, <span class="at">nsim =</span> <span class="dv">1</span>, <span class="at">drop =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">any</span>(<span class="fu">duplicated</span>(preschool_ppp_jit))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -427,10 +426,10 @@ Fraction of frame area: 0.422</code></pre>
 </section>
 <section id="part-1-first-order-analysis-where-are-preschools-concentrated" class="level2">
 <h2 class="anchored" data-anchor-id="part-1-first-order-analysis-where-are-preschools-concentrated">Part 1 — First-order analysis: where are preschools concentrated?</h2>
-<p>First-order analysis asks a simple question: where is the density of points higher or lower across the study area? The tool for this is kernel density estimation (KDE) — instead of looking at exact points, we smear each point out into a little “bump” and add all the bumps up into a continuous surface.</p>
+<p>First-order analysis is really just: where’s it denser, where’s it sparser. The tool is kernel density estimation (KDE) — each point gets smeared into a small “bump,” and stacking all the bumps together gives a continuous surface instead of a scatter of dots.</p>
 <section id="fixed-bandwidth" class="level3">
 <h3 class="anchored" data-anchor-id="fixed-bandwidth">Fixed bandwidth</h3>
-<p><code>sigma</code> controls how wide that bump is (the bandwidth). A fixed value is the simplest starting point.</p>
+<p><code>sigma</code> sets how wide each bump is. Starting with a fixed number just to see what it looks like.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>kde_fixed <span class="ot">&lt;-</span> <span class="fu">density</span>(preschool_ppp_jit,</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">sigma =</span> <span class="dv">500</span>,</span>
@@ -448,30 +447,30 @@ Fraction of frame area: 0.422</code></pre>
 </section>
 <section id="automatic-bandwidth-selection" class="level3">
 <h3 class="anchored" data-anchor-id="automatic-bandwidth-selection">Automatic bandwidth selection</h3>
-<p>Picking <code>sigma</code> by eye is a bit arbitrary. <code>spatstat</code> has a few automatic selectors that pick a bandwidth based on the data itself:</p>
+<p>500 was picked out of thin air, honestly. <code>spatstat</code> has actual selectors that work out a bandwidth from the data instead of guessing:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.diggle</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-270.1161 </code></pre>
+295.4395 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.CvL</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-6471.187 </code></pre>
+7035.831 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.scott</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> sigma.x  sigma.y 
-2111.808 1347.555 </code></pre>
+2111.545 1347.476 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.ppl</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-156.8283 </code></pre>
+210.1767 </code></pre>
 </div>
 </div>
-<p>These rarely agree exactly — they’re optimising for different things (<code>bw.diggle</code> for detecting clusters, <code>bw.CvL</code> and <code>bw.scott</code> more for a smooth overall estimate). Worth plotting a couple of them side by side to see how much the choice actually changes the picture:</p>
+<p>They don’t agree with each other, which makes sense once you notice they’re optimising for different things — <code>bw.diggle</code> leans toward picking up clusters, <code>bw.CvL</code>/<code>bw.scott</code> aim more for a smooth overall estimate. Plotting two of them side by side shows how much the bandwidth choice actually changes what you see:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>kde_diggle <span class="ot">&lt;-</span> <span class="fu">density</span>(preschool_ppp_jit, <span class="at">sigma =</span> bw.diggle, <span class="at">edge =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>kde_ppl <span class="ot">&lt;-</span> <span class="fu">density</span>(preschool_ppp_jit, <span class="at">sigma =</span> bw.ppl, <span class="at">edge =</span> <span class="cn">TRUE</span>)</span>
@@ -491,7 +490,7 @@ Fraction of frame area: 0.422</code></pre>
 </section>
 <section id="clark-evans-test" class="level3">
 <h3 class="anchored" data-anchor-id="clark-evans-test">Clark-Evans test</h3>
-<p>KDE gives a picture; the Clark-Evans test gives a number and a p-value. It compares the average distance between each point and its nearest neighbour to what we’d expect under complete spatial randomness (CSR). A ratio below 1 suggests clustering, above 1 suggests a more even/dispersed spread.</p>
+<p>KDE gives you a picture, not a number. Clark-Evans actually gives a ratio and a p-value — compares the real average nearest-neighbour distance to what you’d expect if the points were scattered completely at random (CSR). Ratio under 1 means more clustered than random, over 1 means more spread out than random.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clarkevans.test</span>(preschool_ppp_jit,</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">correction =</span> <span class="st">"none"</span>,</span>
@@ -505,7 +504,7 @@ Fraction of frame area: 0.422</code></pre>
     Z-test
 
 data:  preschool_ppp_jit
-R = 0.42866, p-value &lt; 2.2e-16
+R = 0.42991, p-value &lt; 2.2e-16
 alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </div>
 </div>
@@ -513,8 +512,8 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </section>
 <section id="part-2-second-order-analysis-is-the-clustering-statistically-real" class="level2">
 <h2 class="anchored" data-anchor-id="part-2-second-order-analysis-is-the-clustering-statistically-real">Part 2 — Second-order analysis: is the clustering statistically real?</h2>
-<p>First-order analysis describes the overall density surface but doesn’t really tell us whether an apparent cluster is meaningful or just noise. Second-order analysis looks at pairs of points and asks whether, at a given distance, points tend to have more or fewer neighbours than a random pattern would.</p>
-<p>The general approach for all four functions below is the same: compute the observed statistic, then simulate many random point patterns (Monte Carlo) inside the same window and see whether the observed line sits outside the range the random simulations produce.</p>
+<p>The KDE stuff above shows where it’s dense, but doesn’t really prove anything on its own — a cluster could just be noise. Second-order analysis instead looks at every pair of points and asks, at a given distance, is there more or less company than you’d expect from pure randomness?</p>
+<p>Same recipe for all four functions below: compute the real statistic, simulate a bunch of random point patterns in the same window (Monte Carlo), and check whether the real line sits outside the band those random simulations produce.</p>
 <section id="g-function-nearest-neighbour-distance" class="level3">
 <h3 class="anchored" data-anchor-id="g-function-nearest-neighbour-distance">G-function — nearest neighbour distance</h3>
 <div class="cell">
@@ -583,7 +582,7 @@ Done.</code></pre>
 </section>
 <section id="k-function-points-within-a-given-radius" class="level3">
 <h3 class="anchored" data-anchor-id="k-function-points-within-a-given-radius">K-function — points within a given radius</h3>
-<p>Unlike G and F, the K-function looks at every pair of points, which is inherently a heavier computation. By default <code>spatstat</code> also applies isotropic edge correction, which involves extra geometric work against the window boundary and gets noticeably slow on a window made up of many separate pieces (Singapore’s mainland plus its various small islands). Border correction is a simpler, much faster alternative that still gives a valid estimate, so it’s used explicitly here.</p>
+<p>This one actually got stuck the first time round. K-function checks every pair of points against every other, already heavier than G or F, and spatstat’s default edge correction (isotropic) does extra geometry against the window boundary on top of that — with Singapore’s mainland-plus-a-bunch-of-small-islands shape, it basically never finished. Switched to border correction instead: simpler, much faster, still a valid estimate.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>K <span class="ot">&lt;-</span> <span class="fu">Kest</span>(preschool_ppp_jit, <span class="at">correction =</span> <span class="st">"border"</span>)</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(K, . <span class="sc">-</span> r <span class="sc">~</span> r, <span class="at">main =</span> <span class="st">"K-function"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -651,11 +650,12 @@ Done.</code></pre>
 </section>
 <section id="reading-the-envelope-plots" class="level2">
 <h2 class="anchored" data-anchor-id="reading-the-envelope-plots">Reading the envelope plots</h2>
-<p>For all four functions, the grey band is the range produced by 99 simulations of a completely random pattern in the same window. If the observed (black) line climbs above the grey band, points are more clustered than random at that distance; if it drops below, they’re more dispersed than random; if it stays inside the band, we can’t tell the pattern apart from CSR at that scale.</p>
+<p>The grey band in each plot is the range you’d expect from 39 random simulations in the same window. Where the black (observed) line pokes above the band, points are clustering at that distance; where it dips below, they’re more spread out than random; where it just sits inside the band, can’t really tell the pattern apart from CSR at that scale.</p>
 </section>
 <section id="notes-and-open-questions" class="level2">
 <h2 class="anchored" data-anchor-id="notes-and-open-questions">Notes and open questions</h2>
-<p>This exercise reuses Hands-on Ex01’s preschool and subzone data rather than the childcare-centre dataset the textbook chapter uses, and substitutes a dissolved subzone outline for the missing coastal-outline shapefile — worth stating plainly rather than pretending it’s the original dataset. A natural next step, if time allows, is repeating the analysis on a single planning area rather than the whole island, since CSR across all of Singapore is a fairly blunt test — preschool placement almost certainly depends on where people live, not on land area alone.</p>
+<p>Two things worth being upfront about: this uses Ex01’s preschool/subzone data instead of the childcare-centre dataset the textbook chapter actually works with, and the study boundary is a dissolved subzone outline standing in for a coastline shapefile that isn’t available here. Not the original dataset, and better to say so than pretend otherwise.</p>
+<p>One thing worth trying later if there’s time: running this on a single planning area instead of the whole island. Testing CSR against all of Singapore at once is a pretty blunt instrument — preschools are almost certainly clustering because that’s where people actually live, not because of anything special about land area on its own.</p>
 
 
 </section>
