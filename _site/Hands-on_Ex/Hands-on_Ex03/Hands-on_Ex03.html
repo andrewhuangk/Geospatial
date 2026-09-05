@@ -6,8 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Huang Kang-Chih">
-<meta name="dcterms.date" content="2026-09-05">
+<meta name="author" content="Andrew Huang">
+<meta name="dcterms.date" content="2026-09-04">
 
 <title>Hands-on Exercise 3: Point Pattern Analysis – Huang Kang-Chih | Geospatial</title>
 <style>
@@ -211,17 +211,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
-             <p>Huang Kang-Chih </p>
+             <p>Andrew Huang </p>
           </div>
   </div>
     
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 5, 2026</p>
+      <p class="date">September 4, 2026</p>
     </div>
   </div>
   
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">September 5, 2026</p>
+    </div>
+  </div>
     
   </div>
   
@@ -452,22 +458,22 @@ Fraction of frame area: 0.422</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.diggle</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-295.4395 </code></pre>
+286.9984 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.CvL</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-7035.831 </code></pre>
+4595.055 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.scott</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> sigma.x  sigma.y 
-2111.545 1347.476 </code></pre>
+2111.650 1347.592 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.ppl</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-210.1767 </code></pre>
+217.4849 </code></pre>
 </div>
 </div>
 <p>They don’t agree with each other, which makes sense once you notice they’re optimising for different things — <code>bw.diggle</code> leans toward picking up clusters, <code>bw.CvL</code>/<code>bw.scott</code> aim more for a smooth overall estimate. Plotting two of them side by side shows how much the bandwidth choice actually changes what you see:</p>
@@ -504,7 +510,7 @@ Fraction of frame area: 0.422</code></pre>
     Z-test
 
 data:  preschool_ppp_jit
-R = 0.42991, p-value &lt; 2.2e-16
+R = 0.42908, p-value &lt; 2.2e-16
 alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </div>
 </div>
