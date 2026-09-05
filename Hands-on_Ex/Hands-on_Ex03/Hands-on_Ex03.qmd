@@ -10,9 +10,9 @@ execute:
 
 ## Getting started
 
-This exercise moves on from mapping points to actually testing whether a set of points is clustered, dispersed, or effectively random. We reuse two files from Hands-on Exercise 1: `PreSchoolsLocation.geojson` (the points we're testing) and `MasterPlan2014SubzoneBoundaryNoSea.geojson` (used here as the study area boundary rather than an administrative map).
+Ex01 and Ex02 were both basically about mapping — where things are, how to make the map look decent. This one's different: are these points actually clustered, or does it just look that way to the eye? Reusing the same two files from Ex01, `PreSchoolsLocation.geojson` and `MasterPlan2014SubzoneBoundaryNoSea.geojson`, except the subzone file isn't for drawing an administrative map this time, it's just standing in for "the boundary of Singapore."
 
-The new package is `spatstat`, which does point pattern analysis. It expects its own `ppp` (planar point pattern) object rather than an `sf` object, so a chunk of this exercise is just converting formats.
+New package: `spatstat`. It doesn't understand `sf` objects at all, it wants its own format called `ppp`. So a good chunk of what follows is just converting things into a shape spatstat will actually accept.
 
 ```{r}
 pacman::p_load(sf, spatstat, tmap, tidyverse)
@@ -28,7 +28,7 @@ mpsz <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryNoSea.geojson") %>
   st_transform(crs = 3414)
 ```
 
-The original textbook uses a dedicated coastal outline shapefile as the study area. We don't have that file, so instead we dissolve all the subzone polygons into one single outline with `st_union()`. It's a reasonable stand-in: the result is still "all of Singapore's land area," just derived a different way.
+The textbook version uses a proper coastline shapefile as the study area. Don't have that file, so instead all 323 subzone polygons get dissolved into one shape with `st_union()` — same land area in the end, just built a different way.
 
 ```{r}
 sg_sf <- mpsz %>%
@@ -40,9 +40,7 @@ plot(st_geometry(sg_sf))
 
 ## Converting to spatstat's ppp format
 
-`spatstat` needs a planar point pattern (`ppp`) plus an observation window (`owin`). The window comes from the dissolved outline; the points come from the preschool coordinates.
-
-The dissolved outline inherits every vertex from the original 323 subzone polygons, which makes for a very detailed coastline (thousands of points). That level of detail isn't actually needed just to define a study-area boundary, and it makes the distance-based calculations later in this exercise (especially the F-function envelope) extremely slow. So the window gets simplified first, with a small tolerance that doesn't visibly change the shape at Singapore's scale.
+`spatstat` wants two things: a `ppp` for the points, an `owin` for the window they live in. Sounds simple enough, except the dissolved outline from earlier still carries every single vertex from all 323 original polygons — thousands of points just to describe a coastline. Didn't think this would matter until later steps just sat there not finishing. Simplifying the outline first with `st_simplify()` (20m tolerance, invisible at Singapore's scale) fixed it — several of the point pattern functions later do real geometric work against the window boundary, and an unnecessarily detailed polygon makes all of that painfully slow.
 
 ```{r}
 sg_sf_simplified <- sg_sf %>%
@@ -59,13 +57,13 @@ plot(preschool_ppp)
 summary(preschool_ppp)
 ```
 
-A common warning at this point is about duplicated points (two preschools sitting at effectively the same coordinate, e.g. in the same building). It's worth checking before running any test that assumes unique locations.
+Worth checking for duplicate points before going further — two preschools can easily sit at the exact same coordinate if they're in the same building, and some of the tests coming up assume unique locations.
 
 ```{r}
 any(duplicated(preschool_ppp))
 ```
 
-If that's `TRUE`, one option is to jitter the duplicates apart by a tiny random amount so they no longer sit exactly on top of each other:
+Turned out to be `TRUE` here, so the duplicates get jittered apart with `rjitter()` — nudges them a tiny random distance so they're not stacked exactly on top of each other:
 
 ```{r}
 preschool_ppp_jit <- rjitter(preschool_ppp, retry = TRUE, nsim = 1, drop = TRUE)
@@ -74,11 +72,11 @@ any(duplicated(preschool_ppp_jit))
 
 ## Part 1 — First-order analysis: where are preschools concentrated?
 
-First-order analysis asks a simple question: where is the density of points higher or lower across the study area? The tool for this is kernel density estimation (KDE) — instead of looking at exact points, we smear each point out into a little "bump" and add all the bumps up into a continuous surface.
+First-order analysis is really just: where's it denser, where's it sparser. The tool is kernel density estimation (KDE) — each point gets smeared into a small "bump," and stacking all the bumps together gives a continuous surface instead of a scatter of dots.
 
 ### Fixed bandwidth
 
-`sigma` controls how wide that bump is (the bandwidth). A fixed value is the simplest starting point.
+`sigma` sets how wide each bump is. Starting with a fixed number just to see what it looks like.
 
 ```{r}
 kde_fixed <- density(preschool_ppp_jit,
@@ -90,7 +88,7 @@ plot(kde_fixed, main = "Fixed bandwidth (sigma = 500m)")
 
 ### Automatic bandwidth selection
 
-Picking `sigma` by eye is a bit arbitrary. `spatstat` has a few automatic selectors that pick a bandwidth based on the data itself:
+500 was picked out of thin air, honestly. `spatstat` has actual selectors that work out a bandwidth from the data instead of guessing:
 
 ```{r}
 bw.diggle(preschool_ppp_jit)
@@ -99,7 +97,7 @@ bw.scott(preschool_ppp_jit)
 bw.ppl(preschool_ppp_jit)
 ```
 
-These rarely agree exactly — they're optimising for different things (`bw.diggle` for detecting clusters, `bw.CvL` and `bw.scott` more for a smooth overall estimate). Worth plotting a couple of them side by side to see how much the choice actually changes the picture:
+They don't agree with each other, which makes sense once you notice they're optimising for different things — `bw.diggle` leans toward picking up clusters, `bw.CvL`/`bw.scott` aim more for a smooth overall estimate. Plotting two of them side by side shows how much the bandwidth choice actually changes what you see:
 
 ```{r}
 kde_diggle <- density(preschool_ppp_jit, sigma = bw.diggle, edge = TRUE)
@@ -113,7 +111,7 @@ par(mfrow = c(1, 1))
 
 ### Clark-Evans test
 
-KDE gives a picture; the Clark-Evans test gives a number and a p-value. It compares the average distance between each point and its nearest neighbour to what we'd expect under complete spatial randomness (CSR). A ratio below 1 suggests clustering, above 1 suggests a more even/dispersed spread.
+KDE gives you a picture, not a number. Clark-Evans actually gives a ratio and a p-value — compares the real average nearest-neighbour distance to what you'd expect if the points were scattered completely at random (CSR). Ratio under 1 means more clustered than random, over 1 means more spread out than random.
 
 ```{r}
 clarkevans.test(preschool_ppp_jit,
@@ -125,9 +123,9 @@ clarkevans.test(preschool_ppp_jit,
 
 ## Part 2 — Second-order analysis: is the clustering statistically real?
 
-First-order analysis describes the overall density surface but doesn't really tell us whether an apparent cluster is meaningful or just noise. Second-order analysis looks at pairs of points and asks whether, at a given distance, points tend to have more or fewer neighbours than a random pattern would.
+The KDE stuff above shows where it's dense, but doesn't really prove anything on its own — a cluster could just be noise. Second-order analysis instead looks at every pair of points and asks, at a given distance, is there more or less company than you'd expect from pure randomness?
 
-The general approach for all four functions below is the same: compute the observed statistic, then simulate many random point patterns (Monte Carlo) inside the same window and see whether the observed line sits outside the range the random simulations produce.
+Same recipe for all four functions below: compute the real statistic, simulate a bunch of random point patterns in the same window (Monte Carlo), and check whether the real line sits outside the band those random simulations produce.
 
 ### G-function — nearest neighbour distance
 
@@ -155,7 +153,7 @@ plot(F.csr, main = "F-function vs CSR envelope")
 
 ### K-function — points within a given radius
 
-Unlike G and F, the K-function looks at every pair of points, which is inherently a heavier computation. By default `spatstat` also applies isotropic edge correction, which involves extra geometric work against the window boundary and gets noticeably slow on a window made up of many separate pieces (Singapore's mainland plus its various small islands). Border correction is a simpler, much faster alternative that still gives a valid estimate, so it's used explicitly here.
+This one actually got stuck the first time round. K-function checks every pair of points against every other, already heavier than G or F, and spatstat's default edge correction (isotropic) does extra geometry against the window boundary on top of that — with Singapore's mainland-plus-a-bunch-of-small-islands shape, it basically never finished. Switched to border correction instead: simpler, much faster, still a valid estimate.
 
 ```{r}
 K <- Kest(preschool_ppp_jit, correction = "border")
@@ -181,8 +179,10 @@ plot(L.csr, . - r ~ r, main = "L-function vs CSR envelope")
 
 ## Reading the envelope plots
 
-For all four functions, the grey band is the range produced by 99 simulations of a completely random pattern in the same window. If the observed (black) line climbs above the grey band, points are more clustered than random at that distance; if it drops below, they're more dispersed than random; if it stays inside the band, we can't tell the pattern apart from CSR at that scale.
+The grey band in each plot is the range you'd expect from 39 random simulations in the same window. Where the black (observed) line pokes above the band, points are clustering at that distance; where it dips below, they're more spread out than random; where it just sits inside the band, can't really tell the pattern apart from CSR at that scale.
 
 ## Notes and open questions
 
-This exercise reuses Hands-on Ex01's preschool and subzone data rather than the childcare-centre dataset the textbook chapter uses, and substitutes a dissolved subzone outline for the missing coastal-outline shapefile — worth stating plainly rather than pretending it's the original dataset. A natural next step, if time allows, is repeating the analysis on a single planning area rather than the whole island, since CSR across all of Singapore is a fairly blunt test — preschool placement almost certainly depends on where people live, not on land area alone.
+Two things worth being upfront about: this uses Ex01's preschool/subzone data instead of the childcare-centre dataset the textbook chapter actually works with, and the study boundary is a dissolved subzone outline standing in for a coastline shapefile that isn't available here. Not the original dataset, and better to say so than pretend otherwise.
+
+One thing worth trying later if there's time: running this on a single planning area instead of the whole island. Testing CSR against all of Singapore at once is a pretty blunt instrument — preschools are almost certainly clustering because that's where people actually live, not because of anything special about land area on its own.

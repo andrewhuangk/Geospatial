@@ -1,5 +1,5 @@
 # Quarto build output (generated, don't need in git)
-/_site/
+# _site/ is now committed on purpose so Netlify can auto-deploy straight from GitHub
 /docs/
 .quarto/
 
