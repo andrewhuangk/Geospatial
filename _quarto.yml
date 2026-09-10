@@ -19,6 +19,8 @@ website:
             text: "Ex02: Thematic Mapping & GeoVisualisation"
           - href: Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03.qmd
             text: "Ex03: Point Pattern Analysis"
+          - href: Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.qmd
+            text: "Ex04: Spatio-Temporal Point Pattern Analysis"
 
       - href: about.qmd
         text: About
