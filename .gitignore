@@ -15,3 +15,5 @@ Thumbs.db
 
 /.quarto/
 **/*.quarto_ipynb
+**/*_cache/
+*.csv.gz
