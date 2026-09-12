@@ -61,7 +61,7 @@ list.files("data/aspatial")
 
 ## Import the Master Plan 2019 Subzone Boundary
 
-A quick note on the data here: the original assignment spec asked for the **KML** version of this boundary file specifically, so that the rvest-parsing technique below would actually get exercised. What I downloaded turned out to be **GeoJSON** instead, and this particular GeoJSON export from data.gov.sg already ships with clean attribute columns (`SUBZONE_N`, `REGION_N`, etc.), so there's nothing to parse out of it. I kept the GeoJSON version below since it gives the same correct results, and left the KML + rvest version further down as a reference for anyone who wants to redo this step with the original file format.
+The spec asked for the **KML** version specifically, so the rvest parsing below would actually get used. I ended up downloading **GeoJSON** instead — this particular data.gov.sg export already ships with clean attribute columns (`SUBZONE_N`, `REGION_N`, etc.), nothing to parse out of it. Kept the GeoJSON version since it's what I actually ran; the KML + rvest code further down never executed, just left in as a reference for what the original spec's route would look like.
 
 ```{r}
 mpsz <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geojson")
@@ -73,26 +73,18 @@ glimpse(mpsz)
 
 `SUBZONE_N`, `PLN_AREA_N`, `REGION_N` and the rest are already usable directly — no extra parsing needed, so I jumped straight to checking `REGION_N` below.
 
-For reference, here's what the KML route would have looked like. Reading the KML in only gives `Name` and `Description`, with the attributes packed into an HTML table inside `Description`:
+Reading the KML in only gives `Name` and `Description`, with the actual fields packed into an HTML table inside `Description` — each `<tr>` row a `<th>`/`<td>` pair. This is the code that would pull it apart, never actually run since the GeoJSON didn't need it:
 
 ```r
 mpsz <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaKML.kml") %>%
   st_transform(crs = 3414)   # KML is WGS84, transform to Singapore's SVY21 (EPSG:3414)
 
-# peek at one raw record to confirm the structure
-substr(mpsz$Description[1], 1, 400)
-```
-
-The HTML inside `Description` is a table, where each `<tr>` row is a `<th>` (field name) paired with a `<td>` (field value):
-
-```r
-# given an HTML string and a field name, return that field's value
 extract_kml_field <- function(html_text, field_name) {
   if (is.na(html_text) || html_text == "") return(NA_character_)
-  page  <- read_html(html_text)          # parse into an HTML document object
-  rows  <- page %>% html_elements("tr")  # get all <tr> rows
+  page  <- read_html(html_text)
+  rows  <- page %>% html_elements("tr")
   value <- rows %>%
-    keep(~ html_text2(html_element(.x, "th")) == field_name) %>%  # keep the row whose th matches the target field
+    keep(~ html_text2(html_element(.x, "th")) == field_name) %>%
     html_element("td") %>%
     html_text2()
   if (length(value) == 0) NA_character_ else value
@@ -109,22 +101,6 @@ mpsz <- mpsz %>%
   relocate(geometry, .after = last_col())
 ```
 
-And a faster version that parses each record once instead of once per field:
-
-```r
-parse_kml_desc <- function(html_text) {
-  rows <- read_html(html_text) %>% html_elements("tr")
-  keys <- rows %>% html_element("th") %>% html_text2()
-  vals <- rows %>% html_element("td") %>% html_text2()
-  ok <- !is.na(keys) & !is.na(vals)
-  as_tibble(setNames(as.list(vals[ok]), keys[ok]))
-}
-
-attrs <- map_dfr(mpsz$Description, parse_kml_desc)
-mpsz <- bind_cols(st_drop_geometry(mpsz), attrs) %>%
-  st_set_geometry(st_geometry(mpsz))
-```
-
 Back to the actual data — check the REGION_N values (used later to filter for the Central Region):
 
 ```{r}
@@ -133,7 +109,7 @@ table(mpsz$REGION_N)
 
 ## Import the population table
 
-Another data mismatch worth noting: the spec called for `respopagesextod2024.csv` (the Type-of-Dwelling breakdown, single year 2024), but what I downloaded is `respopagesexfa2020to2024.csv` — the Floor Area breakdown, covering five years (2020–2024) in one file. It doesn't actually change the analysis, since computing the dependency ratio only needs `PA`, `SZ`, `AG`, and `Pop` — `Sex` and `TOD`/`FA` get summed away regardless of which breakdown is used. The only real consequence is that this file has five years mixed together, so it needs an extra filter step to get down to 2024.
+Same kind of mismatch here: spec wanted `respopagesextod2024.csv` (Type-of-Dwelling, just 2024), I've got `respopagesexfa2020to2024.csv` (Floor Area, 2020–2024 all in one file) instead. Doesn't change anything about the dependency ratio itself — that only needs `PA`, `SZ`, `AG`, and `Pop`, and `Sex`/`TOD`/`FA` get summed away regardless. Just means an extra filter step to pull 2024 back out of the five years.
 
 ```{r}
 popdata <- read_csv("data/aspatial/respopagesexfa2020to2024.csv")
@@ -358,7 +334,7 @@ tm_shape(mpsz_pop2024) +
   tm_borders(fill_alpha = 0.5)
 ```
 
-Comparing the two on the same data: quantile spreads colours out evenly, which makes ranking easy to read; equal reflects the actual spacing between values more faithfully. Neither is objectively "correct" — the classification method chosen actually shapes how a reader interprets the map, so it's worth picking on purpose rather than just leaving the default. (`tm_scale_intervals()` also supports `style = "jenks"` for natural breaks, `"sd"` for standard deviation, `"pretty"` for round-number breaks, and a few others.)
+Comparing the two on the same data: quantile spreads colours out evenly, which makes ranking easy to read; equal reflects the actual spacing between values more faithfully. Neither is objectively "correct" — the classification method shapes how a reader interprets the map, so it's a real decision to make on purpose, not just whatever the default happens to be. (`tm_scale_intervals()` also supports `style = "jenks"` for natural breaks, `"sd"` for standard deviation, `"pretty"` for round-number breaks, and a few others.)
 
 ## Custom Breaks
 
@@ -672,14 +648,9 @@ Every interactive map bundles Leaflet's JS/CSS into the page, which adds up fast
 
 # Summary
 
-A few things worth remembering from this exercise:
+Most of what tripped me up this time was the tmap v3→v4 renaming — `fill` for polygon colour vs. `col` for lines, classification moved under `fill.scale = tm_scale_*()`, legends under `fill.legend = tm_legend()`. The classification method itself (quantile vs. equal vs. custom breaks) changes what the map actually tells the reader, so that's a real choice to make each time, not just whatever the default happens to be.
 
-- In tmap v4, `fill` controls fill colour and `col` controls line colour; classification/colour-scale settings live under `fill.scale = tm_scale_*()`, and legend settings under `fill.legend = tm_legend()`.
-- Some data.gov.sg KML exports hide attributes inside an HTML table in `Description` — rvest pulls them out when that happens, though the GeoJSON I actually used here didn't need it.
-- The population wrangling comes down to `group_by()` + `summarise()` + `pivot_wider()`; grouping ages by column name held up better than the positional-index approach from the course material.
-- `left_join()` needs the sf object on the left, and the join key's case has to match beforehand.
-- The classification method (quantile / equal / custom breaks) changes what the map actually communicates, so it's worth a deliberate choice rather than the default.
-- After `tmap_mode("view")` or `tmap_style()`, switch back to `"plot"` / `"white"` before continuing, or later maps inherit the setting.
+On the data side: some data.gov.sg KML exports hide their attributes inside an HTML table in `Description` and need rvest to open up, though the GeoJSON I actually used here didn't need that. The population wrangling was really just `group_by()` + `summarise()` + `pivot_wider()`, grouping ages by column name rather than position so it doesn't quietly break if the underlying data changes shape. Two easy traps to leave for later: `left_join()` needs the sf object on the left or it silently degrades to a plain data frame, and switching `tmap_mode("view")` or `tmap_style()` means switching back before the next map, or it inherits the setting.
 
 ## Data sources
 

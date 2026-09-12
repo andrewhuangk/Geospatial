@@ -58,7 +58,7 @@ plot(preschool_ppp)
 summary(preschool_ppp)
 ```
 
-Worth checking for duplicate points before going further — two preschools can easily sit at the exact same coordinate if they're in the same building, and some of the tests coming up assume unique locations.
+Two preschools can land on the exact same coordinate if they share a building, and duplicate points break some of the tests below, so I checked before going further:
 
 ```{r}
 any(duplicated(preschool_ppp))
@@ -184,6 +184,6 @@ The grey band in each plot is the range you'd expect from 39 random simulations 
 
 ## Notes and open questions
 
-Two things worth being upfront about: this uses Ex01's preschool/subzone data instead of the childcare-centre dataset the textbook chapter actually works with, and the study boundary is a dissolved subzone outline standing in for a coastline shapefile that isn't available here. Not the original dataset, and better to say so than pretend otherwise.
+This still isn't the textbook's actual dataset — it's Ex01's preschool and subzone files again, standing in for the childcare-centre data the chapter uses, and the study boundary is a dissolved subzone outline rather than the real coastline shapefile. Same substitution as before, just flagging it again here since it affects every result in this file.
 
-One thing worth trying later if there's time: running this on a single planning area instead of the whole island. Testing CSR against all of Singapore at once is a pretty blunt instrument — preschools are almost certainly clustering because that's where people actually live, not because of anything special about land area on its own.
+Testing CSR against the whole island is a pretty blunt way to ask the question, too — preschools are obviously going to cluster wherever people actually live, so a chunk of what these tests are picking up is probably just population density, not anything specific to where a preschool gets built. Splitting this by planning area and re-running would be a better test of that, if there's time before this needs to be handed in.

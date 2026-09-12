@@ -30,7 +30,7 @@ The goal of this exercise is to get familiar with **sf (simple features)**, R's 
 5. Run basic GIS geoprocessing: buffering and point-in-polygon counting.
 6. Use `ggplot2` for exploratory data analysis (EDA).
 
-Coming from Python, a few of the R equivalents I kept looking up: `geopandas.read_file()` is `sf::st_read()`, a `GeoDataFrame` is basically an `sf` object (a data frame with an extra geometry column), `gdf.crs`/`gdf.to_crs()` map to `st_crs()`/`st_transform()`, `gdf.buffer(5)` is `st_buffer(x, dist = 5)`, and the `%>%` pipe does roughly what method chaining does in pandas.
+Coming from Python, most of this exercise is just relearning names for things I already know: `st_read()` is `geopandas.read_file()`, an `sf` object is basically a `GeoDataFrame` with its geometry column, `st_crs()`/`st_transform()` map to `gdf.crs`/`gdf.to_crs()`, `st_buffer()` is `gdf.buffer()`, and `%>%` is doing roughly what method chaining does in pandas.
 
 ---
 
@@ -89,27 +89,7 @@ preschool <- st_read("data/geospatial/PreSchoolsLocation.geojson")
 glimpse(preschool)
 ```
 
-This one only has `Name` and `Description` — the actual name, code, etc. are packed into an HTML table inside `Description`. Since this exercise only needs the pre-schools' geometry to do a point-in-polygon count and never touches the name/code fields, I skipped parsing that out and went straight to the analysis below.
-
-If I wanted `CENTRE_NAME` later (e.g. to label pre-schools on a map), the same rvest approach used in Hands-on Exercise 2 would work here too:
-
-```r
-extract_kml_field <- function(html_text, field_name) {
-  if (is.na(html_text) || html_text == "") return(NA_character_)
-  page  <- read_html(html_text)
-  rows  <- page %>% html_elements("tr")
-  value <- rows %>%
-    keep(~ html_text2(html_element(.x, "th")) == field_name) %>%
-    html_element("td") %>%
-    html_text2()
-  if (length(value) == 0) NA_character_ else value
-}
-
-preschool <- preschool %>%
-  mutate(CENTRE_NAME = map_chr(Description, extract_kml_field, "CENTRE_NAME")) %>%
-  select(-Name, -Description) %>%
-  relocate(geometry, .after = last_col())
-```
+This one only has `Name` and `Description` — the actual name, code, etc. are packed into an HTML table inside `Description`. This exercise only needs the geometry for a point-in-polygon count, not the name or code, so I skipped parsing that out and went straight to the analysis below. (Same rvest trick as Hands-on Exercise 2 if I ever need `CENTRE_NAME` out of this file later.)
 
 ## Import the cycling path network (Shapefile, lines)
 
@@ -195,7 +175,7 @@ cyclingpath3414 <- st_set_crs(cyclingpath, 3414)
 st_crs(cyclingpath3414)$epsg
 ```
 
-A quick way to tell which function is needed: look at the coordinate values. Small decimals like `103.8, 1.35` are lat/long, so `st_transform()`; six-digit numbers like `28000, 33000` are already SVY21, so just `st_set_crs()` to label it.
+Easiest way to tell which one's needed, in practice: check what the coordinate numbers look like. Small decimals like `103.8, 1.35` mean lat/long, so it needs `st_transform()`; six-digit numbers like `28000, 33000` are already in SVY21, so `st_set_crs()` is enough.
 
 Confirm the three layers line up:
 
@@ -233,7 +213,7 @@ listings_sf <- st_as_sf(
   st_transform(crs = 3414)              # transform to SVY21 right away for later analysis
 ```
 
-Worth flagging: the order in `coords` has to be `c(longitude, latitude)`, i.e. (X, Y). Get it backwards and every point ends up off the coast of Africa — I mixed this up on a different dataset once and spent a while wondering why nothing plotted where it should.
+The order in `coords` has to be `c(longitude, latitude)`, i.e. (X, Y) — get it backwards and every point ends up off the coast of Africa instead of Singapore.
 
 ```{r}
 glimpse(listings_sf)
@@ -377,14 +357,9 @@ ggplot(data = mpsz3414,
 
 # Summary
 
-A few things I want to remember from this exercise:
+Biggest thing this exercise drilled in: `st_set_crs()` and `st_transform()` sound interchangeable but aren't — one just relabels, the other actually re-projects the coordinates, and mixing them up quietly breaks every distance or area calculation downstream. Same idea with `st_read()`: it takes a single path for GeoJSON and KML but wants a `dsn` + `layer` pair for Shapefile, and some data.gov.sg exports bury their real attributes inside an HTML `Description` column that needs rvest to open up.
 
-- `st_read()` handles three formats differently: GeoJSON and KML take a single path, Shapefile needs `dsn` + `layer`.
-- Some data.gov.sg files hide their attributes inside an HTML table in `Description` — that needs rvest to pull out, but not always (MP14 here didn't need it, the pre-school file technically did but I didn't end up needing those fields).
-- `st_set_crs()` labels, `st_transform()` actually re-projects — easy to mix these up. Everything gets transformed to EPSG:3414 before any distance/area work.
-- `st_as_sf()` turns a lat/long CSV into a spatial layer; `coords` order is (longitude, latitude), not the other way round.
-- `st_buffer()` + `st_area()` for buffering/area; `st_intersects()` + `lengths()` for point-in-polygon counts.
-- `st_area()` output carries units, so `as.numeric()` before plotting.
+The rest was mostly plumbing — `st_as_sf()` to turn a lat/long CSV into a spatial layer (longitude before latitude in `coords`, every time), `st_buffer()` and `st_area()` for the widening scenario, `st_intersects()` + `lengths()` for the point-in-polygon count, and remembering that `st_area()`'s output carries units, so `as.numeric()` has to strip them off before anything can be plotted.
 
 ## Data sources
 
