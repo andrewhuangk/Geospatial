@@ -240,7 +240,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 5, 2026</p>
+      <p class="date-modified">September 12, 2026</p>
     </div>
   </div>
     
@@ -429,7 +429,7 @@ Window area = 781571000 square units
 Fraction of frame area: 0.422</code></pre>
 </div>
 </div>
-<p>Worth checking for duplicate points before going further — two preschools can easily sit at the exact same coordinate if they’re in the same building, and some of the tests coming up assume unique locations.</p>
+<p>Two preschools can land on the exact same coordinate if they share a building, and duplicate points break some of the tests below, so I checked before going further:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">any</span>(<span class="fu">duplicated</span>(preschool_ppp))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -473,22 +473,22 @@ Fraction of frame area: 0.422</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.diggle</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-286.9984 </code></pre>
+320.7629 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.CvL</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-4595.055 </code></pre>
+4068.381 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.scott</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> sigma.x  sigma.y 
-2111.650 1347.592 </code></pre>
+2111.635 1347.439 </code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.ppl</span>(preschool_ppp_jit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   sigma 
-217.4849 </code></pre>
+301.3285 </code></pre>
 </div>
 </div>
 <p>They don’t agree with each other, which makes sense once you notice they’re optimising for different things — <code>bw.diggle</code> leans toward picking up clusters, <code>bw.CvL</code>/<code>bw.scott</code> aim more for a smooth overall estimate. Plotting two of them side by side shows how much the bandwidth choice actually changes what you see:</p>
@@ -525,7 +525,7 @@ Fraction of frame area: 0.422</code></pre>
     Z-test
 
 data:  preschool_ppp_jit
-R = 0.42908, p-value &lt; 2.2e-16
+R = 0.43224, p-value &lt; 2.2e-16
 alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </div>
 </div>
@@ -675,8 +675,8 @@ Done.</code></pre>
 </section>
 <section id="notes-and-open-questions" class="level2">
 <h2 class="anchored" data-anchor-id="notes-and-open-questions">Notes and open questions</h2>
-<p>Two things worth being upfront about: this uses Ex01’s preschool/subzone data instead of the childcare-centre dataset the textbook chapter actually works with, and the study boundary is a dissolved subzone outline standing in for a coastline shapefile that isn’t available here. Not the original dataset, and better to say so than pretend otherwise.</p>
-<p>One thing worth trying later if there’s time: running this on a single planning area instead of the whole island. Testing CSR against all of Singapore at once is a pretty blunt instrument — preschools are almost certainly clustering because that’s where people actually live, not because of anything special about land area on its own.</p>
+<p>This still isn’t the textbook’s actual dataset — it’s Ex01’s preschool and subzone files again, standing in for the childcare-centre data the chapter uses, and the study boundary is a dissolved subzone outline rather than the real coastline shapefile. Same substitution as before, just flagging it again here since it affects every result in this file.</p>
+<p>Testing CSR against the whole island is a pretty blunt way to ask the question, too — preschools are obviously going to cluster wherever people actually live, so a chunk of what these tests are picking up is probably just population density, not anything specific to where a preschool gets built. Splitting this by planning area and re-running would be a better test of that, if there’s time before this needs to be handed in.</p>
 
 
 </section>
