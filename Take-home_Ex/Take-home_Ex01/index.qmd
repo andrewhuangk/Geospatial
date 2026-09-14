@@ -21,8 +21,6 @@ execute:
 
 # Overview
 
-Hands-on Exercise 3 covered spatial point pattern analysis (KDE, Clark-Evans, G/F/K/L functions) on a single static point set. This take-home exercise reuses that whole toolkit on a real dataset — road traffic accidents in Thailand — but adds a dimension Ex03 didn't touch: **time**. The dataset carries a full timestamp per accident (`incident_datetime`), so on top of "where do accidents cluster" I can also ask "does *where* they cluster change depending on *when*" — day vs. night, weekday vs. weekend.
-
 The brief has three required parts plus one open-ended one:
 
 1. **First-order analysis** — kernel density estimation (KDE) to map accident hotspots across the study area.
