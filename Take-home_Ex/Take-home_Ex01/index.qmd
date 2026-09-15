@@ -41,12 +41,12 @@ pacman::p_load(sf, spatstat, sparr, tidyverse, lubridate, knitr, kableExtra)
 ```
 
 - **sf**: reading/writing vector geospatial data and all the geometric operations (projection, filtering, union).
-- **spatstat**: everything point-pattern — `ppp`, `owin`, `density()`, `envelope()`, `Gest`/`Fest`/`Kest`/`Lest`, `clarkevans.test()`, `segregation.test()`. This is the same package Ex03 used.
+- **spatstat**: everything point-pattern — `ppp`, `owin`, `density()`, `envelope()`, `Gest`/`Fest`/`Kest`/`Lest`, `clarkevans.test()`, `segregation.test()`.
 - **sparr**: `spattemp.density()` — spatio-temporal kernel density estimation, the technique from Chapter 6.
 - **tidyverse** / **lubridate**: data wrangling and date-time handling.
 - **knitr** / **kableExtra**: tidy tables.
 
-Unlike Ex01/Ex02 I'm not loading `tmap` here — KDE surfaces and the G/F/K/L plots are `spatstat` objects (`im`, `fv`), and `spatstat`'s own `plot()` methods are the standard way to look at them (that's also what the lecture slides do). `ggplot2` + `sf` covers the handful of ordinary vector maps/charts I need elsewhere in this document.
+I'm not loading `tmap` here — KDE surfaces and the G/F/K/L plots are `spatstat` objects (`im`, `fv`), so `spatstat`'s own `plot()` methods are the standard way to look at them. `ggplot2` + `sf` covers the handful of ordinary vector maps/charts I need elsewhere in this document.
 
 ## Data sources
 
@@ -241,7 +241,7 @@ plot(kde_adaptive, main = "")
 
 ## Interpretation
 
-Both surfaces tell the same basic story, which is reassuring: accident intensity is not spread evenly across the BMR, it traces the expressway/arterial road network, with a small number of sharp point hotspots sitting at major interchanges in central-eastern Bangkok. The adaptive version sharpens those interchange hotspots further (since local point density there pulls its effective bandwidth down), while smoothing the low-density fringe more aggressively than the fixed version does. Neither surface shows any hotspot away from a road corridor, which is a reasonable sanity check — accidents can only happen where vehicles are.
+Both surfaces agree: intensity isn't spread evenly across the BMR, it follows the main roads, with a handful of sharp hotspots at big interchanges in central-eastern Bangkok. Adaptive makes those hotspots sharper because point density there pulls its bandwidth down, and it smooths the quieter areas harder than the fixed version does. No hotspot shows up off a road either. Obviously, accidents only happen where cars are.
 
 ---
 
@@ -300,13 +300,13 @@ clarkevans.test(acc_ppp, correction = "cdf", alternative = "clustered")
 
 ## Interpretation
 
-All four functions agree, and agree with the KDE maps: the observed curve sits **outside** the simulation envelope in the clustered direction across essentially the whole range tested (G above, F below, K/L above), and the Clark-Evans R statistic of **0.215** — far below 1, p < 2.2 × 10⁻¹⁶ — rejects CSR at any reasonable significance level. In plain terms: 2022 BMR road accidents cluster far more tightly than random chance would produce, and they do so from the very shortest inter-point distances (G function departs from CSR almost immediately) out to the largest radii tested (K/L keep diverging rather than flattening back toward the envelope). That's consistent with a real underlying cause — accidents are physically constrained to the road network, and further concentrated at high-conflict points like busy intersections — rather than any artefact of the analysis.
+All four functions agree with each other and with the KDE maps: the observed curve sits **outside** the CSR envelope in the clustered direction across basically the whole range tested (G above, F below, K/L above), and the Clark-Evans R statistic of **0.215** (far below 1, p < 2.2 × 10⁻¹⁶) rejects CSR at any reasonable level. So 2022 BMR accidents cluster much tighter than random chance would give you, and that holds from the shortest distances (G departs from CSR almost right away) out to the longest radii tested (K/L keep climbing instead of flattening back to the envelope). Makes sense: accidents are stuck to the road network, and pile up even more at busy junctions, so this isn't some fluke in the analysis.
 
 ---
 
 # Spatio-Temporal Analysis
 
-Ex03's toolkit stops at "is this one point pattern clustered." The accident data lets me go further: does *where* accidents cluster change depending on *when* they happen? `incident_datetime` gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this — spatio-temporal KDE.
+Does *where* accidents cluster change depending on *when* they happen? `incident_datetime` gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this — spatio-temporal KDE.
 
 ## Deriving time attributes
 
@@ -415,7 +415,7 @@ plot(kde_day,   main = paste0("Day (n=", day_ppp$n, ")"),   zlim = c(0, zmax))
 plot(kde_night, main = paste0("Night (n=", night_ppp$n, ")"), zlim = c(0, zmax))
 ```
 
-The daytime surface has one noticeably sharper, brighter hotspot at the main central interchange than the night-time surface does at the same location — daytime accidents concentrate more tightly there, consistent with peak-hour congestion at that specific junction, while night-time accidents are spread a bit more broadly along the corridor.
+The daytime surface has one sharper, brighter hotspot at the main central interchange than the night-time surface does at the same spot. Daytime accidents bunch up tighter there, which fits peak-hour traffic at that junction. Night-time accidents spread out more along the road.
 
 ### Weekday vs. weekend
 
@@ -430,7 +430,7 @@ plot(kde_wd, main = paste0("Weekday (n=", wd_ppp$n, ")"), zlim = c(0, zmax2))
 plot(kde_we, main = paste0("Weekend (n=", we_ppp$n, ")"), zlim = c(0, zmax2))
 ```
 
-These two look far more alike than the day/night pair — same corridors light up, same interchange stands out — which by eye suggests weekday and weekend accidents don't really relocate spatially, they just happen at different volumes (2,549 vs. 1,041, matching commuter traffic being a weekday phenomenon).
+These two look a lot more alike than the day/night pair. Same roads light up, same interchange stands out. By eye, weekday and weekend accidents don't really move to different places, they just happen at different volumes (2,549 vs. 1,041, which fits commuting being a weekday thing).
 
 ### Formal test: is the spatial pattern actually different?
 
@@ -459,11 +459,11 @@ I used a larger, fixed `sigma = 3000` m for this test specifically — `segregat
 
 Putting the continuous STKDE picture and the discrete formal test together, they agree and reinforce each other:
 
-- The **hour-of-day STKDE** shows the hotspot's location and shape genuinely reshaping across the 24-hour cycle, not just dimming and brightening in place — and the discrete test confirms this is statistically real: **day vs. night, p = `r round(seg_period$p.value, 3)`**, significant spatial segregation. Where accidents happen genuinely shifts between day and night, not just how many.
-- The **weekday/weekend discrete test gives the opposite answer — p = `r round(seg_daytype$p.value, 3)`**, not significant. Weekday and weekend accidents share essentially the same spatial footprint; only the volume changes (2,549 vs. 1,041). I didn't run a weekday/weekend STKDE for the same reason there's no continuous "weekday-ness" variable to feed it — day-of-week is inherently categorical, which is exactly the kind of split discrete testing is built for and STKDE isn't.
-- The **month STKDE** adds a dimension neither of the day-of-week splits could show on its own: the hotspot doesn't relocate across the year, but it does intensify and sharpen from October through December, tracking the same months with the highest raw counts.
+- The **hour-of-day STKDE** shows the hotspot's location and shape actually reshaping across the 24-hour cycle, not just dimming and brightening in place. The discrete test backs this up: **day vs. night, p = `r round(seg_period$p.value, 3)`**, significant. Where accidents happen really does shift between day and night, not just how many.
+- The **weekday/weekend discrete test gives the opposite answer: p = `r round(seg_daytype$p.value, 3)`**, not significant. Weekday and weekend accidents cover basically the same area; only the volume changes (2,549 vs. 1,041). I didn't run a weekday/weekend STKDE because there's no continuous "weekday-ness" variable to feed it. Day-of-week is categorical, which is exactly what discrete testing is built for and STKDE isn't.
+- The **month STKDE** adds something the day-of-week splits can't show on their own: the hotspot doesn't move across the year, but it gets sharper and brighter from October through December, matching the months with the highest raw counts.
 
-That maps onto a sensible real-world explanation: time-of-day changes *what kind* of driving is happening at a given location (peak-hour congestion at specific junctions vs. free-flowing night traffic), which is a spatial effect; weekday/weekend mostly changes *how much* traffic uses the same road network, a volume effect rather than a spatial one; and year-end changes both — more accidents, concentrated more tightly at the existing hotspot rather than spread out.
+That lines up with how traffic actually works: time-of-day changes *what kind* of driving happens at a given spot (peak-hour jams at specific junctions vs. free-flowing night traffic), so it's a spatial effect. Weekday/weekend mostly just changes *how much* traffic uses the same roads, a volume effect, not a spatial one. Year-end changes both: more accidents, packed even tighter into the existing hotspot.
 
 ---
 
