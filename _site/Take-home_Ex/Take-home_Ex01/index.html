@@ -157,6 +157,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html">
  <span class="dropdown-text">Ex04: Spatio-Temporal Point Pattern Analysis</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex05/Hands-on_Ex05.html">
+ <span class="dropdown-text">Ex05: Spatial Weights and Applications</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -282,7 +286,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 13, 2026</p>
+      <p class="date-modified">September 14, 2026</p>
     </div>
   </div>
     
@@ -314,12 +318,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <ul>
 <li><strong>sf</strong>: reading/writing vector geospatial data and all the geometric operations (projection, filtering, union).</li>
-<li><strong>spatstat</strong>: everything point-pattern — <code>ppp</code>, <code>owin</code>, <code>density()</code>, <code>envelope()</code>, <code>Gest</code>/<code>Fest</code>/<code>Kest</code>/<code>Lest</code>, <code>clarkevans.test()</code>, <code>segregation.test()</code>. This is the same package Ex03 used.</li>
+<li><strong>spatstat</strong>: everything point-pattern — <code>ppp</code>, <code>owin</code>, <code>density()</code>, <code>envelope()</code>, <code>Gest</code>/<code>Fest</code>/<code>Kest</code>/<code>Lest</code>, <code>clarkevans.test()</code>, <code>segregation.test()</code>.</li>
 <li><strong>sparr</strong>: <code>spattemp.density()</code> — spatio-temporal kernel density estimation, the technique from Chapter 6.</li>
 <li><strong>tidyverse</strong> / <strong>lubridate</strong>: data wrangling and date-time handling.</li>
 <li><strong>knitr</strong> / <strong>kableExtra</strong>: tidy tables.</li>
 </ul>
-<p>Unlike Ex01/Ex02 I’m not loading <code>tmap</code> here — KDE surfaces and the G/F/K/L plots are <code>spatstat</code> objects (<code>im</code>, <code>fv</code>), and <code>spatstat</code>’s own <code>plot()</code> methods are the standard way to look at them (that’s also what the lecture slides do). <code>ggplot2</code> + <code>sf</code> covers the handful of ordinary vector maps/charts I need elsewhere in this document.</p>
+<p>I’m not loading <code>tmap</code> here — KDE surfaces and the G/F/K/L plots are <code>spatstat</code> objects (<code>im</code>, <code>fv</code>), so <code>spatstat</code>’s own <code>plot()</code> methods are the standard way to look at them. <code>ggplot2</code> + <code>sf</code> covers the handful of ordinary vector maps/charts I need elsewhere in this document.</p>
 </section>
 <section id="data-sources" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="data-sources"><span class="header-section-number">2.2</span> Data sources</h2>
@@ -625,7 +629,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </section>
 <section id="interpretation" class="level2" data-number="5.4">
 <h2 data-number="5.4" class="anchored" data-anchor-id="interpretation"><span class="header-section-number">5.4</span> Interpretation</h2>
-<p>Both surfaces tell the same basic story, which is reassuring: accident intensity is not spread evenly across the BMR, it traces the expressway/arterial road network, with a small number of sharp point hotspots sitting at major interchanges in central-eastern Bangkok. The adaptive version sharpens those interchange hotspots further (since local point density there pulls its effective bandwidth down), while smoothing the low-density fringe more aggressively than the fixed version does. Neither surface shows any hotspot away from a road corridor, which is a reasonable sanity check — accidents can only happen where vehicles are.</p>
+<p>Both surfaces agree: intensity isn’t spread evenly across the BMR, it follows the main roads, with a handful of sharp hotspots at big interchanges in central-eastern Bangkok. Adaptive makes those hotspots sharper because point density there pulls its bandwidth down, and it smooths the quieter areas harder than the fixed version does. No hotspot shows up off a road either. Obviously, accidents only happen where cars are.</p>
 <hr>
 </section>
 </section>
@@ -716,13 +720,13 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </section>
 <section id="interpretation-1" class="level2" data-number="6.6">
 <h2 data-number="6.6" class="anchored" data-anchor-id="interpretation-1"><span class="header-section-number">6.6</span> Interpretation</h2>
-<p>All four functions agree, and agree with the KDE maps: the observed curve sits <strong>outside</strong> the simulation envelope in the clustered direction across essentially the whole range tested (G above, F below, K/L above), and the Clark-Evans R statistic of <strong>0.215</strong> — far below 1, p &lt; 2.2 × 10⁻¹⁶ — rejects CSR at any reasonable significance level. In plain terms: 2022 BMR road accidents cluster far more tightly than random chance would produce, and they do so from the very shortest inter-point distances (G function departs from CSR almost immediately) out to the largest radii tested (K/L keep diverging rather than flattening back toward the envelope). That’s consistent with a real underlying cause — accidents are physically constrained to the road network, and further concentrated at high-conflict points like busy intersections — rather than any artefact of the analysis.</p>
+<p>All four functions agree with each other and with the KDE maps: the observed curve sits <strong>outside</strong> the CSR envelope in the clustered direction across basically the whole range tested (G above, F below, K/L above), and the Clark-Evans R statistic of <strong>0.215</strong> (far below 1, p &lt; 2.2 × 10⁻¹⁶) rejects CSR at any reasonable level. So 2022 BMR accidents cluster much tighter than random chance would give you, and that holds from the shortest distances (G departs from CSR almost right away) out to the longest radii tested (K/L keep climbing instead of flattening back to the envelope). Makes sense: accidents are stuck to the road network, and pile up even more at busy junctions, so this isn’t some fluke in the analysis.</p>
 <hr>
 </section>
 </section>
 <section id="spatio-temporal-analysis" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Spatio-Temporal Analysis</h1>
-<p>Ex03’s toolkit stops at “is this one point pattern clustered.” The accident data lets me go further: does <em>where</em> accidents cluster change depending on <em>when</em> they happen? <code>incident_datetime</code> gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this — spatio-temporal KDE.</p>
+<p>Does <em>where</em> accidents cluster change depending on <em>when</em> they happen? <code>incident_datetime</code> gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this — spatio-temporal KDE.</p>
 <section id="deriving-time-attributes" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="deriving-time-attributes"><span class="header-section-number">7.1</span> Deriving time attributes</h2>
 <div class="cell">
@@ -896,7 +900,7 @@ Evaluation
 </div>
 </div>
 </div>
-<p>The daytime surface has one noticeably sharper, brighter hotspot at the main central interchange than the night-time surface does at the same location — daytime accidents concentrate more tightly there, consistent with peak-hour congestion at that specific junction, while night-time accidents are spread a bit more broadly along the corridor.</p>
+<p>The daytime surface has one sharper, brighter hotspot at the main central interchange than the night-time surface does at the same spot. Daytime accidents bunch up tighter there, which fits peak-hour traffic at that junction. Night-time accidents spread out more along the road.</p>
 </section>
 <section id="weekday-vs.-weekend" class="level3" data-number="7.3.3">
 <h3 data-number="7.3.3" class="anchored" data-anchor-id="weekday-vs.-weekend"><span class="header-section-number">7.3.3</span> Weekday vs.&nbsp;weekend</h3>
@@ -917,7 +921,7 @@ Evaluation
 </div>
 </div>
 </div>
-<p>These two look far more alike than the day/night pair — same corridors light up, same interchange stands out — which by eye suggests weekday and weekend accidents don’t really relocate spatially, they just happen at different volumes (2,549 vs.&nbsp;1,041, matching commuter traffic being a weekday phenomenon).</p>
+<p>These two look a lot more alike than the day/night pair. Same roads light up, same interchange stands out. By eye, weekday and weekend accidents don’t really move to different places, they just happen at different volumes (2,549 vs.&nbsp;1,041, which fits commuting being a weekday thing).</p>
 </section>
 <section id="formal-test-is-the-spatial-pattern-actually-different" class="level3" data-number="7.3.4">
 <h3 data-number="7.3.4" class="anchored" data-anchor-id="formal-test-is-the-spatial-pattern-actually-different"><span class="header-section-number">7.3.4</span> Formal test: is the spatial pattern actually different?</h3>
@@ -977,11 +981,11 @@ T = 26.787, p-value = 0.34</code></pre>
 <h2 data-number="7.4" class="anchored" data-anchor-id="interpretation-2"><span class="header-section-number">7.4</span> Interpretation</h2>
 <p>Putting the continuous STKDE picture and the discrete formal test together, they agree and reinforce each other:</p>
 <ul>
-<li>The <strong>hour-of-day STKDE</strong> shows the hotspot’s location and shape genuinely reshaping across the 24-hour cycle, not just dimming and brightening in place — and the discrete test confirms this is statistically real: <strong>day vs.&nbsp;night, p = 0.01</strong>, significant spatial segregation. Where accidents happen genuinely shifts between day and night, not just how many.</li>
-<li>The <strong>weekday/weekend discrete test gives the opposite answer — p = 0.34</strong>, not significant. Weekday and weekend accidents share essentially the same spatial footprint; only the volume changes (2,549 vs.&nbsp;1,041). I didn’t run a weekday/weekend STKDE for the same reason there’s no continuous “weekday-ness” variable to feed it — day-of-week is inherently categorical, which is exactly the kind of split discrete testing is built for and STKDE isn’t.</li>
-<li>The <strong>month STKDE</strong> adds a dimension neither of the day-of-week splits could show on its own: the hotspot doesn’t relocate across the year, but it does intensify and sharpen from October through December, tracking the same months with the highest raw counts.</li>
+<li>The <strong>hour-of-day STKDE</strong> shows the hotspot’s location and shape actually reshaping across the 24-hour cycle, not just dimming and brightening in place. The discrete test backs this up: <strong>day vs.&nbsp;night, p = 0.01</strong>, significant. Where accidents happen really does shift between day and night, not just how many.</li>
+<li>The <strong>weekday/weekend discrete test gives the opposite answer: p = 0.34</strong>, not significant. Weekday and weekend accidents cover basically the same area; only the volume changes (2,549 vs.&nbsp;1,041). I didn’t run a weekday/weekend STKDE because there’s no continuous “weekday-ness” variable to feed it. Day-of-week is categorical, which is exactly what discrete testing is built for and STKDE isn’t.</li>
+<li>The <strong>month STKDE</strong> adds something the day-of-week splits can’t show on their own: the hotspot doesn’t move across the year, but it gets sharper and brighter from October through December, matching the months with the highest raw counts.</li>
 </ul>
-<p>That maps onto a sensible real-world explanation: time-of-day changes <em>what kind</em> of driving is happening at a given location (peak-hour congestion at specific junctions vs.&nbsp;free-flowing night traffic), which is a spatial effect; weekday/weekend mostly changes <em>how much</em> traffic uses the same road network, a volume effect rather than a spatial one; and year-end changes both — more accidents, concentrated more tightly at the existing hotspot rather than spread out.</p>
+<p>That lines up with how traffic actually works: time-of-day changes <em>what kind</em> of driving happens at a given spot (peak-hour jams at specific junctions vs.&nbsp;free-flowing night traffic), so it’s a spatial effect. Weekday/weekend mostly just changes <em>how much</em> traffic uses the same roads, a volume effect, not a spatial one. Year-end changes both: more accidents, packed even tighter into the existing hotspot.</p>
 <hr>
 </section>
 </section>

@@ -22,6 +22,8 @@ website:
             text: "Ex03: Point Pattern Analysis"
           - href: Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.qmd
             text: "Ex04: Spatio-Temporal Point Pattern Analysis"
+          - href: Hands-on_Ex/Hands-on_Ex05/Hands-on_Ex05.qmd
+            text: "Ex05: Spatial Weights and Applications"
 
       - text: "Take-home Exercise"
         menu:
