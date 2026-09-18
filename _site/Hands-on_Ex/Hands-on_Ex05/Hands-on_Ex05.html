@@ -196,16 +196,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#getting-started" id="toc-getting-started" class="nav-link active" data-scroll-target="#getting-started">Getting started</a></li>
   <li><a href="#importing-data" id="toc-importing-data" class="nav-link" data-scroll-target="#importing-data">Importing data</a></li>
-  <li><a href="#visualising-regional-development-indicator" id="toc-visualising-regional-development-indicator" class="nav-link" data-scroll-target="#visualising-regional-development-indicator">Visualising regional development indicator</a></li>
-  <li><a href="#contiguity-based-spatial-weights" id="toc-contiguity-based-spatial-weights" class="nav-link" data-scroll-target="#contiguity-based-spatial-weights">Contiguity-based spatial weights</a></li>
-  <li><a href="#distance-based-spatial-weights" id="toc-distance-based-spatial-weights" class="nav-link" data-scroll-target="#distance-based-spatial-weights">Distance-based spatial weights</a>
+  <li><a href="#mapping-gdppc" id="toc-mapping-gdppc" class="nav-link" data-scroll-target="#mapping-gdppc">Mapping GDPPC</a></li>
+  <li><a href="#queen-vs-rook-neighbours" id="toc-queen-vs-rook-neighbours" class="nav-link" data-scroll-target="#queen-vs-rook-neighbours">Queen vs rook neighbours</a></li>
+  <li><a href="#distance-based-neighbours" id="toc-distance-based-neighbours" class="nav-link" data-scroll-target="#distance-based-neighbours">Distance-based neighbours</a>
   <ul class="collapse">
   <li><a href="#fixed-distance" id="toc-fixed-distance" class="nav-link" data-scroll-target="#fixed-distance">Fixed distance</a></li>
   <li><a href="#adaptive-distance-k-nearest-neighbours" id="toc-adaptive-distance-k-nearest-neighbours" class="nav-link" data-scroll-target="#adaptive-distance-k-nearest-neighbours">Adaptive distance (k nearest neighbours)</a></li>
   </ul></li>
   <li><a href="#inverse-distance-weights" id="toc-inverse-distance-weights" class="nav-link" data-scroll-target="#inverse-distance-weights">Inverse distance weights</a></li>
   <li><a href="#row-standardised-weights-matrix" id="toc-row-standardised-weights-matrix" class="nav-link" data-scroll-target="#row-standardised-weights-matrix">Row-standardised weights matrix</a></li>
-  <li><a href="#spatially-lagged-variables" id="toc-spatially-lagged-variables" class="nav-link" data-scroll-target="#spatially-lagged-variables">Spatially lagged variables</a>
+  <li><a href="#spatial-lag" id="toc-spatial-lag" class="nav-link" data-scroll-target="#spatial-lag">Spatial lag</a>
   <ul class="collapse">
   <li><a href="#row-standardised-lag" id="toc-row-standardised-lag" class="nav-link" data-scroll-target="#row-standardised-lag">Row-standardised lag</a></li>
   <li><a href="#sum-of-neighbouring-values" id="toc-sum-of-neighbouring-values" class="nav-link" data-scroll-target="#sum-of-neighbouring-values">Sum of neighbouring values</a></li>
@@ -244,7 +244,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 17, 2026</p>
+      <p class="date-modified">September 18, 2026</p>
     </div>
   </div>
     
@@ -279,11 +279,11 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, hunan2012) <span class="sc">%&gt;%</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">7</span>, <span class="dv">15</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="visualising-regional-development-indicator" class="level2">
-<h2 class="anchored" data-anchor-id="visualising-regional-development-indicator">Visualising regional development indicator</h2>
+<section id="mapping-gdppc" class="level2">
+<h2 class="anchored" data-anchor-id="mapping-gdppc">Mapping GDPPC</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>basemap <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(hunan) <span class="sc">+</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
@@ -302,8 +302,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 </div>
 </section>
-<section id="contiguity-based-spatial-weights" class="level2">
-<h2 class="anchored" data-anchor-id="contiguity-based-spatial-weights">Contiguity-based spatial weights</h2>
+<section id="queen-vs-rook-neighbours" class="level2">
+<h2 class="anchored" data-anchor-id="queen-vs-rook-neighbours">Queen vs rook neighbours</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span> <span class="fu">poly2nb</span>(hunan, <span class="at">queen =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(wm_q)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -362,8 +362,8 @@ Link number distribution:
 </div>
 </div>
 </section>
-<section id="distance-based-spatial-weights" class="level2">
-<h2 class="anchored" data-anchor-id="distance-based-spatial-weights">Distance-based spatial weights</h2>
+<section id="distance-based-neighbours" class="level2">
+<h2 class="anchored" data-anchor-id="distance-based-neighbours">Distance-based neighbours</h2>
 <section id="fixed-distance" class="level3">
 <h3 class="anchored" data-anchor-id="fixed-distance">Fixed distance</h3>
 <div class="cell">
@@ -471,8 +471,8 @@ W 88 7744 88 37.86334 365.9147</code></pre>
 </div>
 </div>
 </section>
-<section id="spatially-lagged-variables" class="level2">
-<h2 class="anchored" data-anchor-id="spatially-lagged-variables">Spatially lagged variables</h2>
+<section id="spatial-lag" class="level2">
+<h2 class="anchored" data-anchor-id="spatial-lag">Spatial lag</h2>
 <section id="row-standardised-lag" class="level3">
 <h3 class="anchored" data-anchor-id="row-standardised-lag">Row-standardised lag</h3>
 <div class="cell">

@@ -24,10 +24,10 @@ hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
 
 ```{r}
 hunan <- left_join(hunan, hunan2012) %>%
-  select(1:4, 7, 15)
+  select(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)
 ```
 
-## Visualising regional development indicator
+## Mapping GDPPC
 
 ```{r fig.width=10}
 basemap <- tm_shape(hunan) +
@@ -40,7 +40,7 @@ gdppc <- qtm(hunan, "GDPPC") +
 tmap_arrange(basemap, gdppc, asp = 1, ncol = 2)
 ```
 
-## Contiguity-based spatial weights
+## Queen vs rook neighbours
 
 ```{r}
 wm_q <- poly2nb(hunan, queen = TRUE)
@@ -66,7 +66,7 @@ plot(hunan$geometry, border = "lightgrey", main = "Rook Contiguity")
 plot(wm_r, coords, pch = 19, cex = 0.6, add = TRUE, col = "red")
 ```
 
-## Distance-based spatial weights
+## Distance-based neighbours
 
 ### Fixed distance
 
@@ -118,7 +118,7 @@ rswm_q <- nb2listw(wm_q, style = "W", zero.policy = TRUE)
 rswm_q
 ```
 
-## Spatially lagged variables
+## Spatial lag
 
 ### Row-standardised lag
 
