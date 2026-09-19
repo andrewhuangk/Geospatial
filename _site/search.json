@@ -709,8 +709,71 @@
   {
     "objectID": "inclass_Ex/inclass week 4/inclass week 4.html",
     "href": "inclass_Ex/inclass week 4/inclass week 4.html",
-    "title": "inclass ex 4",
+    "title": "Inclass Exercise 4",
     "section": "",
-    "text": "get started\n\nYou can add options to executable code like this\n\n\n[1] 4\n\n\nThe echo: false option disables the printing of code (only output is displayed)."
+    "text": "pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#get-started",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#get-started",
+    "title": "Inclass Exercise 4",
+    "section": "",
+    "text": "pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#import-data",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#import-data",
+    "title": "Inclass Exercise 4",
+    "section": "Import data",
+    "text": "Import data\n\nhunan &lt;- st_read(dsn = \"data/geospatial\", layer = \"Hunan\")\n\nReading layer `Hunan' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 4\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\nhunan2012 &lt;- read_csv(\"data/aspatial/Hunan_2012.csv\")"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#join",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#join",
+    "title": "Inclass Exercise 4",
+    "section": "Join",
+    "text": "Join\n\nhunan &lt;- left_join(hunan, hunan2012) %&gt;%\n  select(NAME_2, ID_3, NAME_3, County, GDPPC, Agri, Service)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#mapping-gdppc",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#mapping-gdppc",
+    "title": "Inclass Exercise 4",
+    "section": "Mapping GDPPC",
+    "text": "Mapping GDPPC\n\nbasemap &lt;- tm_shape(hunan) +\n  tm_polygons() +\n  tm_text(\"NAME_3\", size = 0.5)\n\ngdppc &lt;- qtm(hunan, \"GDPPC\") +\n  tm_layout(legend.position = c(\"left\", \"bottom\"))\n\ntmap_arrange(basemap, gdppc, asp = 1, ncol = 2)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-data-for-gwmodel",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-data-for-gwmodel",
+    "title": "Inclass Exercise 4",
+    "section": "Preparing data for GWmodel",
+    "text": "Preparing data for GWmodel\n\nhunan_sp &lt;- as_Spatial(hunan)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#determine-adaptive-bandwidth",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#determine-adaptive-bandwidth",
+    "title": "Inclass Exercise 4",
+    "section": "Determine adaptive bandwidth",
+    "text": "Determine adaptive bandwidth\n\nbw_CV &lt;- bw.gwr(GDPPC ~ 1,\n                data = hunan_sp,\n                approach = \"CV\",\n                adaptive = TRUE,\n                kernel = \"bisquare\",\n                longlat = TRUE)\n\nAdaptive bandwidth: 62 CV score: 15515442343 \nAdaptive bandwidth: 46 CV score: 14937956887 \nAdaptive bandwidth: 36 CV score: 14408561608 \nAdaptive bandwidth: 29 CV score: 14198527496 \nAdaptive bandwidth: 26 CV score: 13898800611 \nAdaptive bandwidth: 22 CV score: 13662299974 \nAdaptive bandwidth: 22 CV score: 13662299974 \n\n\n\nbw_AIC &lt;- bw.gwr(GDPPC ~ 1,\n                 data = hunan_sp,\n                 approach = \"AIC\",\n                 adaptive = TRUE,\n                 kernel = \"bisquare\",\n                 longlat = TRUE)\n\nAdaptive bandwidth (number of nearest neighbours): 62 AICc value: 1923.156 \nAdaptive bandwidth (number of nearest neighbours): 46 AICc value: 1920.469 \nAdaptive bandwidth (number of nearest neighbours): 36 AICc value: 1917.324 \nAdaptive bandwidth (number of nearest neighbours): 29 AICc value: 1916.661 \nAdaptive bandwidth (number of nearest neighbours): 26 AICc value: 1914.897 \nAdaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045 \nAdaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#geographically-weighted-summary-statistics",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#geographically-weighted-summary-statistics",
+    "title": "Inclass Exercise 4",
+    "section": "Geographically weighted summary statistics",
+    "text": "Geographically weighted summary statistics\n\ngwstat &lt;- gwss(data = hunan_sp,\n               vars = \"GDPPC\",\n               bw = bw_AIC,\n               kernel = \"bisquare\",\n               adaptive = TRUE,\n               longlat = TRUE)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-the-output-data",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-the-output-data",
+    "title": "Inclass Exercise 4",
+    "section": "Preparing the output data",
+    "text": "Preparing the output data\n\ngwstat_df &lt;- as.data.frame(gwstat$SDF)\nhunan_gstat &lt;- cbind(hunan, gwstat_df)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#visualising-geographically-weighted-summary-statistics",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#visualising-geographically-weighted-summary-statistics",
+    "title": "Inclass Exercise 4",
+    "section": "Visualising geographically weighted summary statistics",
+    "text": "Visualising geographically weighted summary statistics\n\ntm_shape(hunan_gstat) +\n  tm_polygons(fill = \"GDPPC_LM\",\n              fill.scale = tm_scale_intervals(\n                style = \"quantile\",\n                n = 5,\n                values = \"brewer.blues\"),\n              fill.legend = tm_legend(\n                title = \"local Mean\")) +\n  tm_borders(fill_alpha = 0.5) +\n  tm_title(\"Distribution of geographically wieghted mean\") +\n  tm_layout(legend.position = c(\"left\", \"bottom\"))"
   }
 ]
