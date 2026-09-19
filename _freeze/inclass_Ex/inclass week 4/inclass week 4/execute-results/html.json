@@ -1,0 +1,15 @@
+{
+  "hash": "53ed3079a2bbbf44430beccfebcce44f",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"inclass ex 4\"\nauthor: \"Kang Chih Huang\"\nformat: html\ndate: \"2026-09-19\"\ndate-modified: today\nexecute: \n  echo: true\n  eval: true\n  warning: false\n  freeze: true\n  message: false\n---\n\nget started\n\n```{pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)}\n```\n\nYou can add options to executable code like this\n\n\n::: {.cell}\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] 4\n```\n\n\n:::\n:::\n\n\nThe `echo: false` option disables the printing of code (only output is displayed).\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

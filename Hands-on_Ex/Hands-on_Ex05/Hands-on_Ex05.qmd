@@ -23,8 +23,7 @@ hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
 ```
 
 ```{r}
-hunan <- left_join(hunan, hunan2012) %>%
-  select(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)
+quarto render
 ```
 
 ## Mapping GDPPC
