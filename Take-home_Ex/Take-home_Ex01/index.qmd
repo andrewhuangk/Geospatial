@@ -477,7 +477,7 @@ acc_sf |> st_drop_geometry() |> count(weather_condition, sort = TRUE)
 
 ## KDE by weather condition
 
-Unlike the day/night comparison, I let each weather subset use its **own** `bw.ppl()` bandwidth here rather than sharing one — the two groups differ in size by an order of magnitude (3,263 vs. 309), and forcing the sparser rainy-day pattern through the same tight ~630 m bandwidth tuned for the dense clear-day pattern would just render as a scatter of unconnected dots, telling me nothing about where its own hotspots are.
+Unlike the day/night comparison, I let each weather group use its own `bw.ppl()` bandwidth instead of sharing one. The two groups differ in size by a factor of ten (3,263 vs. 309), and forcing the rainy group through the same tight ~630m bandwidth tuned for the clear group would just turn it into a scatter of disconnected dots, telling me nothing about where its hotspots actually are.
 
 ```{r}
 #| fig-cap: "KDE of accidents by weather condition, each panel on its own bandwidth and colour scale (see caveat below)."
@@ -495,7 +495,7 @@ plot(kde_clear, main = paste0("Clear (n=", clear_ppp$n, "), σ≈", round(sigma_
 plot(kde_rainy, main = paste0("Rainy (n=", rainy_ppp$n, "), σ≈", round(sigma_rainy), "m"))
 ```
 
-Because the two panels use different bandwidths (~630 m vs. ~2,970 m) they aren't directly comparable by eye in the way the day/night pair was — the rainy panel is inherently smoother just from having fewer points to work with. What *is* comparable: clear-weather accidents trace the road network tightly, with the sharpest hotspot at the same central interchange seen throughout this document; rainy-weather accidents, even smoothed over a much wider radius, still concentrate most heavily in the east-central part of the study area rather than spreading evenly across it — a different part of the network than clear-weather's single dominant hotspot.
+The two panels use different bandwidths (~630m vs. ~2,970m), so they can't be compared by eye the same way the day/night pair could. The rainy panel just looks smoother because it has fewer points. What is comparable: clear-weather accidents trace the road network tightly, with the sharpest hotspot at the same central interchange seen throughout this report. Rainy-weather accidents, even smoothed over a much wider radius, still concentrate mostly in the east-central part of the study area instead of spreading out evenly, a different spot than clear-weather's one dominant hotspot.
 
 ## Formal test
 
@@ -510,7 +510,18 @@ seg_weather
 
 ## Interpretation
 
-`segregation.test()` returns **p = `r round(seg_weather$p.value, 3)`**, significant at the 5% level: clear-weather and rainy-weather accidents are not just different in volume (3,263 vs. 309, tracking the fact that it isn't raining most of the time) but occupy meaningfully different locations within the BMR. A plausible mechanism: rain doesn't just add slickness uniformly everywhere, it exposes drainage, visibility and road-surface weaknesses that are concentrated in particular stretches of the network — so the "risky when wet" locations aren't simply the same "risky all the time" locations scaled down. That's a genuinely different, actionable finding from the first-order KDE alone, which only ever showed one dominant hotspot regardless of conditions.
+`segregation.test()` returns **p = `r round(seg_weather$p.value, 3)`**, significant at the 5% level. Clear-weather and rainy-weather accidents differ in volume (3,263 vs. 309, since it isn't raining most of the time), but they also happen in different places within the BMR. My guess is rain doesn't add slickness evenly everywhere, it exposes drainage, visibility and road-surface problems that only show up in certain stretches of the network. So the spots that are risky when wet aren't just a smaller version of the spots that are risky all the time. That's a different finding from the plain KDE, which only ever showed one dominant hotspot no matter the weather.
+
+---
+
+# Public Safety Implications
+
+Based on the findings above:
+
+- Put more enforcement at the central-eastern interchange, since every analysis in this report keeps pointing back to the same spot.
+- Move patrols between day and night instead of just adding more of them, since the day/night test showed the hotspot itself shifts, not just how many accidents happen.
+- Check drainage and signage in the east-central area before rainy season, since that's where rainy-weather accidents cluster.
+- Expect more accidents packed into the same area between October and December, based on what the STKDE analysis showed.
 
 ---
 

@@ -30,6 +30,8 @@ website:
         menu:
           - href: Take-home_Ex/Take-home_Ex01/index.qmd
             text: "Ex01: Thailand Road Accident Spatio-temporal Analysis"
+          - href: Take-home_Ex/Take-home_Ex01/executive-summary.qmd
+            text: "Ex01: Executive Summary"
 
       - text: "In-class Exercise"
         menu:

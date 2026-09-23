@@ -1,0 +1,121 @@
+---
+title: "Spatio-Temporal Analysis of Road Traffic Accidents"
+subtitle: "2022 accidents in the Bangkok Metropolitan Region"
+author: "Andrew Huang"
+date: "2026-09-23"
+date-modified: "last-modified"
+format:
+  revealjs:
+    slide-number: true
+    footer: "ISSS626 Take-home Exercise 1"
+    transition: fade
+    theme: default
+---
+
+## Where this analysis looks
+
+:::: {.columns}
+::: {.column width="45%"}
+- Where are 2022 accidents concentrated?
+- Is that clustering real, or just coincidence?
+- Does the cluster's location change with time, month, or weather?
+:::
+::: {.column width="55%"}
+![](es_images/fig-motivation.png)
+:::
+::::
+
+## Study Area & Data
+
+:::: {.columns}
+::: {.column width="45%"}
+- Bangkok + 5 surrounding provinces (BMR), 2022
+- 3,590 geolocated accidents after cleaning
+- Data: Kaggle accident records + geoBoundaries province polygons
+- Projected to EPSG:32647 (UTM 47N, metres)
+:::
+::: {.column width="55%"}
+![](es_images/fig-study-area.png)
+:::
+::::
+
+## Methodology
+
+- KDE — where is intensity highest
+- G / F / K / L + Clark-Evans — is the clustering statistically real
+- STKDE — does the hotspot move over time
+- segregation.test() — is a day/night or weather split really different
+
+## First-Order Analysis: Where
+
+:::: {.columns}
+::: {.column width="45%"}
+- Adaptive KDE, bandwidth chosen with bw.ppl() (≈750m)
+- Hotspot sits at a major interchange in central-eastern Bangkok
+- Intensity follows the road network, not spread evenly
+:::
+::: {.column width="55%"}
+![](es_images/fig-first-order.png)
+:::
+::::
+
+## Second-Order Analysis: Is It Real?
+
+:::: {.columns}
+::: {.column width="45%"}
+- G, F, K, L functions all reject CSR (complete spatial randomness)
+- Clark-Evans R = 0.215, p < 2.2×10⁻¹⁶
+- Clustering holds from the shortest to the longest distances tested
+:::
+::: {.column width="55%"}
+![](es_images/fig-second-order.png)
+:::
+::::
+
+## Spatio-Temporal Analysis: The Hotspot Moves
+
+- By hour: single peak at night, spreads out during the morning commute, sharpens again at midday
+- By month: same location all year, but intensity jumps October–December
+
+![](es_images/fig-stkde.png){width="85%" fig-align="center"}
+
+## Day vs. Night, Weekday vs. Weekend
+
+:::: {.columns}
+::: {.column width="45%"}
+- Day vs. night: significantly different locations (p = 0.01)
+- Weekday vs. weekend: same locations, only volume differs (p = 0.34; 2,549 vs. 1,041)
+:::
+::: {.column width="55%"}
+![](es_images/fig-day-night.png)
+:::
+::::
+
+## Value-Added: Does Weather Matter?
+
+:::: {.columns}
+::: {.column width="45%"}
+- 3,263 clear-weather points vs. 309 rainy-weather points
+- Locations differ significantly (p = 0.01)
+- Rainy-weather accidents concentrate in the east-central area, not just a smaller version of the usual hotspot
+:::
+::: {.column width="55%"}
+![](es_images/fig-weather.png)
+:::
+::::
+
+## Public Safety Implications
+
+- Concentrate enforcement at the central-eastern interchange — the hotspot every analysis points to
+- Shift patrol locations between day and night, not just add more patrols
+- Check drainage and signage at the east-central cluster before rainy season
+- Plan for higher, more concentrated demand October–December
+
+## Limitations & Conclusion
+
+- BMR boundary is a province-name union, not an official metro polygon
+- 5% of records had no coordinates and were dropped
+- 321 duplicate coordinates jittered to fix a statistical issue
+- Day/night split is a fixed clock boundary, not actual daylight
+
+**Conclusion:** 2022 BMR accidents cluster along the road network, the clustering is statistically real, and where it clusters shifts by time of day, month, and weather — not just how many accidents happen.

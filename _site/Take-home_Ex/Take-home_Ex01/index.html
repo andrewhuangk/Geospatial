@@ -172,6 +172,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../Take-home_Ex/Take-home_Ex01/index.html">
  <span class="dropdown-text">Ex01: Thailand Road Accident Spatio-temporal Analysis</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../Take-home_Ex/Take-home_Ex01/executive-summary.html">
+ <span class="dropdown-text">Ex01: Executive Summary</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -258,11 +262,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#formal-test" id="toc-formal-test" class="nav-link" data-scroll-target="#formal-test"><span class="header-section-number">8.2</span> Formal test</a></li>
   <li><a href="#interpretation-3" id="toc-interpretation-3" class="nav-link" data-scroll-target="#interpretation-3"><span class="header-section-number">8.3</span> Interpretation</a></li>
   </ul></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">9</span> Summary</a>
+  <li><a href="#public-safety-implications" id="toc-public-safety-implications" class="nav-link" data-scroll-target="#public-safety-implications"><span class="header-section-number">9</span> Public Safety Implications</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">10</span> Summary</a>
   <ul class="collapse">
-  <li><a href="#key-findings" id="toc-key-findings" class="nav-link" data-scroll-target="#key-findings"><span class="header-section-number">9.1</span> Key findings</a></li>
-  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations"><span class="header-section-number">9.2</span> Limitations</a></li>
-  <li><a href="#data-sources-1" id="toc-data-sources-1" class="nav-link" data-scroll-target="#data-sources-1"><span class="header-section-number">9.3</span> Data sources</a></li>
+  <li><a href="#key-findings" id="toc-key-findings" class="nav-link" data-scroll-target="#key-findings"><span class="header-section-number">10.1</span> Key findings</a></li>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations"><span class="header-section-number">10.2</span> Limitations</a></li>
+  <li><a href="#data-sources-1" id="toc-data-sources-1" class="nav-link" data-scroll-target="#data-sources-1"><span class="header-section-number">10.3</span> Data sources</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -297,7 +302,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 14, 2026</p>
+      <p class="date-modified">September 23, 2026</p>
     </div>
   </div>
     
@@ -1018,7 +1023,7 @@ T = 26.787, p-value = 0.34</code></pre>
 </div>
 <section id="kde-by-weather-condition" class="level2" data-number="8.1">
 <h2 data-number="8.1" class="anchored" data-anchor-id="kde-by-weather-condition"><span class="header-section-number">8.1</span> KDE by weather condition</h2>
-<p>Unlike the day/night comparison, I let each weather subset use its <strong>own</strong> <code>bw.ppl()</code> bandwidth here rather than sharing one — the two groups differ in size by an order of magnitude (3,263 vs.&nbsp;309), and forcing the sparser rainy-day pattern through the same tight ~630 m bandwidth tuned for the dense clear-day pattern would just render as a scatter of unconnected dots, telling me nothing about where its own hotspots are.</p>
+<p>Unlike the day/night comparison, I let each weather group use its own <code>bw.ppl()</code> bandwidth instead of sharing one. The two groups differ in size by a factor of ten (3,263 vs.&nbsp;309), and forcing the rainy group through the same tight ~630m bandwidth tuned for the clear group would just turn it into a scatter of disconnected dots, telling me nothing about where its hotspots actually are.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>clear_ppp <span class="ot">&lt;-</span> <span class="fu">make_ppp</span>(acc_sf <span class="sc">|&gt;</span> <span class="fu">filter</span>(weather_condition <span class="sc">==</span> <span class="st">"clear"</span>))</span>
 <span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>rainy_ppp <span class="ot">&lt;-</span> <span class="fu">make_ppp</span>(acc_sf <span class="sc">|&gt;</span> <span class="fu">filter</span>(weather_condition <span class="sc">==</span> <span class="st">"rainy"</span>))</span>
@@ -1041,7 +1046,7 @@ T = 26.787, p-value = 0.34</code></pre>
 </div>
 </div>
 </div>
-<p>Because the two panels use different bandwidths (~630 m vs.&nbsp;~2,970 m) they aren’t directly comparable by eye in the way the day/night pair was — the rainy panel is inherently smoother just from having fewer points to work with. What <em>is</em> comparable: clear-weather accidents trace the road network tightly, with the sharpest hotspot at the same central interchange seen throughout this document; rainy-weather accidents, even smoothed over a much wider radius, still concentrate most heavily in the east-central part of the study area rather than spreading evenly across it — a different part of the network than clear-weather’s single dominant hotspot.</p>
+<p>The two panels use different bandwidths (~630m vs.&nbsp;~2,970m), so they can’t be compared by eye the same way the day/night pair could. The rainy panel just looks smoother because it has fewer points. What is comparable: clear-weather accidents trace the road network tightly, with the sharpest hotspot at the same central interchange seen throughout this report. Rainy-weather accidents, even smoothed over a much wider radius, still concentrate mostly in the east-central part of the study area instead of spreading out evenly, a different spot than clear-weather’s one dominant hotspot.</p>
 </section>
 <section id="formal-test" class="level2" data-number="8.2">
 <h2 data-number="8.2" class="anchored" data-anchor-id="formal-test"><span class="header-section-number">8.2</span> Formal test</h2>
@@ -1072,14 +1077,25 @@ T = 28.983, p-value = 0.01</code></pre>
 </section>
 <section id="interpretation-3" class="level2" data-number="8.3">
 <h2 data-number="8.3" class="anchored" data-anchor-id="interpretation-3"><span class="header-section-number">8.3</span> Interpretation</h2>
-<p><code>segregation.test()</code> returns <strong>p = 0.01</strong>, significant at the 5% level: clear-weather and rainy-weather accidents are not just different in volume (3,263 vs.&nbsp;309, tracking the fact that it isn’t raining most of the time) but occupy meaningfully different locations within the BMR. A plausible mechanism: rain doesn’t just add slickness uniformly everywhere, it exposes drainage, visibility and road-surface weaknesses that are concentrated in particular stretches of the network — so the “risky when wet” locations aren’t simply the same “risky all the time” locations scaled down. That’s a genuinely different, actionable finding from the first-order KDE alone, which only ever showed one dominant hotspot regardless of conditions.</p>
+<p><code>segregation.test()</code> returns <strong>p = 0.01</strong>, significant at the 5% level. Clear-weather and rainy-weather accidents differ in volume (3,263 vs.&nbsp;309, since it isn’t raining most of the time), but they also happen in different places within the BMR. My guess is rain doesn’t add slickness evenly everywhere, it exposes drainage, visibility and road-surface problems that only show up in certain stretches of the network. So the spots that are risky when wet aren’t just a smaller version of the spots that are risky all the time. That’s a different finding from the plain KDE, which only ever showed one dominant hotspot no matter the weather.</p>
 <hr>
 </section>
 </section>
-<section id="summary" class="level1" data-number="9">
-<h1 data-number="9"><span class="header-section-number">9</span> Summary</h1>
-<section id="key-findings" class="level2" data-number="9.1">
-<h2 data-number="9.1" class="anchored" data-anchor-id="key-findings"><span class="header-section-number">9.1</span> Key findings</h2>
+<section id="public-safety-implications" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Public Safety Implications</h1>
+<p>Based on the findings above:</p>
+<ul>
+<li>Put more enforcement at the central-eastern interchange, since every analysis in this report keeps pointing back to the same spot.</li>
+<li>Move patrols between day and night instead of just adding more of them, since the day/night test showed the hotspot itself shifts, not just how many accidents happen.</li>
+<li>Check drainage and signage in the east-central area before rainy season, since that’s where rainy-weather accidents cluster.</li>
+<li>Expect more accidents packed into the same area between October and December, based on what the STKDE analysis showed.</li>
+</ul>
+<hr>
+</section>
+<section id="summary" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Summary</h1>
+<section id="key-findings" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="key-findings"><span class="header-section-number">10.1</span> Key findings</h2>
 <ol type="1">
 <li><strong>First-order</strong>: 2022 BMR accidents are heavily concentrated along the expressway/arterial network, with the sharpest hotspot at a central-eastern interchange in Bangkok. Both fixed and adaptive KDE agree on the location.</li>
 <li><strong>Second-order</strong>: G, F, K and L function envelopes, plus a Clark-Evans R of 0.215 (p &lt; 2.2 × 10⁻¹⁶), all confirm the clustering is statistically real and holds from the shortest to the longest spatial scales tested — this is not an artefact of random chance.</li>
@@ -1087,8 +1103,8 @@ T = 28.983, p-value = 0.01</code></pre>
 <li><strong>Value-added (weather)</strong>: rainy-weather accidents cluster in a significantly different part of the BMR than clear-weather accidents do (p ≈ 0.01), not just in smaller numbers.</li>
 </ol>
 </section>
-<section id="limitations" class="level2" data-number="9.2">
-<h2 data-number="9.2" class="anchored" data-anchor-id="limitations"><span class="header-section-number">9.2</span> Limitations</h2>
+<section id="limitations" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="limitations"><span class="header-section-number">10.2</span> Limitations</h2>
 <ul>
 <li>The BMR boundary is a name-based union of six provinces, not an official metro-area polygon — some edge effects near provincial borders are possible.</li>
 <li>5% of BMR 2022 accident records have no coordinates and were dropped; if missingness isn’t spatially random (e.g.&nbsp;concentrated in a particular reporting agency or district), the hotspots shown here could be mildly biased.</li>
@@ -1096,8 +1112,8 @@ T = 28.983, p-value = 0.01</code></pre>
 <li>The day/night split (06:00–17:59 vs.&nbsp;18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight — a reasonable approximation at this latitude but not exact.</li>
 </ul>
 </section>
-<section id="data-sources-1" class="level2" data-number="9.3">
-<h2 data-number="9.3" class="anchored" data-anchor-id="data-sources-1"><span class="header-section-number">9.3</span> Data sources</h2>
+<section id="data-sources-1" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="data-sources-1"><span class="header-section-number">10.3</span> Data sources</h2>
 <ul>
 <li>Thailand Road Accident 2019–2022 dataset — <a href="https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022">Kaggle</a></li>
 <li>Thailand ADM1 province boundaries — <a href="https://www.geoboundaries.org/">geoBoundaries</a></li>
