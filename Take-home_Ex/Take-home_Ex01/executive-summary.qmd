@@ -18,7 +18,7 @@ format:
 - Is that clustering real, or just coincidence?
 - Does the cluster's location change with time, month, or weather?
 
-![](es_images/fig-motivation.png){width="60%" fig-align="center"}
+![](es_images/fig-motivation.png){fig-align="center"}
 
 ## Study Area & Data
 
@@ -27,7 +27,7 @@ format:
 - Data: Kaggle accident records + geoBoundaries province polygons
 - Projected to EPSG:32647 (UTM 47N, metres)
 
-![](es_images/fig-study-area.png){width="55%" fig-align="center"}
+![](es_images/fig-study-area.png){fig-align="center"}
 
 ## Methodology
 
@@ -42,7 +42,7 @@ format:
 - Hotspot sits at a major interchange in central-eastern Bangkok
 - Intensity follows the road network, not spread evenly
 
-![](es_images/fig-first-order.png){width="55%" fig-align="center"}
+![](es_images/fig-first-order.png){fig-align="center"}
 
 ## Second-Order Analysis: Is It Real?
 
@@ -50,21 +50,21 @@ format:
 - Clark-Evans R = 0.215, p < 2.2×10⁻¹⁶
 - Clustering holds from the shortest to the longest distances tested
 
-![](es_images/fig-second-order.png){width="45%" fig-align="center"}
+![](es_images/fig-second-order.png){fig-align="center"}
 
 ## Spatio-Temporal Analysis: The Hotspot Moves
 
 - By hour: single peak at night, spreads out during the morning commute, sharpens again at midday
 - By month: same location all year, but intensity jumps October–December
 
-![](es_images/fig-stkde.png){width="95%" fig-align="center"}
+![](es_images/fig-stkde.png){fig-align="center"}
 
 ## Day vs. Night, Weekday vs. Weekend
 
 - Day vs. night: significantly different locations (p = 0.01)
 - Weekday vs. weekend: same locations, only volume differs (p = 0.34; 2,549 vs. 1,041)
 
-![](es_images/fig-day-night.png){width="75%" fig-align="center"}
+![](es_images/fig-day-night.png){fig-align="center"}
 
 ## Value-Added: Does Weather Matter?
 
@@ -72,7 +72,7 @@ format:
 - Locations differ significantly (p = 0.01)
 - Rainy-weather accidents concentrate in the east-central area, not just a smaller version of the usual hotspot
 
-![](es_images/fig-weather.png){width="75%" fig-align="center"}
+![](es_images/fig-weather.png){fig-align="center"}
 
 ## Public Safety Implications
 
