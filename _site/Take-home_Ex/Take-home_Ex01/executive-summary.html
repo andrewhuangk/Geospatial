@@ -149,31 +149,23 @@ Andrew Huang
 </section>
 <section id="where-this-analysis-looks" class="slide level2">
 <h2>Where this analysis looks</h2>
-<div class="columns">
-<div class="column" style="width:45%;">
 <ul>
 <li>Where are 2022 accidents concentrated?</li>
 <li>Is that clustering real, or just coincidence?</li>
 <li>Does the cluster’s location change with time, month, or weather?</li>
 </ul>
-</div><div class="column" style="width:55%;">
-<p><img data-src="es_images/fig-motivation.png"></p>
-</div></div>
-</section>
+
+<img data-src="es_images/fig-motivation.png" class="quarto-figure quarto-figure-center r-stretch" style="width:60.0%"></section>
 <section id="study-area-data" class="slide level2">
 <h2>Study Area &amp; Data</h2>
-<div class="columns">
-<div class="column" style="width:45%;">
 <ul>
 <li>Bangkok + 5 surrounding provinces (BMR), 2022</li>
 <li>3,590 geolocated accidents after cleaning</li>
 <li>Data: Kaggle accident records + geoBoundaries province polygons</li>
 <li>Projected to EPSG:32647 (UTM 47N, metres)</li>
 </ul>
-</div><div class="column" style="width:55%;">
-<p><img data-src="es_images/fig-study-area.png"></p>
-</div></div>
-</section>
+
+<img data-src="es_images/fig-study-area.png" class="quarto-figure quarto-figure-center r-stretch" style="width:55.0%"></section>
 <section id="methodology" class="slide level2">
 <h2>Methodology</h2>
 <ul>
@@ -185,30 +177,22 @@ Andrew Huang
 </section>
 <section id="first-order-analysis-where" class="slide level2">
 <h2>First-Order Analysis: Where</h2>
-<div class="columns">
-<div class="column" style="width:45%;">
 <ul>
 <li>Adaptive KDE, bandwidth chosen with bw.ppl() (≈750m)</li>
 <li>Hotspot sits at a major interchange in central-eastern Bangkok</li>
 <li>Intensity follows the road network, not spread evenly</li>
 </ul>
-</div><div class="column" style="width:55%;">
-<p><img data-src="es_images/fig-first-order.png"></p>
-</div></div>
-</section>
+
+<img data-src="es_images/fig-first-order.png" class="quarto-figure quarto-figure-center r-stretch" style="width:55.0%"></section>
 <section id="second-order-analysis-is-it-real" class="slide level2">
 <h2>Second-Order Analysis: Is It Real?</h2>
-<div class="columns">
-<div class="column" style="width:45%;">
 <ul>
 <li>G, F, K, L functions all reject CSR (complete spatial randomness)</li>
 <li>Clark-Evans R = 0.215, p &lt; 2.2×10⁻¹⁶</li>
 <li>Clustering holds from the shortest to the longest distances tested</li>
 </ul>
-</div><div class="column" style="width:55%;">
-<p><img data-src="es_images/fig-second-order.png"></p>
-</div></div>
-</section>
+
+<img data-src="es_images/fig-second-order.png" class="quarto-figure quarto-figure-center r-stretch" style="width:45.0%"></section>
 <section id="spatio-temporal-analysis-the-hotspot-moves" class="slide level2">
 <h2>Spatio-Temporal Analysis: The Hotspot Moves</h2>
 <ul>
@@ -216,32 +200,24 @@ Andrew Huang
 <li>By month: same location all year, but intensity jumps October–December</li>
 </ul>
 
-<img data-src="es_images/fig-stkde.png" class="quarto-figure quarto-figure-center r-stretch" style="width:85.0%"></section>
+<img data-src="es_images/fig-stkde.png" class="quarto-figure quarto-figure-center r-stretch" style="width:95.0%"></section>
 <section id="day-vs.-night-weekday-vs.-weekend" class="slide level2">
 <h2>Day vs.&nbsp;Night, Weekday vs.&nbsp;Weekend</h2>
-<div class="columns">
-<div class="column" style="width:45%;">
 <ul>
 <li>Day vs.&nbsp;night: significantly different locations (p = 0.01)</li>
 <li>Weekday vs.&nbsp;weekend: same locations, only volume differs (p = 0.34; 2,549 vs.&nbsp;1,041)</li>
 </ul>
-</div><div class="column" style="width:55%;">
-<p><img data-src="es_images/fig-day-night.png"></p>
-</div></div>
-</section>
+
+<img data-src="es_images/fig-day-night.png" class="quarto-figure quarto-figure-center r-stretch" style="width:75.0%"></section>
 <section id="value-added-does-weather-matter" class="slide level2">
 <h2>Value-Added: Does Weather Matter?</h2>
-<div class="columns">
-<div class="column" style="width:45%;">
 <ul>
 <li>3,263 clear-weather points vs.&nbsp;309 rainy-weather points</li>
 <li>Locations differ significantly (p = 0.01)</li>
 <li>Rainy-weather accidents concentrate in the east-central area, not just a smaller version of the usual hotspot</li>
 </ul>
-</div><div class="column" style="width:55%;">
-<p><img data-src="es_images/fig-weather.png"></p>
-</div></div>
-</section>
+
+<img data-src="es_images/fig-weather.png" class="quarto-figure quarto-figure-center r-stretch" style="width:75.0%"></section>
 <section id="public-safety-implications" class="slide level2">
 <h2>Public Safety Implications</h2>
 <ul>

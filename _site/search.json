@@ -18,14 +18,14 @@
     "href": "Take-home_Ex/Take-home_Ex01/executive-summary.html#where-this-analysis-looks",
     "title": "Spatio-Temporal Analysis of Road Traffic Accidents",
     "section": "Where this analysis looks",
-    "text": "Where this analysis looks\n\n\n\nWhere are 2022 accidents concentrated?\nIs that clustering real, or just coincidence?\nDoes the cluster’s location change with time, month, or weather?"
+    "text": "Where this analysis looks\n\nWhere are 2022 accidents concentrated?\nIs that clustering real, or just coincidence?\nDoes the cluster’s location change with time, month, or weather?"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/executive-summary.html#study-area-data",
     "href": "Take-home_Ex/Take-home_Ex01/executive-summary.html#study-area-data",
     "title": "Spatio-Temporal Analysis of Road Traffic Accidents",
     "section": "Study Area & Data",
-    "text": "Study Area & Data\n\n\n\nBangkok + 5 surrounding provinces (BMR), 2022\n3,590 geolocated accidents after cleaning\nData: Kaggle accident records + geoBoundaries province polygons\nProjected to EPSG:32647 (UTM 47N, metres)"
+    "text": "Study Area & Data\n\nBangkok + 5 surrounding provinces (BMR), 2022\n3,590 geolocated accidents after cleaning\nData: Kaggle accident records + geoBoundaries province polygons\nProjected to EPSG:32647 (UTM 47N, metres)"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/executive-summary.html#methodology",
@@ -39,14 +39,14 @@
     "href": "Take-home_Ex/Take-home_Ex01/executive-summary.html#first-order-analysis-where",
     "title": "Spatio-Temporal Analysis of Road Traffic Accidents",
     "section": "First-Order Analysis: Where",
-    "text": "First-Order Analysis: Where\n\n\n\nAdaptive KDE, bandwidth chosen with bw.ppl() (≈750m)\nHotspot sits at a major interchange in central-eastern Bangkok\nIntensity follows the road network, not spread evenly"
+    "text": "First-Order Analysis: Where\n\nAdaptive KDE, bandwidth chosen with bw.ppl() (≈750m)\nHotspot sits at a major interchange in central-eastern Bangkok\nIntensity follows the road network, not spread evenly"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/executive-summary.html#second-order-analysis-is-it-real",
     "href": "Take-home_Ex/Take-home_Ex01/executive-summary.html#second-order-analysis-is-it-real",
     "title": "Spatio-Temporal Analysis of Road Traffic Accidents",
     "section": "Second-Order Analysis: Is It Real?",
-    "text": "Second-Order Analysis: Is It Real?\n\n\n\nG, F, K, L functions all reject CSR (complete spatial randomness)\nClark-Evans R = 0.215, p &lt; 2.2×10⁻¹⁶\nClustering holds from the shortest to the longest distances tested"
+    "text": "Second-Order Analysis: Is It Real?\n\nG, F, K, L functions all reject CSR (complete spatial randomness)\nClark-Evans R = 0.215, p &lt; 2.2×10⁻¹⁶\nClustering holds from the shortest to the longest distances tested"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/executive-summary.html#spatio-temporal-analysis-the-hotspot-moves",
@@ -60,14 +60,14 @@
     "href": "Take-home_Ex/Take-home_Ex01/executive-summary.html#day-vs.-night-weekday-vs.-weekend",
     "title": "Spatio-Temporal Analysis of Road Traffic Accidents",
     "section": "Day vs. Night, Weekday vs. Weekend",
-    "text": "Day vs. Night, Weekday vs. Weekend\n\n\n\nDay vs. night: significantly different locations (p = 0.01)\nWeekday vs. weekend: same locations, only volume differs (p = 0.34; 2,549 vs. 1,041)"
+    "text": "Day vs. Night, Weekday vs. Weekend\n\nDay vs. night: significantly different locations (p = 0.01)\nWeekday vs. weekend: same locations, only volume differs (p = 0.34; 2,549 vs. 1,041)"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/executive-summary.html#value-added-does-weather-matter",
     "href": "Take-home_Ex/Take-home_Ex01/executive-summary.html#value-added-does-weather-matter",
     "title": "Spatio-Temporal Analysis of Road Traffic Accidents",
     "section": "Value-Added: Does Weather Matter?",
-    "text": "Value-Added: Does Weather Matter?\n\n\n\n3,263 clear-weather points vs. 309 rainy-weather points\nLocations differ significantly (p = 0.01)\nRainy-weather accidents concentrate in the east-central area, not just a smaller version of the usual hotspot"
+    "text": "Value-Added: Does Weather Matter?\n\n3,263 clear-weather points vs. 309 rainy-weather points\nLocations differ significantly (p = 0.01)\nRainy-weather accidents concentrate in the east-central area, not just a smaller version of the usual hotspot"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/executive-summary.html#public-safety-implications",
@@ -739,7 +739,7 @@
     "href": "Take-home_Ex/Take-home_Ex01/index.html#kde-by-weather-condition",
     "title": "Take-home Exercise 1: Spatio-temporal Analysis of Road Traffic Accidents",
     "section": "8.1 KDE by weather condition",
-    "text": "8.1 KDE by weather condition\nUnlike the day/night comparison, I let each weather group use its own bw.ppl() bandwidth instead of sharing one. The two groups differ in size by a factor of ten (3,263 vs. 309), and forcing the rainy group through the same tight ~630m bandwidth tuned for the clear group would just turn it into a scatter of disconnected dots, telling me nothing about where its hotspots actually are.\n\nclear_ppp &lt;- make_ppp(acc_sf |&gt; filter(weather_condition == \"clear\"))\nrainy_ppp &lt;- make_ppp(acc_sf |&gt; filter(weather_condition == \"rainy\"))\n\nsigma_clear &lt;- bw.ppl(clear_ppp)\nsigma_rainy &lt;- bw.ppl(rainy_ppp)\n\nkde_clear &lt;- density(clear_ppp, sigma = sigma_clear)\nkde_rainy &lt;- density(rainy_ppp, sigma = sigma_rainy)\n\npar(mfrow = c(1, 2))\nplot(kde_clear, main = paste0(\"Clear (n=\", clear_ppp$n, \"), σ≈\", round(sigma_clear), \"m\"))\nplot(kde_rainy, main = paste0(\"Rainy (n=\", rainy_ppp$n, \"), σ≈\", round(sigma_rainy), \"m\"))\n\n\n\n\nKDE of accidents by weather condition, each panel on its own bandwidth and colour scale (see caveat below).\n\n\n\n\nThe two panels use different bandwidths (~630m vs. ~2,970m), so they can’t be compared by eye the same way the day/night pair could. The rainy panel just looks smoother because it has fewer points. What is comparable: clear-weather accidents trace the road network tightly, with the sharpest hotspot at the same central interchange seen throughout this report. Rainy-weather accidents, even smoothed over a much wider radius, still concentrate mostly in the east-central part of the study area instead of spreading out evenly, a different spot than clear-weather’s one dominant hotspot."
+    "text": "8.1 KDE by weather condition\nUnlike the day/night comparison, I let each weather group use its own bw.ppl() bandwidth instead of sharing one. The two groups differ in size by a factor of ten (3,263 vs. 309), and forcing the rainy group through the same tight ~630m bandwidth tuned for the clear group would just turn it into a scatter of disconnected dots, telling me nothing about where its hotspots actually are.\n\nclear_ppp &lt;- make_ppp(acc_sf |&gt; filter(weather_condition == \"clear\"))\nrainy_ppp &lt;- make_ppp(acc_sf |&gt; filter(weather_condition == \"rainy\"))\n\nsigma_clear &lt;- bw.ppl(clear_ppp)\nsigma_rainy &lt;- bw.ppl(rainy_ppp)\n\nkde_clear &lt;- density(clear_ppp, sigma = sigma_clear)\nkde_rainy &lt;- density(rainy_ppp, sigma = sigma_rainy)\n\npar(mfrow = c(1, 2), mar = c(2, 2, 4, 4))\nplot(kde_clear, main = paste0(\"Clear (n=\", clear_ppp$n, \"), σ≈\", round(sigma_clear), \"m\"), cex.main = 1)\nplot(kde_rainy, main = paste0(\"Rainy (n=\", rainy_ppp$n, \"), σ≈\", round(sigma_rainy), \"m\"), cex.main = 1)\n\n\n\n\nKDE of accidents by weather condition, each panel on its own bandwidth and colour scale (see caveat below).\n\n\n\n\nThe two panels use different bandwidths (~630m vs. ~2,970m), so they can’t be compared by eye the same way the day/night pair could. The rainy panel just looks smoother because it has fewer points. What is comparable: clear-weather accidents trace the road network tightly, with the sharpest hotspot at the same central interchange seen throughout this report. Rainy-weather accidents, even smoothed over a much wider radius, still concentrate mostly in the east-central part of the study area instead of spreading out evenly, a different spot than clear-weather’s one dominant hotspot."
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/index.html#formal-test",

@@ -269,6 +269,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations"><span class="header-section-number">10.2</span> Limitations</a></li>
   <li><a href="#data-sources-1" id="toc-data-sources-1" class="nav-link" data-scroll-target="#data-sources-1"><span class="header-section-number">10.3</span> Data sources</a></li>
   </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">11</span> References</a></li>
   </ul>
 </nav>
     </div>
@@ -302,7 +303,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 23, 2026</p>
+      <p class="date-modified">September 24, 2026</p>
     </div>
   </div>
     
@@ -1034,13 +1035,13 @@ T = 26.787, p-value = 0.34</code></pre>
 <span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>kde_clear <span class="ot">&lt;-</span> <span class="fu">density</span>(clear_ppp, <span class="at">sigma =</span> sigma_clear)</span>
 <span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>kde_rainy <span class="ot">&lt;-</span> <span class="fu">density</span>(rainy_ppp, <span class="at">sigma =</span> sigma_rainy)</span>
 <span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
-<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(kde_clear, <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Clear (n="</span>, clear_ppp<span class="sc">$</span>n, <span class="st">"), σ≈"</span>, <span class="fu">round</span>(sigma_clear), <span class="st">"m"</span>))</span>
-<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(kde_rainy, <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Rainy (n="</span>, rainy_ppp<span class="sc">$</span>n, <span class="st">"), σ≈"</span>, <span class="fu">round</span>(sigma_rainy), <span class="st">"m"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(kde_clear, <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Clear (n="</span>, clear_ppp<span class="sc">$</span>n, <span class="st">"), σ≈"</span>, <span class="fu">round</span>(sigma_clear), <span class="st">"m"</span>), <span class="at">cex.main =</span> <span class="dv">1</span>)</span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(kde_rainy, <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Rainy (n="</span>, rainy_ppp<span class="sc">$</span>n, <span class="st">"), σ≈"</span>, <span class="fu">round</span>(sigma_rainy), <span class="st">"m"</span>), <span class="at">cex.main =</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="index_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="index_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid figure-img" width="1056"></p>
 <figcaption>KDE of accidents by weather condition, each panel on its own bandwidth and colour scale (see caveat below).</figcaption>
 </figure>
 </div>
@@ -1118,9 +1119,28 @@ T = 28.983, p-value = 0.01</code></pre>
 <li>Thailand Road Accident 2019–2022 dataset — <a href="https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022">Kaggle</a></li>
 <li>Thailand ADM1 province boundaries — <a href="https://www.geoboundaries.org/">geoBoundaries</a></li>
 </ul>
-
-
+<hr>
 </section>
+</section>
+<section id="references" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> References</h1>
+<p><strong>Data</strong></p>
+<ul>
+<li>Thailand Road Accident 2019–2022 dataset. Kaggle. <a href="https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022" class="uri">https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022</a></li>
+<li>geoBoundaries-THA-ADM1 (Thailand province boundaries). geoBoundaries. <a href="https://www.geoboundaries.org/" class="uri">https://www.geoboundaries.org/</a></li>
+</ul>
+<p><strong>R packages</strong></p>
+<ul>
+<li>Pebesma, E. (2018). Simple Features for R: Standardized Support for Spatial Vector Data. <em>sf</em> package. <a href="https://CRAN.R-project.org/package=sf" class="uri">https://CRAN.R-project.org/package=sf</a></li>
+<li>Baddeley, A., Rubak, E., &amp; Turner, R. <em>spatstat</em>: Spatial Point Pattern Analysis, Model-Fitting, Simulation, Tests. <a href="https://CRAN.R-project.org/package=spatstat" class="uri">https://CRAN.R-project.org/package=spatstat</a></li>
+<li>Davies, T. M., Hazelton, M. L., et al.&nbsp;<em>sparr</em>: Spatial and Spatiotemporal Relative Risk. <a href="https://CRAN.R-project.org/package=sparr" class="uri">https://CRAN.R-project.org/package=sparr</a></li>
+<li>Wickham, H., et al.&nbsp;(2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>. <a href="https://CRAN.R-project.org/package=tidyverse" class="uri">https://CRAN.R-project.org/package=tidyverse</a></li>
+<li>Grolemund, G., &amp; Wickham, H. (2011). Dates and Times Made Easy with lubridate. <em>Journal of Statistical Software</em>. <a href="https://CRAN.R-project.org/package=lubridate" class="uri">https://CRAN.R-project.org/package=lubridate</a></li>
+<li>Xie, Y. <em>knitr</em>: A General-Purpose Package for Dynamic Report Generation in R. <a href="https://CRAN.R-project.org/package=knitr" class="uri">https://CRAN.R-project.org/package=knitr</a></li>
+<li>Zhu, H. <em>kableExtra</em>: Construct Complex Table with ‘kable’ and Pipe Syntax. <a href="https://CRAN.R-project.org/package=kableExtra" class="uri">https://CRAN.R-project.org/package=kableExtra</a></li>
+</ul>
+
+
 </section>
 
 </main> <!-- /main -->
