@@ -25,6 +25,10 @@ website:
             text: "Ex04: Spatio-Temporal Point Pattern Analysis"
           - href: Hands-on_Ex/Hands-on_Ex05/Hands-on_Ex05.qmd
             text: "Ex05: Spatial Weights and Applications"
+          - href: Hands-on_Ex/Hands-on_Ex06a/Hands-on_Ex06a.qmd
+            text: "Ex06a: Global Measures of Spatial Autocorrelation"
+          - href: Hands-on_Ex/Hands-on_Ex06b/Hands-on_Ex06b.qmd
+            text: "Ex06b: Local Measures of Spatial Autocorrelation"
 
       - text: "Take-home Exercise"
         menu:
