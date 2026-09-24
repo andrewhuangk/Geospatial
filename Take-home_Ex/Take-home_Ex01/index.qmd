@@ -481,6 +481,8 @@ Unlike the day/night comparison, I let each weather group use its own `bw.ppl()`
 
 ```{r}
 #| fig-cap: "KDE of accidents by weather condition, each panel on its own bandwidth and colour scale (see caveat below)."
+#| fig-width: 11
+#| fig-height: 5.5
 clear_ppp <- make_ppp(acc_sf |> filter(weather_condition == "clear"))
 rainy_ppp <- make_ppp(acc_sf |> filter(weather_condition == "rainy"))
 
@@ -490,9 +492,9 @@ sigma_rainy <- bw.ppl(rainy_ppp)
 kde_clear <- density(clear_ppp, sigma = sigma_clear)
 kde_rainy <- density(rainy_ppp, sigma = sigma_rainy)
 
-par(mfrow = c(1, 2))
-plot(kde_clear, main = paste0("Clear (n=", clear_ppp$n, "), σ≈", round(sigma_clear), "m"))
-plot(kde_rainy, main = paste0("Rainy (n=", rainy_ppp$n, "), σ≈", round(sigma_rainy), "m"))
+par(mfrow = c(1, 2), mar = c(2, 2, 4, 4))
+plot(kde_clear, main = paste0("Clear (n=", clear_ppp$n, "), σ≈", round(sigma_clear), "m"), cex.main = 1)
+plot(kde_rainy, main = paste0("Rainy (n=", rainy_ppp$n, "), σ≈", round(sigma_rainy), "m"), cex.main = 1)
 ```
 
 The two panels use different bandwidths (~630m vs. ~2,970m), so they can't be compared by eye the same way the day/night pair could. The rainy panel just looks smoother because it has fewer points. What is comparable: clear-weather accidents trace the road network tightly, with the sharpest hotspot at the same central interchange seen throughout this report. Rainy-weather accidents, even smoothed over a much wider radius, still concentrate mostly in the east-central part of the study area instead of spreading out evenly, a different spot than clear-weather's one dominant hotspot.
@@ -545,3 +547,22 @@ Based on the findings above:
 
 - Thailand Road Accident 2019–2022 dataset — [Kaggle](https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022)
 - Thailand ADM1 province boundaries — [geoBoundaries](https://www.geoboundaries.org/)
+
+---
+
+# References
+
+**Data**
+
+- Thailand Road Accident 2019–2022 dataset. Kaggle. <https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022>
+- geoBoundaries-THA-ADM1 (Thailand province boundaries). geoBoundaries. <https://www.geoboundaries.org/>
+
+**R packages**
+
+- Pebesma, E. (2018). Simple Features for R: Standardized Support for Spatial Vector Data. *sf* package. <https://CRAN.R-project.org/package=sf>
+- Baddeley, A., Rubak, E., & Turner, R. *spatstat*: Spatial Point Pattern Analysis, Model-Fitting, Simulation, Tests. <https://CRAN.R-project.org/package=spatstat>
+- Davies, T. M., Hazelton, M. L., et al. *sparr*: Spatial and Spatiotemporal Relative Risk. <https://CRAN.R-project.org/package=sparr>
+- Wickham, H., et al. (2019). Welcome to the tidyverse. *Journal of Open Source Software*. <https://CRAN.R-project.org/package=tidyverse>
+- Grolemund, G., & Wickham, H. (2011). Dates and Times Made Easy with lubridate. *Journal of Statistical Software*. <https://CRAN.R-project.org/package=lubridate>
+- Xie, Y. *knitr*: A General-Purpose Package for Dynamic Report Generation in R. <https://CRAN.R-project.org/package=knitr>
+- Zhu, H. *kableExtra*: Construct Complex Table with 'kable' and Pipe Syntax. <https://CRAN.R-project.org/package=kableExtra>
