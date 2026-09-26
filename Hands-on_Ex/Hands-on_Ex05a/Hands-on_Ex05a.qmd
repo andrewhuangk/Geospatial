@@ -1,0 +1,134 @@
+---
+title: "Hands-on Exercise 5a: Global Measures of Spatial Autocorrelation"
+author: "Andrew Huang"
+date: "2026-09-24"
+date-modified: "last-modified"
+format: html
+execute:
+  warning: false
+  freeze: auto
+---
+
+## Getting started
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse)
+```
+
+## Importing data
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial", layer = "Hunan")
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+```{r}
+hunan <- left_join(hunan, hunan2012) %>%
+  select(1:4, 7, 15)
+```
+
+## Mapping GDPPC
+
+```{r fig.width=10}
+equal <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(
+                style = "equal",
+                n = 5,
+                values = "brewer.blues")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_layout(legend.position = c("left", "bottom"),
+            main.title = "Equal interval classification")
+
+quantile <- tm_shape(hunan) +
+  tm_polygons(fill = "GDPPC",
+              fill.scale = tm_scale_intervals(
+                style = "quantile",
+                n = 5)) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_layout(legend.position = c("left", "bottom"),
+            main.title = "Quantile classification")
+
+tmap_arrange(equal, quantile, asp = 1, ncol = 2)
+```
+
+## Contiguity spatial weights
+
+```{r}
+wm_q <- poly2nb(hunan, queen = TRUE)
+summary(wm_q)
+```
+
+```{r}
+rswm_q <- nb2listw(wm_q, style = "W", zero.policy = TRUE)
+rswm_q
+```
+
+## Moran's I
+
+```{r}
+moran.test(hunan$GDPPC,
+           listw = rswm_q,
+           zero.policy = TRUE,
+           na.action = na.omit)
+```
+
+```{r}
+set.seed(1234)
+bperm <- moran.mc(hunan$GDPPC,
+                   listw = rswm_q,
+                   nsim = 999,
+                   zero.policy = TRUE,
+                   na.action = na.omit)
+bperm
+```
+
+```{r}
+mean(bperm$res[1:999])
+var(bperm$res[1:999])
+summary(bperm$res[1:999])
+```
+
+```{r}
+hist(bperm$res, freq = TRUE, breaks = 20, xlab = "Simulated Moran's I")
+abline(v = 0, col = "red")
+```
+
+## Geary's C
+
+```{r}
+geary.test(hunan$GDPPC, listw = rswm_q)
+```
+
+```{r}
+set.seed(1234)
+bperm <- geary.mc(hunan$GDPPC,
+                   listw = rswm_q,
+                   nsim = 999)
+bperm
+```
+
+```{r}
+mean(bperm$res[1:999])
+var(bperm$res[1:999])
+summary(bperm$res[1:999])
+```
+
+```{r}
+hist(bperm$res, freq = TRUE, breaks = 20, xlab = "Simulated Geary c")
+abline(v = 1, col = "red")
+```
+
+## Spatial correlogram
+
+```{r}
+MI_corr <- sp.correlogram(wm_q, hunan$GDPPC, order = 6, method = "I", style = "W")
+plot(MI_corr)
+print(MI_corr)
+```
+
+```{r}
+GC_corr <- sp.correlogram(wm_q, hunan$GDPPC, order = 6, method = "C", style = "W")
+plot(GC_corr)
+print(GC_corr)
+```

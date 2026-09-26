@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Andrew Huang">
-<meta name="dcterms.date" content="2026-09-10">
+<meta name="dcterms.date" content="2026-09-17">
 
-<title>Hands-on Exercise 4: Spatio-Temporal Point Pattern Analysis – Huang Kang-Chih | Geospatial</title>
+<title>Hands-on Exercise 4: Spatial Weights and Applications – Huang Kang-Chih | Geospatial</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -142,32 +142,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-hands-on-exercise">    
         <li>
-    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex01/Hands-on_Ex01.html">
- <span class="dropdown-text">Ex01: Geospatial Data Science with R</span></a>
+    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex01a/Hands-on_Ex01a.html">
+ <span class="dropdown-text">Ex01a: Geospatial Data Science with R</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex01b/Hands-on_Ex01b.html">
+ <span class="dropdown-text">Ex01b: Thematic Mapping &amp; GeoVisualisation</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex02/Hands-on_Ex02.html">
- <span class="dropdown-text">Ex02: Thematic Mapping &amp; GeoVisualisation</span></a>
+ <span class="dropdown-text">Ex02: Point Pattern Analysis</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03.html">
- <span class="dropdown-text">Ex03: Point Pattern Analysis</span></a>
+ <span class="dropdown-text">Ex03: Spatio-Temporal Point Pattern Analysis</span></a>
   </li>  
         <li>
     <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.html">
- <span class="dropdown-text">Ex04: Spatio-Temporal Point Pattern Analysis</span></a>
+ <span class="dropdown-text">Ex04: Spatial Weights and Applications</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex05/Hands-on_Ex05.html">
- <span class="dropdown-text">Ex05: Spatial Weights and Applications</span></a>
+    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex05a/Hands-on_Ex05a.html">
+ <span class="dropdown-text">Ex05a: Global Measures of Spatial Autocorrelation</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex06a/Hands-on_Ex06a.html">
- <span class="dropdown-text">Ex06a: Global Measures of Spatial Autocorrelation</span></a>
-  </li>  
-        <li>
-    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex06b/Hands-on_Ex06b.html">
- <span class="dropdown-text">Ex06b: Local Measures of Spatial Autocorrelation</span></a>
+    <a class="dropdown-item" href="../../Hands-on_Ex/Hands-on_Ex05b/Hands-on_Ex05b.html">
+ <span class="dropdown-text">Ex05b: Local Measures of Spatial Autocorrelation</span></a>
   </li>  
     </ul>
   </li>
@@ -218,13 +218,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#getting-started" id="toc-getting-started" class="nav-link active" data-scroll-target="#getting-started">Getting started</a></li>
-  <li><a href="#importing-and-preparing-the-data" id="toc-importing-and-preparing-the-data" class="nav-link" data-scroll-target="#importing-and-preparing-the-data">Importing and preparing the data</a></li>
-  <li><a href="#visualising-the-fire-points" id="toc-visualising-the-fire-points" class="nav-link" data-scroll-target="#visualising-the-fire-points">Visualising the fire points</a></li>
-  <li><a href="#converting-to-spatstats-ppp-format" id="toc-converting-to-spatstats-ppp-format" class="nav-link" data-scroll-target="#converting-to-spatstats-ppp-format">Converting to spatstat’s ppp format</a></li>
-  <li><a href="#part-1-spatio-temporal-kde-does-the-hot-spot-move-over-the-year" id="toc-part-1-spatio-temporal-kde-does-the-hot-spot-move-over-the-year" class="nav-link" data-scroll-target="#part-1-spatio-temporal-kde-does-the-hot-spot-move-over-the-year">Part 1 — Spatio-temporal KDE: does the hot spot move over the year?</a></li>
-  <li><a href="#part-2-bootstrap-bandwidth-selection" id="toc-part-2-bootstrap-bandwidth-selection" class="nav-link" data-scroll-target="#part-2-bootstrap-bandwidth-selection">Part 2 — Bootstrap bandwidth selection</a></li>
-  <li><a href="#part-3-space-time-k-function-is-the-clustering-statistically-real" id="toc-part-3-space-time-k-function-is-the-clustering-statistically-real" class="nav-link" data-scroll-target="#part-3-space-time-k-function-is-the-clustering-statistically-real">Part 3 — Space-time K-function: is the clustering statistically real?</a></li>
-  <li><a href="#notes-and-open-questions" id="toc-notes-and-open-questions" class="nav-link" data-scroll-target="#notes-and-open-questions">Notes and open questions</a></li>
+  <li><a href="#importing-data" id="toc-importing-data" class="nav-link" data-scroll-target="#importing-data">Importing data</a></li>
+  <li><a href="#mapping-gdppc" id="toc-mapping-gdppc" class="nav-link" data-scroll-target="#mapping-gdppc">Mapping GDPPC</a></li>
+  <li><a href="#queen-vs-rook-neighbours" id="toc-queen-vs-rook-neighbours" class="nav-link" data-scroll-target="#queen-vs-rook-neighbours">Queen vs rook neighbours</a></li>
+  <li><a href="#distance-based-neighbours" id="toc-distance-based-neighbours" class="nav-link" data-scroll-target="#distance-based-neighbours">Distance-based neighbours</a>
+  <ul class="collapse">
+  <li><a href="#fixed-distance" id="toc-fixed-distance" class="nav-link" data-scroll-target="#fixed-distance">Fixed distance</a></li>
+  <li><a href="#adaptive-distance-k-nearest-neighbours" id="toc-adaptive-distance-k-nearest-neighbours" class="nav-link" data-scroll-target="#adaptive-distance-k-nearest-neighbours">Adaptive distance (k nearest neighbours)</a></li>
+  </ul></li>
+  <li><a href="#inverse-distance-weights" id="toc-inverse-distance-weights" class="nav-link" data-scroll-target="#inverse-distance-weights">Inverse distance weights</a></li>
+  <li><a href="#row-standardised-weights-matrix" id="toc-row-standardised-weights-matrix" class="nav-link" data-scroll-target="#row-standardised-weights-matrix">Row-standardised weights matrix</a></li>
+  <li><a href="#spatial-lag" id="toc-spatial-lag" class="nav-link" data-scroll-target="#spatial-lag">Spatial lag</a>
+  <ul class="collapse">
+  <li><a href="#row-standardised-lag" id="toc-row-standardised-lag" class="nav-link" data-scroll-target="#row-standardised-lag">Row-standardised lag</a></li>
+  <li><a href="#sum-of-neighbouring-values" id="toc-sum-of-neighbouring-values" class="nav-link" data-scroll-target="#sum-of-neighbouring-values">Sum of neighbouring values</a></li>
+  <li><a href="#spatial-window-average" id="toc-spatial-window-average" class="nav-link" data-scroll-target="#spatial-window-average">Spatial window average</a></li>
+  <li><a href="#spatial-window-sum" id="toc-spatial-window-sum" class="nav-link" data-scroll-target="#spatial-window-sum">Spatial window sum</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -233,7 +243,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Hands-on Exercise 4: Spatio-Temporal Point Pattern Analysis</h1>
+<h1 class="title">Hands-on Exercise 4: Spatial Weights and Applications</h1>
 </div>
 
 
@@ -250,14 +260,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 10, 2026</p>
+      <p class="date">September 17, 2026</p>
     </div>
   </div>
   
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 10, 2026</p>
+      <p class="date-modified">September 26, 2026</p>
     </div>
   </div>
     
@@ -270,401 +280,1413 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="getting-started" class="level2">
 <h2 class="anchored" data-anchor-id="getting-started">Getting started</h2>
-<p>Ex03 was all first- and second-order analysis on a single snapshot in time — preschools just sitting there, no clock attached. This one adds the missing dimension: the density itself changes as time moves. Instead of one KDE surface, you get a stack of them, one per moment, and the interesting question becomes whether the hot spot actually travels or just sits still.</p>
-<p>New package this time is <code>sparr</code>, which is built specifically for this — <code>spattemp.density()</code> gives a spatio-temporal KDE in one call, <code>BOOT.spattemp()</code> picks the bandwidths for you instead of guessing.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spatstat, sparr, stpp, tmap, tidyverse, lubridate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spdep, tmap, tidyverse, knitr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>stpp</code> and <code>tmap</code> are both new installs tonight — didn’t have them on this laptop before, and <code>stpp</code> in particular dragged in <code>rpanel</code>/<code>splancs</code> as dependencies, which took a bit to sort out. So the two sections further down that use them hadn’t actually been run before this render — wrote that code straight off the package documentation (checked the actual <code>STIKhat</code>/<code>as.3dpoints</code>/<code>tm_shape</code> signatures, not guessing), but didn’t have a confirmed working render until just now.</p>
-<p>Data honesty note, upfront: the textbook chapter uses <code>forestfires.csv</code> — FIRMS MODIS fire detections for Indonesia, 2023, cropped to Kepulauan Bangka Belitung — plus a sub-district (kelurahan) boundary from Indonesia’s own geospatial portal. Neither file is on eLearn, and FIRMS’s own download tool turned out to be more fight than it was worth with this due tomorrow. What I used instead: a real MODIS active-fire archive, bulk-downloaded and split by country and year, and I pulled the 2023 Indonesia file out of it — so the year actually matches the chapter now, it’s genuinely 2023 satellite detections. The one thing still substituted is the boundary: I used geoBoundaries’ regency-level (ADM2) polygons for Bangka Belitung’s 7 regencies instead of the finer kelurahan shapefile, since I couldn’t track that one down either. Same region, same year, same method — just a coarser administrative boundary than the chapter’s. Flagging it here rather than letting it look like the exact original file.</p>
 </section>
-<section id="importing-and-preparing-the-data" class="level2">
-<h2 class="anchored" data-anchor-id="importing-and-preparing-the-data">Importing and preparing the data</h2>
+<section id="importing-data" class="level2">
+<h2 class="anchored" data-anchor-id="importing-data">Importing data</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>bb_raw <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/BangkaBelitung.geojson"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"Hunan"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Reading layer `BangkaBelitung' from data source 
-  `C:\Users\User\Desktop\Geospatial\Hands-on_Ex\Hands-on_Ex04\data\geospatial\BangkaBelitung.geojson' 
-  using driver `GeoJSON'
-Simple feature collection with 7 features and 5 fields
-Geometry type: MULTIPOLYGON
+<pre><code>Reading layer `Hunan' from data source 
+  `C:\Users\User\Desktop\Geospatial\Hands-on_Ex\Hands-on_Ex04\data\geospatial' 
+  using driver `ESRI Shapefile'
+Simple feature collection with 88 features and 7 fields
+Geometry type: POLYGON
 Dimension:     XY
-Bounding box:  xmin: 105.1084 ymin: -3.416903 xmax: 108.848 ymax: -1.501884
+Bounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812
 Geodetic CRS:  WGS 84</code></pre>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>hunan2012 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/Hunan_2012.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Same move as Ex03’s <code>st_union()</code> on the subzones: 7 separate regency polygons get dissolved into one outline for the whole island group, then reprojected to UTM zone 48S (EPSG:32748) — that’s the metric CRS the chapter uses for this part of Indonesia.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>bb_sf <span class="ot">&lt;-</span> bb_raw <span class="sc">%&gt;%</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_union</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_sf</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32748</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">st_geometry</span>(bb_sf))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, hunan2012) <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(NAME_2, ID_3, NAME_3, ENGTYPE_3, County, GDPPC)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="mapping-gdppc" class="level2">
+<h2 class="anchored" data-anchor-id="mapping-gdppc">Mapping GDPPC</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>basemap <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(hunan) <span class="sc">+</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"NAME_3"</span>, <span class="at">size =</span> <span class="fl">0.5</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>gdppc <span class="ot">&lt;-</span> <span class="fu">qtm</span>(hunan, <span class="st">"GDPPC"</span>) <span class="sc">+</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(basemap, gdppc, <span class="at">asp =</span> <span class="dv">1</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>That’s Bangka on the left, Belitung on the right, plus a scatter of small islands around both — matches what Bangka Belitung actually looks like on a map, which was a decent sanity check that the regency list was right.</p>
-<p>Fire data next. Raw CSV has one row per detection with <code>latitude</code>/<code>longitude</code>/<code>acq_date</code> among other columns (brightness, confidence, satellite — not using those here). Converting to <code>sf</code> points, reprojecting to match the boundary, then pulling out day-of-year and month since <code>spattemp.density()</code> needs a numeric time mark, not a date.</p>
+</section>
+<section id="queen-vs-rook-neighbours" class="level2">
+<h2 class="anchored" data-anchor-id="queen-vs-rook-neighbours">Queen vs rook neighbours</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fires <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/forestfires_2023.csv"</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fires_sf <span class="ot">&lt;-</span> fires <span class="sc">%&gt;%</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>), <span class="at">crs =</span> <span class="dv">4326</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32748</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">acq_date =</span> <span class="fu">as.Date</span>(acq_date),</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">DayofYear =</span> <span class="fu">yday</span>(acq_date),</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Month_num =</span> <span class="fu">month</span>(acq_date),</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">Month_fac =</span> <span class="fu">factor</span>(month.name[Month_num], <span class="at">levels =</span> month.name)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(fires_sf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span> <span class="fu">poly2nb</span>(hunan, <span class="at">queen =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(wm_q)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 4119</code></pre>
-</div>
-</div>
-<p>4,119 points inside the bounding box I filtered the country file down to before ever touching R. That box is generous though — wider than the actual island outline — so a fair number of these will fall in open water once checked against the real polygon.</p>
-</section>
-<section id="visualising-the-fire-points" class="level2">
-<h2 class="anchored" data-anchor-id="visualising-the-fire-points">Visualising the fire points</h2>
-<p>Before jumping into any density estimate, the chapter’s own move is to just look at where the dots land — <code>tmap</code> instead of base R plotting since it handles the sf objects directly and facets by month in one call.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(bb_sf) <span class="sc">+</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(fires_sf) <span class="sc">+</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
+<pre><code>Neighbour list object:
+Number of regions: 88 
+Number of nonzero links: 448 
+Percentage nonzero weights: 5.785124 
+Average number of links: 5.090909 
+Link number distribution:
+
+ 1  2  3  4  5  6  7  8  9 11 
+ 2  2 12 16 24 14 11  4  2  1 
+2 least connected regions:
+30 65 with 1 link
+1 most connected region:
+85 with 11 links</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(bb_sf) <span class="sc">+</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(fires_sf) <span class="sc">+</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_dots</span>(<span class="at">size =</span> <span class="fl">0.1</span>) <span class="sc">+</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_facets</span>(<span class="at">by =</span> <span class="st">"Month_fac"</span>, <span class="at">free.coords =</span> <span class="cn">FALSE</span>, <span class="at">drop.units =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>Should visually confirm the same thing Part 1’s KDE finds below — empty months at the start of the year, dots piling up around July–September.</p>
-</section>
-<section id="converting-to-spatstats-ppp-format" class="level2">
-<h2 class="anchored" data-anchor-id="converting-to-spatstats-ppp-format">Converting to spatstat’s ppp format</h2>
-<p>Same <code>ppp</code> + <code>owin</code> combination as Ex03, marks this time being <code>DayofYear</code> instead of nothing, since the whole point of this exercise is keeping the time dimension attached to every point.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>bb_owin <span class="ot">&lt;-</span> <span class="fu">as.owin</span>(bb_sf)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>co <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(fires_sf)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>fires_ppp <span class="ot">&lt;-</span> <span class="fu">ppp</span>(co[, <span class="dv">1</span>], co[, <span class="dv">2</span>], <span class="at">window =</span> bb_owin, <span class="at">marks =</span> fires_sf<span class="sc">$</span>DayofYear)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>fires_ppp <span class="ot">&lt;-</span> fires_ppp[bb_owin]</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>fires_ppp<span class="sc">$</span>n</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>wm_r <span class="ot">&lt;-</span> <span class="fu">poly2nb</span>(hunan, <span class="at">queen =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(wm_r)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 899</code></pre>
+<pre><code>Neighbour list object:
+Number of regions: 88 
+Number of nonzero links: 440 
+Percentage nonzero weights: 5.681818 
+Average number of links: 5 
+Link number distribution:
+
+ 1  2  3  4  5  6  7  8  9 10 
+ 2  2 12 20 21 14 11  3  2  1 
+2 least connected regions:
+30 65 with 1 link
+1 most connected region:
+85 with 10 links</code></pre>
 </div>
 </div>
-<p>899 left out of 4,119 — a bigger drop than I expected, 3,220 points gone. Part of that’s just the loose bounding-box filter doing its job. But it’s also a bigger fraction than felt right at first, so I checked: some of it is almost certainly real MODIS detections sitting just offshore, not on land at all — Bangka is known for offshore tin dredging, and dredge platforms/mining barges run hot enough that MODIS’s fire-detection algorithm can flag them the same way it flags an actual fire. Worth keeping in mind reading the “fire” density below — a slice of what MODIS calls a fire pixel here is plausibly mining activity, not vegetation burning, and that’s a property of the <em>sensor</em>, not something specific to my substitute boundary.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fires_ppp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Marked planar point pattern:  899 points
-Average intensity 5.380728e-08 points per square unit
-
-Coordinates are given to 10 decimal places
-
-marks are numeric, of type 'double'
-Summary:
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-   10.0   219.0   260.0   247.7   288.0   360.0 
-
-Window: polygonal boundary
-166 separate polygons (no holes)
-             vertices        area relative.area
-polygon 1         972 1.15518e+10      6.91e-01
-polygon 2           4 5.52353e+04      3.31e-06
-polygon 3           4 2.71303e+05      1.62e-05
-polygon 4           7 1.22230e+06      7.32e-05
-polygon 5          11 1.19865e+06      7.17e-05
-polygon 6           5 1.61208e+05      9.65e-06
-polygon 7           7 9.72385e+04      5.82e-06
-polygon 8           5 8.01867e+04      4.80e-06
-polygon 9           5 1.15109e+05      6.89e-06
-polygon 10          6 2.82441e+05      1.69e-05
-polygon 11          4 1.61748e+05      9.68e-06
-polygon 12          5 9.62914e+04      5.76e-06
-polygon 13          8 1.38438e+05      8.29e-06
-polygon 14         16 3.15251e+06      1.89e-04
-polygon 15         10 2.30273e+06      1.38e-04
-polygon 16          3 4.93646e+04      2.95e-06
-polygon 17          4 4.39216e+04      2.63e-06
-polygon 18          3 5.15383e+04      3.08e-06
-polygon 19          3 8.61068e+03      5.15e-07
-polygon 20        750 4.61633e+09      2.76e-01
-polygon 21          4 5.82890e+04      3.49e-06
-polygon 22          3 1.79418e+04      1.07e-06
-polygon 23          4 6.61881e+04      3.96e-06
-polygon 24          8 1.44528e+06      8.65e-05
-polygon 25          3 1.34860e+04      8.07e-07
-polygon 26          3 1.63158e+04      9.77e-07
-polygon 27          4 6.47358e+04      3.87e-06
-polygon 28          3 1.43257e+04      8.57e-07
-polygon 29          3 2.11344e+04      1.26e-06
-polygon 30          7 1.83485e+05      1.10e-05
-polygon 31          3 2.07092e+04      1.24e-06
-polygon 32          3 1.21024e+04      7.24e-07
-polygon 33          3 1.25179e+04      7.49e-07
-polygon 34          3 1.48894e+04      8.91e-07
-polygon 35          5 7.22322e+04      4.32e-06
-polygon 36          4 7.47054e+04      4.47e-06
-polygon 37          3 3.32508e+04      1.99e-06
-polygon 38          5 2.15573e+05      1.29e-05
-polygon 39         10 1.14421e+06      6.85e-05
-polygon 40          4 1.97234e+05      1.18e-05
-polygon 41          3 3.29659e+04      1.97e-06
-polygon 42          3 1.85400e+04      1.11e-06
-polygon 43         12 2.22646e+06      1.33e-04
-polygon 44          3 2.85195e+04      1.71e-06
-polygon 45          5 8.03029e+04      4.81e-06
-polygon 46          3 2.36333e+04      1.41e-06
-polygon 47          7 5.03517e+05      3.01e-05
-polygon 48          4 4.95921e+04      2.97e-06
-polygon 49          4 6.50527e+04      3.89e-06
-polygon 50         12 1.03324e+06      6.18e-05
-polygon 51          7 2.14381e+05      1.28e-05
-polygon 52          4 3.35785e+04      2.01e-06
-polygon 53          7 8.43923e+05      5.05e-05
-polygon 54          5 9.12163e+04      5.46e-06
-polygon 55         13 3.89789e+05      2.33e-05
-polygon 56          3 1.99295e+04      1.19e-06
-polygon 57          6 9.27007e+04      5.55e-06
-polygon 58          6 3.14806e+04      1.88e-06
-polygon 59          7 3.87331e+05      2.32e-05
-polygon 60          5 4.15080e+05      2.48e-05
-polygon 61         47 1.77006e+07      1.06e-03
-polygon 62          4 2.17224e+05      1.30e-05
-polygon 63          4 8.11440e+04      4.86e-06
-polygon 64         98 4.78925e+07      2.87e-03
-polygon 65        112 1.19531e+08      7.15e-03
-polygon 66         18 3.69323e+06      2.21e-04
-polygon 67          4 8.13274e+04      4.87e-06
-polygon 68          6 6.68740e+04      4.00e-06
-polygon 69          4 2.78888e+04      1.67e-06
-polygon 70          4 2.89101e+04      1.73e-06
-polygon 71          8 1.41673e+06      8.48e-05
-polygon 72         15 3.74263e+06      2.24e-04
-polygon 73         13 3.64500e+06      2.18e-04
-polygon 74          3 1.61822e+04      9.69e-07
-polygon 75          7 2.14775e+05      1.29e-05
-polygon 76         19 7.09955e+06      4.25e-04
-polygon 77          8 1.73607e+05      1.04e-05
-polygon 78          7 2.05677e+06      1.23e-04
-polygon 79        105 2.13014e+08      1.27e-02
-polygon 80          5 1.76854e+05      1.06e-05
-polygon 81          9 1.59859e+06      9.57e-05
-polygon 82          3 3.15646e+04      1.89e-06
-polygon 83         61 2.25281e+07      1.35e-03
-polygon 84         16 2.43687e+06      1.46e-04
-polygon 85          3 2.65057e+04      1.59e-06
-polygon 86          3 1.25332e+04      7.50e-07
-polygon 87          6 5.54606e+05      3.32e-05
-polygon 88          6 1.05070e+06      6.29e-05
-polygon 89          7 4.10680e+05      2.46e-05
-polygon 90          5 3.21451e+05      1.92e-05
-polygon 91         10 1.15656e+06      6.92e-05
-polygon 92          4 5.09016e+04      3.05e-06
-polygon 93          4 5.37866e+04      3.22e-06
-polygon 94          4 4.59354e+04      2.75e-06
-polygon 95          4 2.11056e+04      1.26e-06
-polygon 96          4 2.48302e+04      1.49e-06
-polygon 97         15 5.16472e+06      3.09e-04
-polygon 98         19 1.77557e+06      1.06e-04
-polygon 99          4 3.18341e+04      1.91e-06
-polygon 100        12 3.07555e+06      1.84e-04
-polygon 101         4 1.39730e+05      8.36e-06
-polygon 102         7 4.57652e+05      2.74e-05
-polygon 103         3 4.35533e+04      2.61e-06
-polygon 104         4 9.95883e+04      5.96e-06
-polygon 105         4 8.39710e+04      5.03e-06
-polygon 106         8 1.31312e+06      7.86e-05
-polygon 107         5 2.09401e+05      1.25e-05
-polygon 108         3 1.21280e+04      7.26e-07
-polygon 109         7 1.85681e+06      1.11e-04
-polygon 110         4 4.31833e+04      2.58e-06
-polygon 111         7 6.60441e+05      3.95e-05
-polygon 112         7 8.15940e+05      4.88e-05
-polygon 113        14 3.96656e+06      2.37e-04
-polygon 114         8 4.31229e+05      2.58e-05
-polygon 115         4 3.76481e+04      2.25e-06
-polygon 116         6 7.23993e+05      4.33e-05
-polygon 117         4 3.08229e+05      1.84e-05
-polygon 118         3 2.06334e+04      1.23e-06
-polygon 119        23 7.36520e+06      4.41e-04
-polygon 120         5 2.32145e+05      1.39e-05
-polygon 121         4 3.82403e+04      2.29e-06
-polygon 122         3 6.07853e+04      3.64e-06
-polygon 123         4 5.72581e+04      3.43e-06
-polygon 124         3 1.48414e+04      8.88e-07
-polygon 125         4 3.66299e+05      2.19e-05
-polygon 126         3 4.65963e+04      2.79e-06
-polygon 127        15 3.92372e+06      2.35e-04
-polygon 128         5 4.33959e+05      2.60e-05
-polygon 129         6 4.96159e+05      2.97e-05
-polygon 130         4 6.68707e+04      4.00e-06
-polygon 131         3 2.99676e+04      1.79e-06
-polygon 132        14 1.25380e+06      7.50e-05
-polygon 133         6 7.55594e+05      4.52e-05
-polygon 134         4 1.65543e+05      9.91e-06
-polygon 135         8 2.82780e+05      1.69e-05
-polygon 136         5 3.90974e+05      2.34e-05
-polygon 137        27 1.62599e+07      9.73e-04
-polygon 138        12 1.39947e+06      8.38e-05
-polygon 139         8 2.21254e+06      1.32e-04
-polygon 140         3 1.57797e+04      9.44e-07
-polygon 141         8 1.15978e+06      6.94e-05
-polygon 142         3 3.33351e+04      2.00e-06
-polygon 143         4 1.06614e+05      6.38e-06
-polygon 144         6 4.37427e+04      2.62e-06
-polygon 145         6 4.83872e+05      2.90e-05
-polygon 146         4 9.23055e+04      5.52e-06
-polygon 147         7 3.71832e+05      2.23e-05
-polygon 148        15 3.38528e+06      2.03e-04
-polygon 149         3 2.50495e+04      1.50e-06
-polygon 150         4 2.52480e+04      1.51e-06
-polygon 151         5 1.67399e+05      1.00e-05
-polygon 152         4 1.13606e+05      6.80e-06
-polygon 153         5 5.04469e+04      3.02e-06
-polygon 154        13 2.23775e+06      1.34e-04
-polygon 155         4 6.37252e+04      3.81e-06
-polygon 156        12 1.02457e+06      6.13e-05
-polygon 157         4 8.79862e+04      5.27e-06
-polygon 158         4 1.66575e+05      9.97e-06
-polygon 159         6 2.60576e+05      1.56e-05
-polygon 160         3 1.92124e+04      1.15e-06
-polygon 161         4 6.06838e+04      3.63e-06
-polygon 162         9 1.14617e+06      6.86e-05
-polygon 163         4 1.58161e+04      9.47e-07
-polygon 164         4 1.29217e+05      7.73e-06
-polygon 165         6 2.02654e+05      1.21e-05
-polygon 166         3 1.06955e+05      6.40e-06
-enclosing rectangle: [512053.7, 928099.7] x [9621818, 9833975] units
-                     (416000 x 212200 units)
-Window area = 16707800000 square units
-Fraction of frame area: 0.189</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>longitude <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(hunan<span class="sc">$</span>geometry, <span class="sc">~</span><span class="fu">st_centroid</span>(.x)[[<span class="dv">1</span>]])</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>latitude <span class="ot">&lt;-</span> <span class="fu">map_dbl</span>(hunan<span class="sc">$</span>geometry, <span class="sc">~</span><span class="fu">st_centroid</span>(.x)[[<span class="dv">2</span>]])</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>coords <span class="ot">&lt;-</span> <span class="fu">cbind</span>(longitude, latitude)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</div>
-</section>
-<section id="part-1-spatio-temporal-kde-does-the-hot-spot-move-over-the-year" class="level2">
-<h2 class="anchored" data-anchor-id="part-1-spatio-temporal-kde-does-the-hot-spot-move-over-the-year">Part 1 — Spatio-temporal KDE: does the hot spot move over the year?</h2>
-<p><code>spattemp.density()</code> does the trivariate smoothing — two spatial dimensions plus time — and picks its own bandwidths by default the same way <code>bw.ppl()</code> etc. did in Ex03, just for three dimensions instead of two.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>st_kde <span class="ot">&lt;-</span> <span class="fu">spattemp.density</span>(fires_ppp)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>st_kde</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Spatiotemporal Kernel Density Estimate
-
-Bandwidths
-  h = 19155.99 (spatial)
-  lambda = 6.4456 (temporal)
-
-No. of observations
-  899 </code></pre>
-</div>
-</div>
-<p>Default spatial bandwidth landed around 19.2km, temporal around 6.4 days — tighter spatially than I expected, but still wide relative to the year. Plotting six snapshots across the year, fixing the colour scale so the panels are actually comparable to each other:</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>tims <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">120</span>, <span class="dv">213</span>, <span class="dv">244</span>, <span class="dv">274</span>, <span class="dv">300</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfcol =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>))</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> tims) {</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(st_kde, i, <span class="at">override.par =</span> <span class="cn">FALSE</span>, <span class="at">fix.range =</span> <span class="cn">TRUE</span>, <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Day "</span>, i))</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"lightgrey"</span>, <span class="at">main =</span> <span class="st">"Queen Contiguity"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(wm_q, coords, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"lightgrey"</span>, <span class="at">main =</span> <span class="st">"Rook Contiguity"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(wm_r, coords, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Days 30 and 120 (January, April/May) are flat — nothing burning yet. Day 213 (start of August) is when a hot spot appears on the northwest side of Bangka, and it just keeps intensifying from there: day 244 (start of September) it’s spread across western Bangka and reached Belitung, and by day 274–300 (start of October through late October) western Bangka is lit up as bright as this dataset gets. Checking the raw monthly counts backs this up — September and October alone account for 1,395 and 1,882 of the 4,119 detections respectively, versus single or low double digits from January through April. 2023 was an El Niño year in Indonesia, so a fire season this late and this intense tracks with what actually happened — the dry season ran longer and worse than a typical year, and that shows up here without me having to argue for it.</p>
 </section>
-<section id="part-2-bootstrap-bandwidth-selection" class="level2">
-<h2 class="anchored" data-anchor-id="part-2-bootstrap-bandwidth-selection">Part 2 — Bootstrap bandwidth selection</h2>
-<p>Default bandwidths above were picked automatically, but <code>sparr</code> has a proper optimiser for the spatio-temporal case — <code>BOOT.spattemp()</code>, doing for two bandwidths at once roughly what <code>bw.diggle</code> etc. did for one in Ex03. Fair warning: this one’s slow, close to a minute even on a fairly small point set, since it’s bootstrapping over both dimensions together.</p>
+<section id="distance-based-neighbours" class="level2">
+<h2 class="anchored" data-anchor-id="distance-based-neighbours">Distance-based neighbours</h2>
+<section id="fixed-distance" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-distance">Fixed distance</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>bw_boot <span class="ot">&lt;-</span> <span class="fu">BOOT.spattemp</span>(fires_ppp, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>bw_boot</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>k1 <span class="ot">&lt;-</span> <span class="fu">knn2nb</span>(<span class="fu">knearneigh</span>(coords))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>k1dists <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">nbdists</span>(k1, coords, <span class="at">longlat =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(k1dists)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>          h      lambda 
-21909.02939    19.78252 </code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  24.79   32.57   38.01   39.07   44.52   61.79 </code></pre>
 </div>
 </div>
-<p>Spatial bandwidth barely moved (about 21.9km vs.&nbsp;19.2km default), but the temporal one changed a lot — around 19.8 days instead of 6.4. Re-running the density with those and plotting the same six days:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>st_kde_opt <span class="ot">&lt;-</span> <span class="fu">spattemp.density</span>(fires_ppp, <span class="at">h =</span> bw_boot[<span class="st">"h"</span>], <span class="at">lambda =</span> bw_boot[<span class="st">"lambda"</span>])</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfcol =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>))</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> tims) {</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(st_kde_opt, i, <span class="at">override.par =</span> <span class="cn">FALSE</span>, <span class="at">fix.range =</span> <span class="cn">TRUE</span>, <span class="at">main =</span> <span class="fu">paste0</span>(<span class="st">"Day "</span>, i))</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>wm_d62 <span class="ot">&lt;-</span> <span class="fu">dnearneigh</span>(coords, <span class="dv">0</span>, <span class="dv">62</span>, <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>wm_d62</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Neighbour list object:
+Number of regions: 88 
+Number of nonzero links: 324 
+Percentage nonzero weights: 4.183884 
+Average number of links: 3.681818 </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"lightgrey"</span>, <span class="at">main =</span> <span class="st">"1st nearest neighbours"</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(k1, coords, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"red"</span>, <span class="at">length =</span> <span class="fl">0.08</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"lightgrey"</span>, <span class="at">main =</span> <span class="st">"Distance link"</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(wm_d62, coords, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Same overall story, smoother picture — the western-Bangka hot spot at day 274/300 is a touch less peaky than with the default bandwidth, since a wider temporal window (19.8 days vs.&nbsp;6.4) pools in more nearby detections per snapshot. Makes each panel a less noisy estimate at the cost of blurring the day-to-day detail slightly. This is basically the 2D bandwidth-choice lesson from Ex03 again, just now there are two bandwidths to get right instead of one.</p>
 </section>
-<section id="part-3-space-time-k-function-is-the-clustering-statistically-real" class="level2">
-<h2 class="anchored" data-anchor-id="part-3-space-time-k-function-is-the-clustering-statistically-real">Part 3 — Space-time K-function: is the clustering statistically real?</h2>
-<p>Same first-order-vs-second-order distinction as Ex03: everything above (KDE, STKDE) shows <em>where and when it’s dense</em>, but doesn’t actually test whether that’s more clustered than chance would produce. <code>stpp</code>’s <code>STIKhat()</code> is the space-time equivalent of Ex03’s <code>Kest()</code>/<code>envelope()</code> — counts point pairs within a given distance <em>and</em> time gap, compares that to what’s expected under a random process.</p>
-<p><code>STIKhat()</code> wants a plain <code>(x, y, t)</code> matrix, not a <code>ppp</code> — <code>as.3dpoints()</code> builds that from the same clipped points used above, so the point count here matches <code>fires_ppp$n</code> from earlier.</p>
+<section id="adaptive-distance-k-nearest-neighbours" class="level3">
+<h3 class="anchored" data-anchor-id="adaptive-distance-k-nearest-neighbours">Adaptive distance (k nearest neighbours)</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>xyt <span class="ot">&lt;-</span> <span class="fu">as.3dpoints</span>(fires_ppp<span class="sc">$</span>x, fires_ppp<span class="sc">$</span>y, <span class="fu">marks</span>(fires_ppp))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>knn6 <span class="ot">&lt;-</span> <span class="fu">knn2nb</span>(<span class="fu">knearneigh</span>(coords, <span class="at">k =</span> <span class="dv">6</span>))</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>knn6</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Neighbour list object:
+Number of regions: 88 
+Number of nonzero links: 528 
+Percentage nonzero weights: 6.818182 
+Average number of links: 6 
+Non-symmetric neighbours list</code></pre>
 </div>
-<p>Leaving <code>s.region</code>/<code>t.region</code> out below, which makes <code>STIKhat()</code> fall back to the bounding box of the data and the full day-of-year range — the archipelago’s actual outline is a 166-piece multipolygon (all those small islands), and <code>STIKhat()</code> wants a single simple polygon for <code>s.region</code>, so the bounding box is the pragmatic choice here rather than something I’d want to fight with the night before this is due.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>stik <span class="ot">&lt;-</span> <span class="fu">STIKhat</span>(xyt, <span class="at">dist =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">30000</span>, <span class="dv">5000</span>), <span class="at">times =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">90</span>, <span class="dv">15</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>stpp</code> ships its own <code>plotK()</code> helper for this, and the chapter uses it — but it turns out to be broken inside a Quarto/knitr render specifically. Looked at its source after the first render came back with the K-function section silently missing (no error, just no picture): <code>plotK()</code> checks <code>dev.list()</code>, and if a graphics device is already open — which it always is mid-chunk, that’s how knitr captures plots — it closes it and calls <code>dev.new()</code> to open a fresh one. Knitr never sees that new device, so the plot draws somewhere it can’t capture, and the chunk finishes clean with nothing to show for it. Not a mistake in the code that got run, just a genuine bug in how <code>plotK()</code> behaves outside an interactive R session. Skipping it and calling <code>contour()</code> directly on the same numbers instead — <code>stik$Khat</code> and <code>stik$Ktheo</code> are exactly what <code>plotK()</code> would have plotted anyway:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">contour</span>(stik<span class="sc">$</span>dist, stik<span class="sc">$</span>times, stik<span class="sc">$</span>Khat <span class="sc">-</span> stik<span class="sc">$</span>Ktheo,</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">xlab =</span> <span class="st">"Spatial distance u (m)"</span>, <span class="at">ylab =</span> <span class="st">"Temporal distance v (days)"</span>,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">main =</span> <span class="st">"Space-time L-function, Bangka Belitung 2023"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(hunan<span class="sc">$</span>geometry, <span class="at">border =</span> <span class="st">"lightgrey"</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(knn6, coords, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">cex =</span> <span class="fl">0.6</span>, <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>If this is genuinely clustered in both space and time together (not just space, not just time), the contour should bulge outward at short distances and short time gaps — i.e.&nbsp;fires close in space keep showing up close in time too, past what you’d get from a homogeneous random process over the year. Worth comparing this contour against the raw monthly counts and the STKDE panels above: all three should be telling the same story if the analysis holds together.</p>
 </section>
-<section id="notes-and-open-questions" class="level2">
-<h2 class="anchored" data-anchor-id="notes-and-open-questions">Notes and open questions</h2>
-<p>Two substitutions worth restating: the fire data is genuine 2023 MODIS detections, just pulled from a bulk country archive instead of FIRMS’s own <code>forestfires.csv</code>, and the boundary is geoBoundaries’ regency-level polygons instead of the finer kelurahan shapefile the chapter uses. Couldn’t get to either original source in time, but same region, same year, same method throughout.</p>
-<p>One thing worth trying later: separating out the offshore detections near Bangka’s coast before running any of this again, since a chunk of them are plausibly tin-mining heat signatures rather than actual vegetation fires — right now they’re sitting in the same point pattern as everything else. That’d also be the moment to fix <code>STIKhat()</code>’s <code>s.region</code>, which fell back to the plain bounding box instead of the archipelago’s real outline (that outline is 166 separate polygons and <code>STIKhat()</code> wants one simple one). Both of those are pulling the same direction — a decent stretch of open water is currently being counted as study area — so fixing them together would probably sharpen every result above, not just Part 3’s.</p>
+</section>
+<section id="inverse-distance-weights" class="level2">
+<h2 class="anchored" data-anchor-id="inverse-distance-weights">Inverse distance weights</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>dist <span class="ot">&lt;-</span> <span class="fu">nbdists</span>(wm_q, coords, <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ids <span class="ot">&lt;-</span> <span class="fu">lapply</span>(dist, <span class="cf">function</span>(x) <span class="dv">1</span> <span class="sc">/</span> (x))</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>rswm_ids <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_q, <span class="at">glist =</span> ids, <span class="at">style =</span> <span class="st">"B"</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>rswm_ids</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Characteristics of weights list object:
+Neighbour list object:
+Number of regions: 88 
+Number of nonzero links: 448 
+Percentage nonzero weights: 5.785124 
+Average number of links: 5.090909 
+
+Weights style: B 
+Weights constants summary:
+   n   nn       S0        S1     S2
+B 88 7744 8.786867 0.3776535 3.8137</code></pre>
+</div>
+</div>
+</section>
+<section id="row-standardised-weights-matrix" class="level2">
+<h2 class="anchored" data-anchor-id="row-standardised-weights-matrix">Row-standardised weights matrix</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>rswm_q <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_q, <span class="at">style =</span> <span class="st">"W"</span>, <span class="at">zero.policy =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>rswm_q</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Characteristics of weights list object:
+Neighbour list object:
+Number of regions: 88 
+Number of nonzero links: 448 
+Percentage nonzero weights: 5.785124 
+Average number of links: 5.090909 
+
+Weights style: W 
+Weights constants summary:
+   n   nn S0       S1       S2
+W 88 7744 88 37.86334 365.9147</code></pre>
+</div>
+</div>
+</section>
+<section id="spatial-lag" class="level2">
+<h2 class="anchored" data-anchor-id="spatial-lag">Spatial lag</h2>
+<section id="row-standardised-lag" class="level3">
+<h3 class="anchored" data-anchor-id="row-standardised-lag">Row-standardised lag</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>GDPPC.lag <span class="ot">&lt;-</span> <span class="fu">lag.listw</span>(rswm_q, hunan<span class="sc">$</span>GDPPC)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>lag.list <span class="ot">&lt;-</span> <span class="fu">list</span>(hunan<span class="sc">$</span>NAME_3, GDPPC.lag)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>lag.res <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(lag.list)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(lag.res) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"NAME_3"</span>, <span class="st">"lag GDPPC"</span>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, lag.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>gdppc <span class="ot">&lt;-</span> <span class="fu">qtm</span>(hunan, <span class="st">"GDPPC"</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>lag_gdppc <span class="ot">&lt;-</span> <span class="fu">qtm</span>(hunan, <span class="st">"lag GDPPC"</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(gdppc, lag_gdppc, <span class="at">asp =</span> <span class="dv">1</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sum-of-neighbouring-values" class="level3">
+<h3 class="anchored" data-anchor-id="sum-of-neighbouring-values">Sum of neighbouring values</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>b_weights <span class="ot">&lt;-</span> <span class="fu">lapply</span>(wm_q, <span class="cf">function</span>(x) <span class="dv">0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>b_weights2 <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_q, <span class="at">glist =</span> b_weights, <span class="at">style =</span> <span class="st">"B"</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>lag_sum <span class="ot">&lt;-</span> <span class="fu">list</span>(hunan<span class="sc">$</span>NAME_3, <span class="fu">lag.listw</span>(b_weights2, hunan<span class="sc">$</span>GDPPC))</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>lag.res <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(lag_sum)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(lag.res) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"NAME_3"</span>, <span class="st">"lag_sum GDPPC"</span>)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, lag.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>gdppc <span class="ot">&lt;-</span> <span class="fu">qtm</span>(hunan, <span class="st">"GDPPC"</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>lag_sum_gdppc <span class="ot">&lt;-</span> <span class="fu">qtm</span>(hunan, <span class="st">"lag_sum GDPPC"</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(gdppc, lag_sum_gdppc, <span class="at">asp =</span> <span class="dv">1</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="spatial-window-average" class="level3">
+<h3 class="anchored" data-anchor-id="spatial-window-average">Spatial window average</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">include.self</span>(wm_q)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_qs)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>lag.list.wm_qs <span class="ot">&lt;-</span> <span class="fu">list</span>(hunan<span class="sc">$</span>NAME_3, <span class="fu">lag.listw</span>(wm_qs, hunan<span class="sc">$</span>GDPPC))</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>lag_wm_qs.res <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(lag.list.wm_qs)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(lag_wm_qs.res) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"NAME_3"</span>, <span class="st">"lag_window_avg GDPPC"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, lag_wm_qs.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"County"</span>, <span class="st">"lag GDPPC"</span>, <span class="st">"lag_window_avg GDPPC"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 27%">
+<col style="width: 40%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">County</th>
+<th style="text-align: right;">lag GDPPC</th>
+<th style="text-align: right;">lag_window_avg GDPPC</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Anxiang</td>
+<td style="text-align: right;">24847.20</td>
+<td style="text-align: right;">24650.50</td>
+<td style="text-align: left;">POLYGON ((112.0625 29.75523…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hanshou</td>
+<td style="text-align: right;">22724.80</td>
+<td style="text-align: right;">22434.17</td>
+<td style="text-align: left;">POLYGON ((112.2288 29.11684…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jinshi</td>
+<td style="text-align: right;">24143.25</td>
+<td style="text-align: right;">26233.00</td>
+<td style="text-align: left;">POLYGON ((111.8927 29.6013,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Li</td>
+<td style="text-align: right;">27737.50</td>
+<td style="text-align: right;">27084.60</td>
+<td style="text-align: left;">POLYGON ((111.3731 29.94649…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Linli</td>
+<td style="text-align: right;">27270.25</td>
+<td style="text-align: right;">26927.00</td>
+<td style="text-align: left;">POLYGON ((111.6324 29.76288…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shimen</td>
+<td style="text-align: right;">21248.80</td>
+<td style="text-align: right;">22230.17</td>
+<td style="text-align: left;">POLYGON ((110.8825 30.11675…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Liuyang</td>
+<td style="text-align: right;">43747.00</td>
+<td style="text-align: right;">47621.20</td>
+<td style="text-align: left;">POLYGON ((113.9905 28.5682,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ningxiang</td>
+<td style="text-align: right;">33582.71</td>
+<td style="text-align: right;">37160.12</td>
+<td style="text-align: left;">POLYGON ((112.7181 28.38299…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Wangcheng</td>
+<td style="text-align: right;">45651.17</td>
+<td style="text-align: right;">49224.71</td>
+<td style="text-align: left;">POLYGON ((112.7914 28.52688…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Anren</td>
+<td style="text-align: right;">32027.62</td>
+<td style="text-align: right;">29886.89</td>
+<td style="text-align: left;">POLYGON ((113.1757 26.82734…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Guidong</td>
+<td style="text-align: right;">32671.00</td>
+<td style="text-align: right;">26627.50</td>
+<td style="text-align: left;">POLYGON ((114.1799 26.20117…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jiahe</td>
+<td style="text-align: right;">20810.00</td>
+<td style="text-align: right;">22690.17</td>
+<td style="text-align: left;">POLYGON ((112.4425 25.74358…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Linwu</td>
+<td style="text-align: right;">25711.50</td>
+<td style="text-align: right;">25366.40</td>
+<td style="text-align: left;">POLYGON ((112.5914 25.55143…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rucheng</td>
+<td style="text-align: right;">30672.33</td>
+<td style="text-align: right;">25825.75</td>
+<td style="text-align: left;">POLYGON ((113.6759 25.87578…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Yizhang</td>
+<td style="text-align: right;">33457.75</td>
+<td style="text-align: right;">30329.00</td>
+<td style="text-align: left;">POLYGON ((113.2621 25.68394…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yongxing</td>
+<td style="text-align: right;">31689.20</td>
+<td style="text-align: right;">32682.83</td>
+<td style="text-align: left;">POLYGON ((113.3169 26.41843…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zixing</td>
+<td style="text-align: right;">20269.00</td>
+<td style="text-align: right;">25948.62</td>
+<td style="text-align: left;">POLYGON ((113.7311 26.16259…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Changning</td>
+<td style="text-align: right;">23901.60</td>
+<td style="text-align: right;">23987.67</td>
+<td style="text-align: left;">POLYGON ((112.6144 26.60198…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hengdong</td>
+<td style="text-align: right;">25126.17</td>
+<td style="text-align: right;">25463.14</td>
+<td style="text-align: left;">POLYGON ((113.1056 27.21007…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hengnan</td>
+<td style="text-align: right;">21903.43</td>
+<td style="text-align: right;">21904.38</td>
+<td style="text-align: left;">POLYGON ((112.7599 26.98149…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hengshan</td>
+<td style="text-align: right;">22718.60</td>
+<td style="text-align: right;">23127.50</td>
+<td style="text-align: left;">POLYGON ((112.607 27.4689, …</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Leiyang</td>
+<td style="text-align: right;">25918.80</td>
+<td style="text-align: right;">25949.83</td>
+<td style="text-align: left;">POLYGON ((112.9996 26.69276…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Qidong</td>
+<td style="text-align: right;">20307.00</td>
+<td style="text-align: right;">20018.75</td>
+<td style="text-align: left;">POLYGON ((111.7818 27.0383,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chenxi</td>
+<td style="text-align: right;">20023.80</td>
+<td style="text-align: right;">19524.17</td>
+<td style="text-align: left;">POLYGON ((110.2624 28.21778…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zhongfang</td>
+<td style="text-align: right;">16576.80</td>
+<td style="text-align: right;">18955.00</td>
+<td style="text-align: left;">POLYGON ((109.9431 27.72858…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Huitong</td>
+<td style="text-align: right;">18667.00</td>
+<td style="text-align: right;">17800.40</td>
+<td style="text-align: left;">POLYGON ((109.9419 27.10512…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jingzhou</td>
+<td style="text-align: right;">14394.67</td>
+<td style="text-align: right;">15883.00</td>
+<td style="text-align: left;">POLYGON ((109.8186 26.75842…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mayang</td>
+<td style="text-align: right;">19848.80</td>
+<td style="text-align: right;">18831.33</td>
+<td style="text-align: left;">POLYGON ((109.795 27.98008,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tongdao</td>
+<td style="text-align: right;">15516.33</td>
+<td style="text-align: right;">14832.50</td>
+<td style="text-align: left;">POLYGON ((109.9294 26.46561…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xinhuang</td>
+<td style="text-align: right;">20518.00</td>
+<td style="text-align: right;">17965.00</td>
+<td style="text-align: left;">POLYGON ((109.227 27.43733,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xupu</td>
+<td style="text-align: right;">17572.00</td>
+<td style="text-align: right;">17159.89</td>
+<td style="text-align: left;">POLYGON ((110.7189 28.30485…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yuanling</td>
+<td style="text-align: right;">15200.12</td>
+<td style="text-align: right;">16199.44</td>
+<td style="text-align: left;">POLYGON ((110.9652 28.99895…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zhijiang</td>
+<td style="text-align: right;">18413.80</td>
+<td style="text-align: right;">18764.50</td>
+<td style="text-align: left;">POLYGON ((109.8818 27.60661…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lengshuijiang</td>
+<td style="text-align: right;">14419.33</td>
+<td style="text-align: right;">26878.75</td>
+<td style="text-align: left;">POLYGON ((111.5307 27.81472…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Shuangfeng</td>
+<td style="text-align: right;">24094.50</td>
+<td style="text-align: right;">23188.86</td>
+<td style="text-align: left;">POLYGON ((112.263 27.70421,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xinhua</td>
+<td style="text-align: right;">22019.83</td>
+<td style="text-align: right;">20788.14</td>
+<td style="text-align: left;">POLYGON ((111.3345 28.19642…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Chengbu</td>
+<td style="text-align: right;">12923.50</td>
+<td style="text-align: right;">12365.20</td>
+<td style="text-align: left;">POLYGON ((110.4455 26.69317…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dongan</td>
+<td style="text-align: right;">14756.00</td>
+<td style="text-align: right;">15985.00</td>
+<td style="text-align: left;">POLYGON ((111.4531 26.86812…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dongkou</td>
+<td style="text-align: right;">13869.80</td>
+<td style="text-align: right;">13764.83</td>
+<td style="text-align: left;">POLYGON ((110.6622 27.37305…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Longhui</td>
+<td style="text-align: right;">12296.67</td>
+<td style="text-align: right;">11907.43</td>
+<td style="text-align: left;">POLYGON ((110.985 27.65983,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Shaodong</td>
+<td style="text-align: right;">15775.17</td>
+<td style="text-align: right;">17128.14</td>
+<td style="text-align: left;">POLYGON ((111.9054 27.40254…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Suining</td>
+<td style="text-align: right;">14382.86</td>
+<td style="text-align: right;">14593.62</td>
+<td style="text-align: left;">POLYGON ((110.389 27.10006,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Wugang</td>
+<td style="text-align: right;">11566.33</td>
+<td style="text-align: right;">11644.29</td>
+<td style="text-align: left;">POLYGON ((110.9878 27.03345…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xinning</td>
+<td style="text-align: right;">13199.50</td>
+<td style="text-align: right;">12706.00</td>
+<td style="text-align: left;">POLYGON ((111.0736 26.84627…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xinshao</td>
+<td style="text-align: right;">23412.00</td>
+<td style="text-align: right;">21712.29</td>
+<td style="text-align: left;">POLYGON ((111.6013 27.58275…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shaoshan</td>
+<td style="text-align: right;">39541.00</td>
+<td style="text-align: right;">43548.25</td>
+<td style="text-align: left;">POLYGON ((112.5391 27.97742…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xiangxiang</td>
+<td style="text-align: right;">36186.60</td>
+<td style="text-align: right;">35049.00</td>
+<td style="text-align: left;">POLYGON ((112.4549 28.05783…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Baojing</td>
+<td style="text-align: right;">16559.60</td>
+<td style="text-align: right;">16226.83</td>
+<td style="text-align: left;">POLYGON ((109.7015 28.82844…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fenghuang</td>
+<td style="text-align: right;">20772.50</td>
+<td style="text-align: right;">19294.40</td>
+<td style="text-align: left;">POLYGON ((109.5239 28.19206…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Guzhang</td>
+<td style="text-align: right;">19471.20</td>
+<td style="text-align: right;">18156.00</td>
+<td style="text-align: left;">POLYGON ((109.8968 28.74034…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Huayuan</td>
+<td style="text-align: right;">19827.33</td>
+<td style="text-align: right;">19954.75</td>
+<td style="text-align: left;">POLYGON ((109.5647 28.61712…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jishou</td>
+<td style="text-align: right;">15466.80</td>
+<td style="text-align: right;">18145.17</td>
+<td style="text-align: left;">POLYGON ((109.8375 28.4696,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Longshan</td>
+<td style="text-align: right;">12925.67</td>
+<td style="text-align: right;">12132.75</td>
+<td style="text-align: left;">POLYGON ((109.6337 29.62521…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Luxi</td>
+<td style="text-align: right;">18577.17</td>
+<td style="text-align: right;">18419.29</td>
+<td style="text-align: left;">POLYGON ((110.1067 28.41835…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Yongshun</td>
+<td style="text-align: right;">14943.00</td>
+<td style="text-align: right;">14050.83</td>
+<td style="text-align: left;">POLYGON ((110.0003 29.29499…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Anhua</td>
+<td style="text-align: right;">24913.00</td>
+<td style="text-align: right;">23619.75</td>
+<td style="text-align: left;">POLYGON ((111.6034 28.63716…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Nan</td>
+<td style="text-align: right;">25093.00</td>
+<td style="text-align: right;">24552.71</td>
+<td style="text-align: left;">POLYGON ((112.3232 29.46074…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yuanjiang</td>
+<td style="text-align: right;">24428.80</td>
+<td style="text-align: right;">24733.67</td>
+<td style="text-align: left;">POLYGON ((112.4391 29.1791,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jianghua</td>
+<td style="text-align: right;">17003.00</td>
+<td style="text-align: right;">16762.60</td>
+<td style="text-align: left;">POLYGON ((111.6461 25.29661…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lanshan</td>
+<td style="text-align: right;">21143.75</td>
+<td style="text-align: right;">20932.60</td>
+<td style="text-align: left;">POLYGON ((112.2286 25.61123…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ningyuan</td>
+<td style="text-align: right;">20435.00</td>
+<td style="text-align: right;">19467.75</td>
+<td style="text-align: left;">POLYGON ((112.0715 26.09892…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shuangpai</td>
+<td style="text-align: right;">17131.33</td>
+<td style="text-align: right;">18334.00</td>
+<td style="text-align: left;">POLYGON ((111.8864 26.11957…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xintian</td>
+<td style="text-align: right;">24569.75</td>
+<td style="text-align: right;">22541.00</td>
+<td style="text-align: left;">POLYGON ((112.2578 26.0796,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Huarong</td>
+<td style="text-align: right;">23835.50</td>
+<td style="text-align: right;">26028.00</td>
+<td style="text-align: left;">POLYGON ((112.9242 29.69134…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Linxiang</td>
+<td style="text-align: right;">26360.00</td>
+<td style="text-align: right;">29128.50</td>
+<td style="text-align: left;">POLYGON ((113.5502 29.67418…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Miluo</td>
+<td style="text-align: right;">47383.40</td>
+<td style="text-align: right;">46569.00</td>
+<td style="text-align: left;">POLYGON ((112.9902 29.02139…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Pingjiang</td>
+<td style="text-align: right;">55157.75</td>
+<td style="text-align: right;">47576.60</td>
+<td style="text-align: left;">POLYGON ((113.8436 29.06152…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xiangyin</td>
+<td style="text-align: right;">37058.00</td>
+<td style="text-align: right;">36545.50</td>
+<td style="text-align: left;">POLYGON ((112.9173 28.98264…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cili</td>
+<td style="text-align: right;">21546.67</td>
+<td style="text-align: right;">20838.50</td>
+<td style="text-align: left;">POLYGON ((110.8822 29.69017…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chaling</td>
+<td style="text-align: right;">23348.67</td>
+<td style="text-align: right;">22531.00</td>
+<td style="text-align: left;">POLYGON ((113.7666 27.10573…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Liling</td>
+<td style="text-align: right;">42323.67</td>
+<td style="text-align: right;">42115.50</td>
+<td style="text-align: left;">POLYGON ((113.5673 27.94346…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yanling</td>
+<td style="text-align: right;">28938.60</td>
+<td style="text-align: right;">27619.00</td>
+<td style="text-align: left;">POLYGON ((113.9292 26.6154,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">You</td>
+<td style="text-align: right;">25880.80</td>
+<td style="text-align: right;">27611.33</td>
+<td style="text-align: left;">POLYGON ((113.5879 27.41324…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Zhuzhou</td>
+<td style="text-align: right;">47345.67</td>
+<td style="text-align: right;">44523.29</td>
+<td style="text-align: left;">POLYGON ((113.2493 28.02411…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sangzhi</td>
+<td style="text-align: right;">18711.33</td>
+<td style="text-align: right;">18127.43</td>
+<td style="text-align: left;">POLYGON ((110.556 29.40543,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yueyang</td>
+<td style="text-align: right;">29087.29</td>
+<td style="text-align: right;">28746.38</td>
+<td style="text-align: left;">POLYGON ((113.343 29.61064,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Qiyang</td>
+<td style="text-align: right;">20748.29</td>
+<td style="text-align: right;">20734.50</td>
+<td style="text-align: left;">POLYGON ((111.5563 26.81318…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Taojiang</td>
+<td style="text-align: right;">35933.71</td>
+<td style="text-align: right;">33880.62</td>
+<td style="text-align: left;">POLYGON ((112.0508 28.67265…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Shaoyang</td>
+<td style="text-align: right;">15439.71</td>
+<td style="text-align: right;">14716.38</td>
+<td style="text-align: left;">POLYGON ((111.5013 27.30207…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lianyuan</td>
+<td style="text-align: right;">29787.50</td>
+<td style="text-align: right;">28516.22</td>
+<td style="text-align: left;">POLYGON ((111.6789 28.02946…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hongjiang</td>
+<td style="text-align: right;">18145.00</td>
+<td style="text-align: right;">18086.14</td>
+<td style="text-align: left;">POLYGON ((110.1441 27.47513…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hengyang</td>
+<td style="text-align: right;">21617.00</td>
+<td style="text-align: right;">21244.50</td>
+<td style="text-align: left;">POLYGON ((112.7144 26.98613…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Guiyang</td>
+<td style="text-align: right;">29203.89</td>
+<td style="text-align: right;">29568.80</td>
+<td style="text-align: left;">POLYGON ((113.0811 26.04963…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Changsha</td>
+<td style="text-align: right;">41363.67</td>
+<td style="text-align: right;">48119.71</td>
+<td style="text-align: left;">POLYGON ((112.9421 28.03722…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Taoyuan</td>
+<td style="text-align: right;">22259.09</td>
+<td style="text-align: right;">22310.75</td>
+<td style="text-align: left;">POLYGON ((112.0612 29.32855…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xiangtan</td>
+<td style="text-align: right;">44939.56</td>
+<td style="text-align: right;">43151.60</td>
+<td style="text-align: left;">POLYGON ((113.0426 27.8942,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dao</td>
+<td style="text-align: right;">16902.00</td>
+<td style="text-align: right;">17133.40</td>
+<td style="text-align: left;">POLYGON ((111.498 25.81679,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jiangyong</td>
+<td style="text-align: right;">16930.00</td>
+<td style="text-align: right;">17009.33</td>
+<td style="text-align: left;">POLYGON ((111.3659 25.39472…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>w_avg_gdppc <span class="ot">&lt;-</span> <span class="fu">qtm</span>(hunan, <span class="st">"lag_window_avg GDPPC"</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(lag_gdppc, w_avg_gdppc, <span class="at">asp =</span> <span class="dv">1</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Hands-on_Ex04_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="spatial-window-sum" class="level3">
+<h3 class="anchored" data-anchor-id="spatial-window-sum">Spatial window sum</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>wm_qs <span class="ot">&lt;-</span> <span class="fu">include.self</span>(wm_q)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>b_weights <span class="ot">&lt;-</span> <span class="fu">lapply</span>(wm_qs, <span class="cf">function</span>(x) <span class="dv">0</span> <span class="sc">*</span> x <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>b_weights2 <span class="ot">&lt;-</span> <span class="fu">nb2listw</span>(wm_qs, <span class="at">glist =</span> b_weights, <span class="at">style =</span> <span class="st">"B"</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>w_sum_gdppc <span class="ot">&lt;-</span> <span class="fu">list</span>(hunan<span class="sc">$</span>NAME_3, <span class="fu">lag.listw</span>(b_weights2, hunan<span class="sc">$</span>GDPPC))</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>w_sum_gdppc.res <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(w_sum_gdppc)</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(w_sum_gdppc.res) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"NAME_3"</span>, <span class="st">"w_sum GDPPC"</span>)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, w_sum_gdppc.res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="sc">%&gt;%</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"County"</span>, <span class="st">"lag_sum GDPPC"</span>, <span class="st">"w_sum GDPPC"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 16%">
+<col style="width: 43%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">County</th>
+<th style="text-align: right;">lag_sum GDPPC</th>
+<th style="text-align: right;">w_sum GDPPC</th>
+<th style="text-align: left;">geometry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Anxiang</td>
+<td style="text-align: right;">124236</td>
+<td style="text-align: right;">147903</td>
+<td style="text-align: left;">POLYGON ((112.0625 29.75523…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hanshou</td>
+<td style="text-align: right;">113624</td>
+<td style="text-align: right;">134605</td>
+<td style="text-align: left;">POLYGON ((112.2288 29.11684…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jinshi</td>
+<td style="text-align: right;">96573</td>
+<td style="text-align: right;">131165</td>
+<td style="text-align: left;">POLYGON ((111.8927 29.6013,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Li</td>
+<td style="text-align: right;">110950</td>
+<td style="text-align: right;">135423</td>
+<td style="text-align: left;">POLYGON ((111.3731 29.94649…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Linli</td>
+<td style="text-align: right;">109081</td>
+<td style="text-align: right;">134635</td>
+<td style="text-align: left;">POLYGON ((111.6324 29.76288…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shimen</td>
+<td style="text-align: right;">106244</td>
+<td style="text-align: right;">133381</td>
+<td style="text-align: left;">POLYGON ((110.8825 30.11675…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Liuyang</td>
+<td style="text-align: right;">174988</td>
+<td style="text-align: right;">238106</td>
+<td style="text-align: left;">POLYGON ((113.9905 28.5682,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ningxiang</td>
+<td style="text-align: right;">235079</td>
+<td style="text-align: right;">297281</td>
+<td style="text-align: left;">POLYGON ((112.7181 28.38299…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Wangcheng</td>
+<td style="text-align: right;">273907</td>
+<td style="text-align: right;">344573</td>
+<td style="text-align: left;">POLYGON ((112.7914 28.52688…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Anren</td>
+<td style="text-align: right;">256221</td>
+<td style="text-align: right;">268982</td>
+<td style="text-align: left;">POLYGON ((113.1757 26.82734…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Guidong</td>
+<td style="text-align: right;">98013</td>
+<td style="text-align: right;">106510</td>
+<td style="text-align: left;">POLYGON ((114.1799 26.20117…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jiahe</td>
+<td style="text-align: right;">104050</td>
+<td style="text-align: right;">136141</td>
+<td style="text-align: left;">POLYGON ((112.4425 25.74358…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Linwu</td>
+<td style="text-align: right;">102846</td>
+<td style="text-align: right;">126832</td>
+<td style="text-align: left;">POLYGON ((112.5914 25.55143…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rucheng</td>
+<td style="text-align: right;">92017</td>
+<td style="text-align: right;">103303</td>
+<td style="text-align: left;">POLYGON ((113.6759 25.87578…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Yizhang</td>
+<td style="text-align: right;">133831</td>
+<td style="text-align: right;">151645</td>
+<td style="text-align: left;">POLYGON ((113.2621 25.68394…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yongxing</td>
+<td style="text-align: right;">158446</td>
+<td style="text-align: right;">196097</td>
+<td style="text-align: left;">POLYGON ((113.3169 26.41843…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zixing</td>
+<td style="text-align: right;">141883</td>
+<td style="text-align: right;">207589</td>
+<td style="text-align: left;">POLYGON ((113.7311 26.16259…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Changning</td>
+<td style="text-align: right;">119508</td>
+<td style="text-align: right;">143926</td>
+<td style="text-align: left;">POLYGON ((112.6144 26.60198…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hengdong</td>
+<td style="text-align: right;">150757</td>
+<td style="text-align: right;">178242</td>
+<td style="text-align: left;">POLYGON ((113.1056 27.21007…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hengnan</td>
+<td style="text-align: right;">153324</td>
+<td style="text-align: right;">175235</td>
+<td style="text-align: left;">POLYGON ((112.7599 26.98149…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hengshan</td>
+<td style="text-align: right;">113593</td>
+<td style="text-align: right;">138765</td>
+<td style="text-align: left;">POLYGON ((112.607 27.4689, …</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Leiyang</td>
+<td style="text-align: right;">129594</td>
+<td style="text-align: right;">155699</td>
+<td style="text-align: left;">POLYGON ((112.9996 26.69276…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Qidong</td>
+<td style="text-align: right;">142149</td>
+<td style="text-align: right;">160150</td>
+<td style="text-align: left;">POLYGON ((111.7818 27.0383,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chenxi</td>
+<td style="text-align: right;">100119</td>
+<td style="text-align: right;">117145</td>
+<td style="text-align: left;">POLYGON ((110.2624 28.21778…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zhongfang</td>
+<td style="text-align: right;">82884</td>
+<td style="text-align: right;">113730</td>
+<td style="text-align: left;">POLYGON ((109.9431 27.72858…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Huitong</td>
+<td style="text-align: right;">74668</td>
+<td style="text-align: right;">89002</td>
+<td style="text-align: left;">POLYGON ((109.9419 27.10512…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jingzhou</td>
+<td style="text-align: right;">43184</td>
+<td style="text-align: right;">63532</td>
+<td style="text-align: left;">POLYGON ((109.8186 26.75842…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mayang</td>
+<td style="text-align: right;">99244</td>
+<td style="text-align: right;">112988</td>
+<td style="text-align: left;">POLYGON ((109.795 27.98008,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tongdao</td>
+<td style="text-align: right;">46549</td>
+<td style="text-align: right;">59330</td>
+<td style="text-align: left;">POLYGON ((109.9294 26.46561…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xinhuang</td>
+<td style="text-align: right;">20518</td>
+<td style="text-align: right;">35930</td>
+<td style="text-align: left;">POLYGON ((109.227 27.43733,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xupu</td>
+<td style="text-align: right;">140576</td>
+<td style="text-align: right;">154439</td>
+<td style="text-align: left;">POLYGON ((110.7189 28.30485…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yuanling</td>
+<td style="text-align: right;">121601</td>
+<td style="text-align: right;">145795</td>
+<td style="text-align: left;">POLYGON ((110.9652 28.99895…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zhijiang</td>
+<td style="text-align: right;">92069</td>
+<td style="text-align: right;">112587</td>
+<td style="text-align: left;">POLYGON ((109.8818 27.60661…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lengshuijiang</td>
+<td style="text-align: right;">43258</td>
+<td style="text-align: right;">107515</td>
+<td style="text-align: left;">POLYGON ((111.5307 27.81472…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Shuangfeng</td>
+<td style="text-align: right;">144567</td>
+<td style="text-align: right;">162322</td>
+<td style="text-align: left;">POLYGON ((112.263 27.70421,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xinhua</td>
+<td style="text-align: right;">132119</td>
+<td style="text-align: right;">145517</td>
+<td style="text-align: left;">POLYGON ((111.3345 28.19642…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Chengbu</td>
+<td style="text-align: right;">51694</td>
+<td style="text-align: right;">61826</td>
+<td style="text-align: left;">POLYGON ((110.4455 26.69317…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dongan</td>
+<td style="text-align: right;">59024</td>
+<td style="text-align: right;">79925</td>
+<td style="text-align: left;">POLYGON ((111.4531 26.86812…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dongkou</td>
+<td style="text-align: right;">69349</td>
+<td style="text-align: right;">82589</td>
+<td style="text-align: left;">POLYGON ((110.6622 27.37305…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Longhui</td>
+<td style="text-align: right;">73780</td>
+<td style="text-align: right;">83352</td>
+<td style="text-align: left;">POLYGON ((110.985 27.65983,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Shaodong</td>
+<td style="text-align: right;">94651</td>
+<td style="text-align: right;">119897</td>
+<td style="text-align: left;">POLYGON ((111.9054 27.40254…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Suining</td>
+<td style="text-align: right;">100680</td>
+<td style="text-align: right;">116749</td>
+<td style="text-align: left;">POLYGON ((110.389 27.10006,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Wugang</td>
+<td style="text-align: right;">69398</td>
+<td style="text-align: right;">81510</td>
+<td style="text-align: left;">POLYGON ((110.9878 27.03345…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xinning</td>
+<td style="text-align: right;">52798</td>
+<td style="text-align: right;">63530</td>
+<td style="text-align: left;">POLYGON ((111.0736 26.84627…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xinshao</td>
+<td style="text-align: right;">140472</td>
+<td style="text-align: right;">151986</td>
+<td style="text-align: left;">POLYGON ((111.6013 27.58275…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shaoshan</td>
+<td style="text-align: right;">118623</td>
+<td style="text-align: right;">174193</td>
+<td style="text-align: left;">POLYGON ((112.5391 27.97742…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xiangxiang</td>
+<td style="text-align: right;">180933</td>
+<td style="text-align: right;">210294</td>
+<td style="text-align: left;">POLYGON ((112.4549 28.05783…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Baojing</td>
+<td style="text-align: right;">82798</td>
+<td style="text-align: right;">97361</td>
+<td style="text-align: left;">POLYGON ((109.7015 28.82844…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fenghuang</td>
+<td style="text-align: right;">83090</td>
+<td style="text-align: right;">96472</td>
+<td style="text-align: left;">POLYGON ((109.5239 28.19206…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Guzhang</td>
+<td style="text-align: right;">97356</td>
+<td style="text-align: right;">108936</td>
+<td style="text-align: left;">POLYGON ((109.8968 28.74034…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Huayuan</td>
+<td style="text-align: right;">59482</td>
+<td style="text-align: right;">79819</td>
+<td style="text-align: left;">POLYGON ((109.5647 28.61712…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jishou</td>
+<td style="text-align: right;">77334</td>
+<td style="text-align: right;">108871</td>
+<td style="text-align: left;">POLYGON ((109.8375 28.4696,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Longshan</td>
+<td style="text-align: right;">38777</td>
+<td style="text-align: right;">48531</td>
+<td style="text-align: left;">POLYGON ((109.6337 29.62521…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Luxi</td>
+<td style="text-align: right;">111463</td>
+<td style="text-align: right;">128935</td>
+<td style="text-align: left;">POLYGON ((110.1067 28.41835…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Yongshun</td>
+<td style="text-align: right;">74715</td>
+<td style="text-align: right;">84305</td>
+<td style="text-align: left;">POLYGON ((110.0003 29.29499…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Anhua</td>
+<td style="text-align: right;">174391</td>
+<td style="text-align: right;">188958</td>
+<td style="text-align: left;">POLYGON ((111.6034 28.63716…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Nan</td>
+<td style="text-align: right;">150558</td>
+<td style="text-align: right;">171869</td>
+<td style="text-align: left;">POLYGON ((112.3232 29.46074…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yuanjiang</td>
+<td style="text-align: right;">122144</td>
+<td style="text-align: right;">148402</td>
+<td style="text-align: left;">POLYGON ((112.4391 29.1791,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jianghua</td>
+<td style="text-align: right;">68012</td>
+<td style="text-align: right;">83813</td>
+<td style="text-align: left;">POLYGON ((111.6461 25.29661…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lanshan</td>
+<td style="text-align: right;">84575</td>
+<td style="text-align: right;">104663</td>
+<td style="text-align: left;">POLYGON ((112.2286 25.61123…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ningyuan</td>
+<td style="text-align: right;">143045</td>
+<td style="text-align: right;">155742</td>
+<td style="text-align: left;">POLYGON ((112.0715 26.09892…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shuangpai</td>
+<td style="text-align: right;">51394</td>
+<td style="text-align: right;">73336</td>
+<td style="text-align: left;">POLYGON ((111.8864 26.11957…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Xintian</td>
+<td style="text-align: right;">98279</td>
+<td style="text-align: right;">112705</td>
+<td style="text-align: left;">POLYGON ((112.2578 26.0796,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Huarong</td>
+<td style="text-align: right;">47671</td>
+<td style="text-align: right;">78084</td>
+<td style="text-align: left;">POLYGON ((112.9242 29.69134…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Linxiang</td>
+<td style="text-align: right;">26360</td>
+<td style="text-align: right;">58257</td>
+<td style="text-align: left;">POLYGON ((113.5502 29.67418…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Miluo</td>
+<td style="text-align: right;">236917</td>
+<td style="text-align: right;">279414</td>
+<td style="text-align: left;">POLYGON ((112.9902 29.02139…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Pingjiang</td>
+<td style="text-align: right;">220631</td>
+<td style="text-align: right;">237883</td>
+<td style="text-align: left;">POLYGON ((113.8436 29.06152…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xiangyin</td>
+<td style="text-align: right;">185290</td>
+<td style="text-align: right;">219273</td>
+<td style="text-align: left;">POLYGON ((112.9173 28.98264…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cili</td>
+<td style="text-align: right;">64640</td>
+<td style="text-align: right;">83354</td>
+<td style="text-align: left;">POLYGON ((110.8822 29.69017…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chaling</td>
+<td style="text-align: right;">70046</td>
+<td style="text-align: right;">90124</td>
+<td style="text-align: left;">POLYGON ((113.7666 27.10573…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Liling</td>
+<td style="text-align: right;">126971</td>
+<td style="text-align: right;">168462</td>
+<td style="text-align: left;">POLYGON ((113.5673 27.94346…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yanling</td>
+<td style="text-align: right;">144693</td>
+<td style="text-align: right;">165714</td>
+<td style="text-align: left;">POLYGON ((113.9292 26.6154,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">You</td>
+<td style="text-align: right;">129404</td>
+<td style="text-align: right;">165668</td>
+<td style="text-align: left;">POLYGON ((113.5879 27.41324…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Zhuzhou</td>
+<td style="text-align: right;">284074</td>
+<td style="text-align: right;">311663</td>
+<td style="text-align: left;">POLYGON ((113.2493 28.02411…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sangzhi</td>
+<td style="text-align: right;">112268</td>
+<td style="text-align: right;">126892</td>
+<td style="text-align: left;">POLYGON ((110.556 29.40543,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Yueyang</td>
+<td style="text-align: right;">203611</td>
+<td style="text-align: right;">229971</td>
+<td style="text-align: left;">POLYGON ((113.343 29.61064,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Qiyang</td>
+<td style="text-align: right;">145238</td>
+<td style="text-align: right;">165876</td>
+<td style="text-align: left;">POLYGON ((111.5563 26.81318…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Taojiang</td>
+<td style="text-align: right;">251536</td>
+<td style="text-align: right;">271045</td>
+<td style="text-align: left;">POLYGON ((112.0508 28.67265…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Shaoyang</td>
+<td style="text-align: right;">108078</td>
+<td style="text-align: right;">117731</td>
+<td style="text-align: left;">POLYGON ((111.5013 27.30207…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lianyuan</td>
+<td style="text-align: right;">238300</td>
+<td style="text-align: right;">256646</td>
+<td style="text-align: left;">POLYGON ((111.6789 28.02946…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hongjiang</td>
+<td style="text-align: right;">108870</td>
+<td style="text-align: right;">126603</td>
+<td style="text-align: left;">POLYGON ((110.1441 27.47513…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hengyang</td>
+<td style="text-align: right;">108085</td>
+<td style="text-align: right;">127467</td>
+<td style="text-align: left;">POLYGON ((112.7144 26.98613…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Guiyang</td>
+<td style="text-align: right;">262835</td>
+<td style="text-align: right;">295688</td>
+<td style="text-align: left;">POLYGON ((113.0811 26.04963…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Changsha</td>
+<td style="text-align: right;">248182</td>
+<td style="text-align: right;">336838</td>
+<td style="text-align: left;">POLYGON ((112.9421 28.03722…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Taoyuan</td>
+<td style="text-align: right;">244850</td>
+<td style="text-align: right;">267729</td>
+<td style="text-align: left;">POLYGON ((112.0612 29.32855…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Xiangtan</td>
+<td style="text-align: right;">404456</td>
+<td style="text-align: right;">431516</td>
+<td style="text-align: left;">POLYGON ((113.0426 27.8942,…</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dao</td>
+<td style="text-align: right;">67608</td>
+<td style="text-align: right;">85667</td>
+<td style="text-align: left;">POLYGON ((111.498 25.81679,…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jiangyong</td>
+<td style="text-align: right;">33860</td>
+<td style="text-align: right;">51028</td>
+<td style="text-align: left;">POLYGON ((111.3659 25.39472…</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

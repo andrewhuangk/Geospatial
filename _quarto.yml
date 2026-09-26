@@ -15,20 +15,20 @@ website:
 
       - text: "Hands-on Exercise"
         menu:
-          - href: Hands-on_Ex/Hands-on_Ex01/Hands-on_Ex01.qmd
-            text: "Ex01: Geospatial Data Science with R"
+          - href: Hands-on_Ex/Hands-on_Ex01a/Hands-on_Ex01a.qmd
+            text: "Ex01a: Geospatial Data Science with R"
+          - href: Hands-on_Ex/Hands-on_Ex01b/Hands-on_Ex01b.qmd
+            text: "Ex01b: Thematic Mapping & GeoVisualisation"
           - href: Hands-on_Ex/Hands-on_Ex02/Hands-on_Ex02.qmd
-            text: "Ex02: Thematic Mapping & GeoVisualisation"
+            text: "Ex02: Point Pattern Analysis"
           - href: Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03.qmd
-            text: "Ex03: Point Pattern Analysis"
+            text: "Ex03: Spatio-Temporal Point Pattern Analysis"
           - href: Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.qmd
-            text: "Ex04: Spatio-Temporal Point Pattern Analysis"
-          - href: Hands-on_Ex/Hands-on_Ex05/Hands-on_Ex05.qmd
-            text: "Ex05: Spatial Weights and Applications"
-          - href: Hands-on_Ex/Hands-on_Ex06a/Hands-on_Ex06a.qmd
-            text: "Ex06a: Global Measures of Spatial Autocorrelation"
-          - href: Hands-on_Ex/Hands-on_Ex06b/Hands-on_Ex06b.qmd
-            text: "Ex06b: Local Measures of Spatial Autocorrelation"
+            text: "Ex04: Spatial Weights and Applications"
+          - href: Hands-on_Ex/Hands-on_Ex05a/Hands-on_Ex05a.qmd
+            text: "Ex05a: Global Measures of Spatial Autocorrelation"
+          - href: Hands-on_Ex/Hands-on_Ex05b/Hands-on_Ex05b.qmd
+            text: "Ex05b: Local Measures of Spatial Autocorrelation"
 
       - text: "Take-home Exercise"
         menu:

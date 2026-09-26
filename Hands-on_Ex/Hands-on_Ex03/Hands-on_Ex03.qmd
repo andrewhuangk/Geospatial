@@ -1,7 +1,7 @@
 ---
-title: "Hands-on Exercise 3: Point Pattern Analysis"
+title: "Hands-on Exercise 3: Spatio-Temporal Point Pattern Analysis"
 author: "Andrew Huang"
-date: "2026-09-04"
+date: "2026-09-10"
 date-modified: "last-modified"
 format: html
 execute:
@@ -11,179 +11,171 @@ execute:
 
 ## Getting started
 
-Ex01 and Ex02 were both basically about mapping — where things are, how to make the map look decent. This one's different: are these points actually clustered, or does it just look that way to the eye? Reusing the same two files from Ex01, `PreSchoolsLocation.geojson` and `MasterPlan2014SubzoneBoundaryNoSea.geojson`, except the subzone file isn't for drawing an administrative map this time, it's just standing in for "the boundary of Singapore."
+Ex03 was all first- and second-order analysis on a single snapshot in time — preschools just sitting there, no clock attached. This one adds the missing dimension: the density itself changes as time moves. Instead of one KDE surface, you get a stack of them, one per moment, and the interesting question becomes whether the hot spot actually travels or just sits still.
 
-New package: `spatstat`. It doesn't understand `sf` objects at all, it wants its own format called `ppp`. So a good chunk of what follows is just converting things into a shape spatstat will actually accept.
+New package this time is `sparr`, which is built specifically for this — `spattemp.density()` gives a spatio-temporal KDE in one call, `BOOT.spattemp()` picks the bandwidths for you instead of guessing.
 
 ```{r}
-pacman::p_load(sf, spatstat, tmap, tidyverse)
+pacman::p_load(sf, spatstat, sparr, stpp, tmap, tidyverse, lubridate)
 ```
+
+`stpp` and `tmap` are both new installs tonight — didn't have them on this laptop before, and `stpp` in particular dragged in `rpanel`/`splancs` as dependencies, which took a bit to sort out. So the two sections further down that use them hadn't actually been run before this render — wrote that code straight off the package documentation (checked the actual `STIKhat`/`as.3dpoints`/`tm_shape` signatures, not guessing), but didn't have a confirmed working render until just now.
+
+Data honesty note, upfront: the textbook chapter uses `forestfires.csv` — FIRMS MODIS fire detections for Indonesia, 2023, cropped to Kepulauan Bangka Belitung — plus a sub-district (kelurahan) boundary from Indonesia's own geospatial portal. Neither file is on eLearn, and FIRMS's own download tool turned out to be more fight than it was worth with this due tomorrow. What I used instead: a real MODIS active-fire archive, bulk-downloaded and split by country and year, and I pulled the 2023 Indonesia file out of it — so the year actually matches the chapter now, it's genuinely 2023 satellite detections. The one thing still substituted is the boundary: I used geoBoundaries' regency-level (ADM2) polygons for Bangka Belitung's 7 regencies instead of the finer kelurahan shapefile, since I couldn't track that one down either. Same region, same year, same method — just a coarser administrative boundary than the chapter's. Flagging it here rather than letting it look like the exact original file.
 
 ## Importing and preparing the data
 
 ```{r}
-preschool <- st_read("data/geospatial/PreSchoolsLocation.geojson") %>%
-  st_transform(crs = 3414)
-
-mpsz <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryNoSea.geojson") %>%
-  st_transform(crs = 3414)
+bb_raw <- st_read("data/geospatial/BangkaBelitung.geojson")
 ```
 
-The textbook version uses a proper coastline shapefile as the study area. Don't have that file, so instead all 323 subzone polygons get dissolved into one shape with `st_union()` — same land area in the end, just built a different way.
+Same move as Ex03's `st_union()` on the subzones: 7 separate regency polygons get dissolved into one outline for the whole island group, then reprojected to UTM zone 48S (EPSG:32748) — that's the metric CRS the chapter uses for this part of Indonesia.
 
 ```{r}
-sg_sf <- mpsz %>%
+bb_sf <- bb_raw %>%
   st_union() %>%
-  st_sf()
+  st_sf() %>%
+  st_transform(crs = 32748)
 
-plot(st_geometry(sg_sf))
+plot(st_geometry(bb_sf))
 ```
+
+That's Bangka on the left, Belitung on the right, plus a scatter of small islands around both — matches what Bangka Belitung actually looks like on a map, which was a decent sanity check that the regency list was right.
+
+Fire data next. Raw CSV has one row per detection with `latitude`/`longitude`/`acq_date` among other columns (brightness, confidence, satellite — not using those here). Converting to `sf` points, reprojecting to match the boundary, then pulling out day-of-year and month since `spattemp.density()` needs a numeric time mark, not a date.
+
+```{r}
+fires <- read_csv("data/aspatial/forestfires_2023.csv")
+
+fires_sf <- fires %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326) %>%
+  st_transform(crs = 32748) %>%
+  mutate(
+    acq_date = as.Date(acq_date),
+    DayofYear = yday(acq_date),
+    Month_num = month(acq_date),
+    Month_fac = factor(month.name[Month_num], levels = month.name)
+  )
+
+nrow(fires_sf)
+```
+
+4,119 points inside the bounding box I filtered the country file down to before ever touching R. That box is generous though — wider than the actual island outline — so a fair number of these will fall in open water once checked against the real polygon.
+
+## Visualising the fire points
+
+Before jumping into any density estimate, the chapter's own move is to just look at where the dots land — `tmap` instead of base R plotting since it handles the sf objects directly and facets by month in one call.
+
+```{r}
+tmap_mode("plot")
+
+tm_shape(bb_sf) +
+  tm_polygons() +
+tm_shape(fires_sf) +
+  tm_dots()
+```
+
+```{r fig.height=8}
+tm_shape(bb_sf) +
+  tm_polygons() +
+tm_shape(fires_sf) +
+  tm_dots(size = 0.1) +
+tm_facets(by = "Month_fac", free.coords = FALSE, drop.units = TRUE)
+```
+
+Should visually confirm the same thing Part 1's KDE finds below — empty months at the start of the year, dots piling up around July–September.
 
 ## Converting to spatstat's ppp format
 
-`spatstat` wants two things: a `ppp` for the points, an `owin` for the window they live in. Sounds simple enough, except the dissolved outline from earlier still carries every single vertex from all 323 original polygons — thousands of points just to describe a coastline. Didn't think this would matter until later steps just sat there not finishing. Simplifying the outline first with `st_simplify()` (20m tolerance, invisible at Singapore's scale) fixed it — several of the point pattern functions later do real geometric work against the window boundary, and an unnecessarily detailed polygon makes all of that painfully slow.
+Same `ppp` + `owin` combination as Ex03, marks this time being `DayofYear` instead of nothing, since the whole point of this exercise is keeping the time dimension attached to every point.
 
 ```{r}
-sg_sf_simplified <- sg_sf %>%
-  st_simplify(dTolerance = 20, preserveTopology = TRUE)
+bb_owin <- as.owin(bb_sf)
 
-sg_owin <- as.owin(sg_sf_simplified)
+co <- st_coordinates(fires_sf)
+fires_ppp <- ppp(co[, 1], co[, 2], window = bb_owin, marks = fires_sf$DayofYear)
+fires_ppp <- fires_ppp[bb_owin]
 
-preschool_ppp <- as.ppp(st_coordinates(preschool), W = sg_owin)
-
-plot(preschool_ppp)
+fires_ppp$n
 ```
+
+899 left out of 4,119 — a bigger drop than I expected, 3,220 points gone. Part of that's just the loose bounding-box filter doing its job. But it's also a bigger fraction than felt right at first, so I checked: some of it is almost certainly real MODIS detections sitting just offshore, not on land at all — Bangka is known for offshore tin dredging, and dredge platforms/mining barges run hot enough that MODIS's fire-detection algorithm can flag them the same way it flags an actual fire. Worth keeping in mind reading the "fire" density below — a slice of what MODIS calls a fire pixel here is plausibly mining activity, not vegetation burning, and that's a property of the *sensor*, not something specific to my substitute boundary.
 
 ```{r}
-summary(preschool_ppp)
+summary(fires_ppp)
 ```
 
-Two preschools can land on the exact same coordinate if they share a building, and duplicate points break some of the tests below, so I checked before going further:
+## Part 1 — Spatio-temporal KDE: does the hot spot move over the year?
+
+`spattemp.density()` does the trivariate smoothing — two spatial dimensions plus time — and picks its own bandwidths by default the same way `bw.ppl()` etc. did in Ex03, just for three dimensions instead of two.
 
 ```{r}
-any(duplicated(preschool_ppp))
+st_kde <- spattemp.density(fires_ppp)
+st_kde
 ```
 
-Turned out to be `TRUE` here, so the duplicates get jittered apart with `rjitter()` — nudges them a tiny random distance so they're not stacked exactly on top of each other:
+Default spatial bandwidth landed around 19.2km, temporal around 6.4 days — tighter spatially than I expected, but still wide relative to the year. Plotting six snapshots across the year, fixing the colour scale so the panels are actually comparable to each other:
+
+```{r fig.height=6}
+tims <- c(30, 120, 213, 244, 274, 300)
+par(mfcol = c(2, 3))
+for (i in tims) {
+  plot(st_kde, i, override.par = FALSE, fix.range = TRUE, main = paste0("Day ", i))
+}
+```
+
+Days 30 and 120 (January, April/May) are flat — nothing burning yet. Day 213 (start of August) is when a hot spot appears on the northwest side of Bangka, and it just keeps intensifying from there: day 244 (start of September) it's spread across western Bangka and reached Belitung, and by day 274–300 (start of October through late October) western Bangka is lit up as bright as this dataset gets. Checking the raw monthly counts backs this up — September and October alone account for 1,395 and 1,882 of the 4,119 detections respectively, versus single or low double digits from January through April. 2023 was an El Niño year in Indonesia, so a fire season this late and this intense tracks with what actually happened — the dry season ran longer and worse than a typical year, and that shows up here without me having to argue for it.
+
+## Part 2 — Bootstrap bandwidth selection
+
+Default bandwidths above were picked automatically, but `sparr` has a proper optimiser for the spatio-temporal case — `BOOT.spattemp()`, doing for two bandwidths at once roughly what `bw.diggle` etc. did for one in Ex03. Fair warning: this one's slow, close to a minute even on a fairly small point set, since it's bootstrapping over both dimensions together.
 
 ```{r}
-preschool_ppp_jit <- rjitter(preschool_ppp, retry = TRUE, nsim = 1, drop = TRUE)
-any(duplicated(preschool_ppp_jit))
+bw_boot <- BOOT.spattemp(fires_ppp, verbose = FALSE)
+bw_boot
 ```
 
-## Part 1 — First-order analysis: where are preschools concentrated?
+Spatial bandwidth barely moved (about 21.9km vs. 19.2km default), but the temporal one changed a lot — around 19.8 days instead of 6.4. Re-running the density with those and plotting the same six days:
 
-First-order analysis is really just: where's it denser, where's it sparser. The tool is kernel density estimation (KDE) — each point gets smeared into a small "bump," and stacking all the bumps together gives a continuous surface instead of a scatter of dots.
+```{r fig.height=6}
+st_kde_opt <- spattemp.density(fires_ppp, h = bw_boot["h"], lambda = bw_boot["lambda"])
 
-### Fixed bandwidth
+par(mfcol = c(2, 3))
+for (i in tims) {
+  plot(st_kde_opt, i, override.par = FALSE, fix.range = TRUE, main = paste0("Day ", i))
+}
+```
 
-`sigma` sets how wide each bump is. Starting with a fixed number just to see what it looks like.
+Same overall story, smoother picture — the western-Bangka hot spot at day 274/300 is a touch less peaky than with the default bandwidth, since a wider temporal window (19.8 days vs. 6.4) pools in more nearby detections per snapshot. Makes each panel a less noisy estimate at the cost of blurring the day-to-day detail slightly. This is basically the 2D bandwidth-choice lesson from Ex03 again, just now there are two bandwidths to get right instead of one.
+
+## Part 3 — Space-time K-function: is the clustering statistically real?
+
+Same first-order-vs-second-order distinction as Ex03: everything above (KDE, STKDE) shows *where and when it's dense*, but doesn't actually test whether that's more clustered than chance would produce. `stpp`'s `STIKhat()` is the space-time equivalent of Ex03's `Kest()`/`envelope()` — counts point pairs within a given distance *and* time gap, compares that to what's expected under a random process.
+
+`STIKhat()` wants a plain `(x, y, t)` matrix, not a `ppp` — `as.3dpoints()` builds that from the same clipped points used above, so the point count here matches `fires_ppp$n` from earlier.
 
 ```{r}
-kde_fixed <- density(preschool_ppp_jit,
-                      sigma = 500,
-                      edge = TRUE,
-                      kernel = "gaussian")
-plot(kde_fixed, main = "Fixed bandwidth (sigma = 500m)")
+xyt <- as.3dpoints(fires_ppp$x, fires_ppp$y, marks(fires_ppp))
 ```
 
-### Automatic bandwidth selection
-
-500 was picked out of thin air, honestly. `spatstat` has actual selectors that work out a bandwidth from the data instead of guessing:
+Leaving `s.region`/`t.region` out below, which makes `STIKhat()` fall back to the bounding box of the data and the full day-of-year range — the archipelago's actual outline is a 166-piece multipolygon (all those small islands), and `STIKhat()` wants a single simple polygon for `s.region`, so the bounding box is the pragmatic choice here rather than something I'd want to fight with the night before this is due.
 
 ```{r}
-bw.diggle(preschool_ppp_jit)
-bw.CvL(preschool_ppp_jit)
-bw.scott(preschool_ppp_jit)
-bw.ppl(preschool_ppp_jit)
+stik <- STIKhat(xyt, dist = seq(0, 30000, 5000), times = seq(0, 90, 15))
 ```
 
-They don't agree with each other, which makes sense once you notice they're optimising for different things — `bw.diggle` leans toward picking up clusters, `bw.CvL`/`bw.scott` aim more for a smooth overall estimate. Plotting two of them side by side shows how much the bandwidth choice actually changes what you see:
+`stpp` ships its own `plotK()` helper for this, and the chapter uses it — but it turns out to be broken inside a Quarto/knitr render specifically. Looked at its source after the first render came back with the K-function section silently missing (no error, just no picture): `plotK()` checks `dev.list()`, and if a graphics device is already open — which it always is mid-chunk, that's how knitr captures plots — it closes it and calls `dev.new()` to open a fresh one. Knitr never sees that new device, so the plot draws somewhere it can't capture, and the chunk finishes clean with nothing to show for it. Not a mistake in the code that got run, just a genuine bug in how `plotK()` behaves outside an interactive R session. Skipping it and calling `contour()` directly on the same numbers instead — `stik$Khat` and `stik$Ktheo` are exactly what `plotK()` would have plotted anyway:
 
 ```{r}
-kde_diggle <- density(preschool_ppp_jit, sigma = bw.diggle, edge = TRUE)
-kde_ppl <- density(preschool_ppp_jit, sigma = bw.ppl, edge = TRUE)
-
-par(mfrow = c(1, 2))
-plot(kde_diggle, main = "bw.diggle")
-plot(kde_ppl, main = "bw.ppl")
-par(mfrow = c(1, 1))
+contour(stik$dist, stik$times, stik$Khat - stik$Ktheo,
+        xlab = "Spatial distance u (m)", ylab = "Temporal distance v (days)",
+        main = "Space-time L-function, Bangka Belitung 2023")
 ```
 
-### Clark-Evans test
-
-KDE gives you a picture, not a number. Clark-Evans actually gives a ratio and a p-value — compares the real average nearest-neighbour distance to what you'd expect if the points were scattered completely at random (CSR). Ratio under 1 means more clustered than random, over 1 means more spread out than random.
-
-```{r}
-clarkevans.test(preschool_ppp_jit,
-                 correction = "none",
-                 clipregion = sg_owin,
-                 alternative = "clustered",
-                 nsim = 99)
-```
-
-## Part 2 — Second-order analysis: is the clustering statistically real?
-
-The KDE stuff above shows where it's dense, but doesn't really prove anything on its own — a cluster could just be noise. Second-order analysis instead looks at every pair of points and asks, at a given distance, is there more or less company than you'd expect from pure randomness?
-
-Same recipe for all four functions below: compute the real statistic, simulate a bunch of random point patterns in the same window (Monte Carlo), and check whether the real line sits outside the band those random simulations produce.
-
-### G-function — nearest neighbour distance
-
-```{r}
-G <- Gest(preschool_ppp_jit)
-plot(G, main = "G-function")
-```
-
-```{r}
-G.csr <- envelope(preschool_ppp_jit, Gest, nsim = 39)
-plot(G.csr, main = "G-function vs CSR envelope")
-```
-
-### F-function — empty space distance
-
-```{r}
-F <- Fest(preschool_ppp_jit)
-plot(F, main = "F-function")
-```
-
-```{r}
-F.csr <- envelope(preschool_ppp_jit, Fest, nsim = 39)
-plot(F.csr, main = "F-function vs CSR envelope")
-```
-
-### K-function — points within a given radius
-
-This one actually got stuck the first time round. K-function checks every pair of points against every other, already heavier than G or F, and spatstat's default edge correction (isotropic) does extra geometry against the window boundary on top of that — with Singapore's mainland-plus-a-bunch-of-small-islands shape, it basically never finished. Switched to border correction instead: simpler, much faster, still a valid estimate.
-
-```{r}
-K <- Kest(preschool_ppp_jit, correction = "border")
-plot(K, . - r ~ r, main = "K-function")
-```
-
-```{r}
-K.csr <- envelope(preschool_ppp_jit, Kest, nsim = 39, correction = "border")
-plot(K.csr, . - r ~ r, main = "K-function vs CSR envelope")
-```
-
-### L-function — a rescaled, easier-to-read version of K
-
-```{r}
-L <- Lest(preschool_ppp_jit, correction = "border")
-plot(L, . - r ~ r, main = "L-function")
-```
-
-```{r}
-L.csr <- envelope(preschool_ppp_jit, Lest, nsim = 39, correction = "border")
-plot(L.csr, . - r ~ r, main = "L-function vs CSR envelope")
-```
-
-## Reading the envelope plots
-
-The grey band in each plot is the range you'd expect from 39 random simulations in the same window. Where the black (observed) line pokes above the band, points are clustering at that distance; where it dips below, they're more spread out than random; where it just sits inside the band, can't really tell the pattern apart from CSR at that scale.
+If this is genuinely clustered in both space and time together (not just space, not just time), the contour should bulge outward at short distances and short time gaps — i.e. fires close in space keep showing up close in time too, past what you'd get from a homogeneous random process over the year. Worth comparing this contour against the raw monthly counts and the STKDE panels above: all three should be telling the same story if the analysis holds together.
 
 ## Notes and open questions
 
-This still isn't the textbook's actual dataset — it's Ex01's preschool and subzone files again, standing in for the childcare-centre data the chapter uses, and the study boundary is a dissolved subzone outline rather than the real coastline shapefile. Same substitution as before, just flagging it again here since it affects every result in this file.
+Two substitutions worth restating: the fire data is genuine 2023 MODIS detections, just pulled from a bulk country archive instead of FIRMS's own `forestfires.csv`, and the boundary is geoBoundaries' regency-level polygons instead of the finer kelurahan shapefile the chapter uses. Couldn't get to either original source in time, but same region, same year, same method throughout.
 
-Testing CSR against the whole island is a pretty blunt way to ask the question, too — preschools are obviously going to cluster wherever people actually live, so a chunk of what these tests are picking up is probably just population density, not anything specific to where a preschool gets built. Splitting this by planning area and re-running would be a better test of that, if there's time before this needs to be handed in.
+One thing worth trying later: separating out the offshore detections near Bangka's coast before running any of this again, since a chunk of them are plausibly tin-mining heat signatures rather than actual vegetation fires — right now they're sitting in the same point pattern as everything else. That'd also be the moment to fix `STIKhat()`'s `s.region`, which fell back to the plain bounding box instead of the archipelago's real outline (that outline is 166 separate polygons and `STIKhat()` wants one simple one). Both of those are pulling the same direction — a decent stretch of open water is currently being counted as study area — so fixing them together would probably sharpen every result above, not just Part 3's.

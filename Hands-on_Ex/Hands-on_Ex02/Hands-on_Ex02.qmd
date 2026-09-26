@@ -1,658 +1,189 @@
 ---
-title: "Hands-on Exercise 2: Thematic Mapping and GeoVisualisation with R"
-subtitle: "Choropleth mapping with tmap (v4)"
+title: "Hands-on Exercise 2: Point Pattern Analysis"
 author: "Andrew Huang"
-date: "2026-08-27"
+date: "2026-09-04"
 date-modified: "last-modified"
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    number-sections: true
-    code-fold: false
-    code-copy: true
+format: html
 execute:
-  eval: true
-  echo: true
   warning: false
-  message: false
   freeze: auto
 ---
 
-# Overview
+## Getting started
 
-A thematic map uses symbols, colour, or texture to show the spatial distribution of a geographic phenomenon — population density, rainfall, poverty rate, and so on. The goal of this exercise is to use the **tmap** package to draw a choropleth map of the dependency ratio for each planning subzone in Singapore, based on 2024 population data.
+Ex01 and Ex02 were both basically about mapping — where things are, how to make the map look decent. This one's different: are these points actually clustered, or does it just look that way to the eye? Reusing the same two files from Ex01, `PreSchoolsLocation.geojson` and `MasterPlan2014SubzoneBoundaryNoSea.geojson`, except the subzone file isn't for drawing an administrative map this time, it's just standing in for "the boundary of Singapore."
 
-We'll cover:
-
-1. Import the 2019 subzone boundary and, where needed, use `rvest` to extract attribute fields from the HTML table embedded in `Description`.
-2. Wrangle the 2024 population table: compute the YOUNG / ECONOMY ACTIVE / AGED age bands and the dependency ratio.
-3. Use `left_join()` to attach the population data to the geographic layer, and save an RDS backup.
-4. Build up maps with `tmap`, from simple to advanced: quick mapping → layer stacking → classification & colour → cartographic decorations → small multiples → statistical charts → interactive maps.
-
-One thing worth noting up front: tmap went through a fairly large syntax overhaul in version 4, so v3-style code (which is what most older blog posts and Stack Overflow answers still use) will error or throw deprecation warnings here. The renames that tripped me up most: `tm_polygons(col = "VAR")` is now `tm_polygons(fill = "VAR")`; `style`/`palette` arguments move into `fill.scale = tm_scale_intervals(...)`; legend titles move into `fill.legend = tm_legend(title = "...")`; `tm_scale_bar()` is now `tm_scalebar()`; and `tm_layout(main.title = ...)` is now `tm_title(...)`. The rule I kept repeating to myself: `fill` is always the polygon's fill colour, `col` is always a line/border colour.
-
----
-
-# Getting Started
+New package: `spatstat`. It doesn't understand `sf` objects at all, it wants its own format called `ppp`. So a good chunk of what follows is just converting things into a shape spatstat will actually accept.
 
 ```{r}
-pacman::p_load(sf, tmap, tidyverse, rvest)
+pacman::p_load(sf, spatstat, tmap, tidyverse)
 ```
 
-Confirm tmap is version 4.x:
+## Importing and preparing the data
 
 ```{r}
-packageVersion("tmap")
+preschool <- st_read("data/geospatial/PreSchoolsLocation.geojson") %>%
+  st_transform(crs = 3414)
+
+mpsz <- st_read("data/geospatial/MasterPlan2014SubzoneBoundaryNoSea.geojson") %>%
+  st_transform(crs = 3414)
 ```
 
-(If it comes back 3.x, `install.packages("tmap")` in the R Console and restart the session before continuing — the code below won't run correctly on v3.)
-
-Confirm the data files:
+The textbook version uses a proper coastline shapefile as the study area. Don't have that file, so instead all 323 subzone polygons get dissolved into one shape with `st_union()` — same land area in the end, just built a different way.
 
 ```{r}
-list.files("data/geospatial")
-list.files("data/aspatial")
+sg_sf <- mpsz %>%
+  st_union() %>%
+  st_sf()
+
+plot(st_geometry(sg_sf))
 ```
 
----
+## Converting to spatstat's ppp format
 
-# Importing Data
-
-## Import the Master Plan 2019 Subzone Boundary
-
-The spec asked for the **KML** version specifically, so the rvest parsing below would actually get used. I ended up downloading **GeoJSON** instead — this particular data.gov.sg export already ships with clean attribute columns (`SUBZONE_N`, `REGION_N`, etc.), nothing to parse out of it. Kept the GeoJSON version since it's what I actually ran; the KML + rvest code further down never executed, just left in as a reference for what the original spec's route would look like.
+`spatstat` wants two things: a `ppp` for the points, an `owin` for the window they live in. Sounds simple enough, except the dissolved outline from earlier still carries every single vertex from all 323 original polygons — thousands of points just to describe a coastline. Didn't think this would matter until later steps just sat there not finishing. Simplifying the outline first with `st_simplify()` (20m tolerance, invisible at Singapore's scale) fixed it — several of the point pattern functions later do real geometric work against the window boundary, and an unnecessarily detailed polygon makes all of that painfully slow.
 
 ```{r}
-mpsz <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaGEOJSON.geojson")
+sg_sf_simplified <- sg_sf %>%
+  st_simplify(dTolerance = 20, preserveTopology = TRUE)
+
+sg_owin <- as.owin(sg_sf_simplified)
+
+preschool_ppp <- as.ppp(st_coordinates(preschool), W = sg_owin)
+
+plot(preschool_ppp)
 ```
 
 ```{r}
-glimpse(mpsz)
+summary(preschool_ppp)
 ```
 
-`SUBZONE_N`, `PLN_AREA_N`, `REGION_N` and the rest are already usable directly — no extra parsing needed, so I jumped straight to checking `REGION_N` below.
-
-Reading the KML in only gives `Name` and `Description`, with the actual fields packed into an HTML table inside `Description` — each `<tr>` row a `<th>`/`<td>` pair. This is the code that would pull it apart, never actually run since the GeoJSON didn't need it:
-
-```r
-mpsz <- st_read("data/geospatial/MasterPlan2019SubzoneBoundaryNoSeaKML.kml") %>%
-  st_transform(crs = 3414)   # KML is WGS84, transform to Singapore's SVY21 (EPSG:3414)
-
-extract_kml_field <- function(html_text, field_name) {
-  if (is.na(html_text) || html_text == "") return(NA_character_)
-  page  <- read_html(html_text)
-  rows  <- page %>% html_elements("tr")
-  value <- rows %>%
-    keep(~ html_text2(html_element(.x, "th")) == field_name) %>%
-    html_element("td") %>%
-    html_text2()
-  if (length(value) == 0) NA_character_ else value
-}
-
-mpsz <- mpsz %>%
-  mutate(
-    REGION_N   = map_chr(Description, extract_kml_field, "REGION_N"),
-    PLN_AREA_N = map_chr(Description, extract_kml_field, "PLN_AREA_N"),
-    SUBZONE_N  = map_chr(Description, extract_kml_field, "SUBZONE_N"),
-    SUBZONE_C  = map_chr(Description, extract_kml_field, "SUBZONE_C")
-  ) %>%
-  select(-Name, -Description) %>%
-  relocate(geometry, .after = last_col())
-```
-
-Back to the actual data — check the REGION_N values (used later to filter for the Central Region):
+Two preschools can land on the exact same coordinate if they share a building, and duplicate points break some of the tests below, so I checked before going further:
 
 ```{r}
-table(mpsz$REGION_N)
+any(duplicated(preschool_ppp))
 ```
 
-## Import the population table
-
-Same kind of mismatch here: spec wanted `respopagesextod2024.csv` (Type-of-Dwelling, just 2024), I've got `respopagesexfa2020to2024.csv` (Floor Area, 2020–2024 all in one file) instead. Doesn't change anything about the dependency ratio itself — that only needs `PA`, `SZ`, `AG`, and `Pop`, and `Sex`/`TOD`/`FA` get summed away regardless. Just means an extra filter step to pull 2024 back out of the five years.
+Turned out to be `TRUE` here, so the duplicates get jittered apart with `rjitter()` — nudges them a tiny random distance so they're not stacked exactly on top of each other:
 
 ```{r}
-popdata <- read_csv("data/aspatial/respopagesexfa2020to2024.csv")
+preschool_ppp_jit <- rjitter(preschool_ppp, retry = TRUE, nsim = 1, drop = TRUE)
+any(duplicated(preschool_ppp_jit))
 ```
+
+## Part 1 — First-order analysis: where are preschools concentrated?
+
+First-order analysis is really just: where's it denser, where's it sparser. The tool is kernel density estimation (KDE) — each point gets smeared into a small "bump," and stacking all the bumps together gives a continuous surface instead of a scatter of dots.
+
+### Fixed bandwidth
+
+`sigma` sets how wide each bump is. Starting with a fixed number just to see what it looks like.
 
 ```{r}
-glimpse(popdata)
+kde_fixed <- density(preschool_ppp_jit,
+                      sigma = 500,
+                      edge = TRUE,
+                      kernel = "gaussian")
+plot(kde_fixed, main = "Fixed bandwidth (sigma = 500m)")
 ```
 
-Column meanings:
+### Automatic bandwidth selection
 
-- `PA`: Planning Area
-- `SZ`: Subzone
-- `AG`: Age Group (e.g. `0_to_4`, `90_and_over`)
-- `Sex`: sex
-- `FA`: Floor Area band (not used in this analysis)
-- `Pop`: population count
-- `Time`: year (2020–2024 here, so filtering is needed)
-
-Filter down to 2024:
+500 was picked out of thin air, honestly. `spatstat` has actual selectors that work out a bandwidth from the data instead of guessing:
 
 ```{r}
-popdata <- popdata %>%
-  filter(Time == 2024)
-
-nrow(popdata)
+bw.diggle(preschool_ppp_jit)
+bw.CvL(preschool_ppp_jit)
+bw.scott(preschool_ppp_jit)
+bw.ppl(preschool_ppp_jit)
 ```
 
----
-
-# Data Wrangling
-
-## Goal
-
-Turn the long-format table (one row per age group × sex × dwelling type) into a wide format (one row per subzone), producing three age-band columns:
-
-- **YOUNG**: ages 0–24
-- **ECONOMY ACTIVE**: ages 25–64
-- **AGED**: ages 65+
-- **DEPENDENCY** = (YOUNG + AGED) / ECONOMY ACTIVE
-
-## Group by the lower bound of each age band
-
-The `AG` column looks like `0_to_4`, `25_to_29`, `90_and_over`. A regular expression pulls out the leading number as the age band's lower bound, then buckets it into one of the three groups.
+They don't agree with each other, which makes sense once you notice they're optimising for different things — `bw.diggle` leans toward picking up clusters, `bw.CvL`/`bw.scott` aim more for a smooth overall estimate. Plotting two of them side by side shows how much the bandwidth choice actually changes what you see:
 
 ```{r}
-popdata2024 <- popdata %>%
-  # extract the leading number from AG, e.g. "25_to_29" -> 25, "90_and_over" -> 90
-  mutate(AGE_LOWER = as.numeric(str_extract(AG, "^\\d+"))) %>%
-  mutate(AGE_GROUP = case_when(
-    AGE_LOWER < 25 ~ "YOUNG",
-    AGE_LOWER < 65 ~ "ECONOMY ACTIVE",
-    TRUE           ~ "AGED"
-  )) %>%
-  # sum population within the same subzone and age band (across sex and dwelling type)
-  group_by(PA, SZ, AGE_GROUP) %>%
-  summarise(POP = sum(Pop), .groups = "drop") %>%
-  # pivot long to wide: each of the three AGE_GROUP values becomes its own column
-  pivot_wider(names_from = AGE_GROUP, values_from = POP, values_fill = 0) %>%
-  # compute total population and the dependency ratio
-  mutate(
-    TOTAL      = YOUNG + `ECONOMY ACTIVE` + AGED,
-    DEPENDENCY = (YOUNG + AGED) / `ECONOMY ACTIVE`
-  ) %>%
-  select(PA, SZ, YOUNG, `ECONOMY ACTIVE`, AGED, TOTAL, DEPENDENCY)
+kde_diggle <- density(preschool_ppp_jit, sigma = bw.diggle, edge = TRUE)
+kde_ppl <- density(preschool_ppp_jit, sigma = bw.ppl, edge = TRUE)
 
-head(popdata2024)
+par(mfrow = c(1, 2))
+plot(kde_diggle, main = "bw.diggle")
+plot(kde_ppl, main = "bw.ppl")
+par(mfrow = c(1, 1))
 ```
 
-`ECONOMY ACTIVE` has a space in it, so it needs backticks every time it's referenced in R — `` `ECONOMY ACTIVE` `` — which is why the code above has so many of them.
+### Clark-Evans test
 
-For reference, the course material actually sums columns by position instead of by name (after `pivot_wider`, columns land in alphabetical order, so `5_to_9` ends up after `45_to_49`, which is why the index ranges look scattered):
-
-```r
-popdata2024 <- popdata %>%
-  group_by(PA, SZ, AG) %>%
-  summarise(`POP` = sum(`Pop`)) %>%
-  ungroup() %>%
-  pivot_wider(names_from = AG, values_from = POP) %>%
-  mutate(YOUNG = rowSums(.[3:6]) + rowSums(.[12])) %>%
-  mutate(`ECONOMY ACTIVE` = rowSums(.[7:11]) + rowSums(.[13:15])) %>%
-  mutate(`AGED` = rowSums(.[16:21])) %>%
-  mutate(`TOTAL` = rowSums(.[3:21])) %>%
-  mutate(`DEPENDENCY` = (`YOUNG` + `AGED`) / `ECONOMY ACTIVE`) %>%
-  select(`PA`, `SZ`, `YOUNG`, `ECONOMY ACTIVE`, `AGED`, `TOTAL`, `DEPENDENCY`)
-```
-
-Both give the same numbers, but I went with the name-based version — the positional one would quietly compute the wrong answer if the data version changes or the number of age groups shifts, since it's just trusting that column 3 is still whatever it was before.
-
-## Handling case and edge cases
-
-The geographic layer's `SUBZONE_N` is all uppercase (`MARINA SOUTH`), while the population table's `SZ` is title case (`Marina South`) — the join won't match unless these are unified. Also filtered out subzones with a zero denominator, which would otherwise produce `Inf` in the ratio.
+KDE gives you a picture, not a number. Clark-Evans actually gives a ratio and a p-value — compares the real average nearest-neighbour distance to what you'd expect if the points were scattered completely at random (CSR). Ratio under 1 means more clustered than random, over 1 means more spread out than random.
 
 ```{r}
-popdata2024 <- popdata2024 %>%
-  mutate(across(c(PA, SZ), toupper)) %>%   # convert PA and SZ to all-uppercase
-  filter(`ECONOMY ACTIVE` > 0)             # avoid Inf in the dependency ratio
-
-head(popdata2024)
+clarkevans.test(preschool_ppp_jit,
+                 correction = "none",
+                 clipregion = sg_owin,
+                 alternative = "clustered",
+                 nsim = 99)
 ```
 
-## Join the geographic and attribute data
+## Part 2 — Second-order analysis: is the clustering statistically real?
+
+The KDE stuff above shows where it's dense, but doesn't really prove anything on its own — a cluster could just be noise. Second-order analysis instead looks at every pair of points and asks, at a given distance, is there more or less company than you'd expect from pure randomness?
+
+Same recipe for all four functions below: compute the real statistic, simulate a bunch of random point patterns in the same window (Monte Carlo), and check whether the real line sits outside the band those random simulations produce.
+
+### G-function — nearest neighbour distance
 
 ```{r}
-mpsz_pop2024 <- left_join(mpsz, popdata2024,
-                          by = c("SUBZONE_N" = "SZ"))
-```
-
-The sf object (`mpsz`) has to go on the left here — `left_join(popdata2024, mpsz, ...)` would silently produce a plain data frame instead, and tmap can't plot that.
-
-Check how well the join worked:
-
-```{r}
-sum(is.na(mpsz_pop2024$DEPENDENCY))  # number of subzones with no matching population data (mostly unpopulated subzones)
-```
-
-## Export an RDS backup
-
-RDS is R's native binary format and fully preserves an sf object's class and CRS, so this saves having to re-run the whole preprocessing pipeline next time.
-
-```{r}
-# create the rds folder if it doesn't exist
-if (!dir.exists("data/rds")) dir.create("data/rds", recursive = TRUE)
-
-write_rds(mpsz_pop2024, "data/rds/mpsz_pop2024.rds")
-```
-
-To reload it later:
-
-```{r}
-mpsz_pop2024 <- read_rds("data/rds/mpsz_pop2024.rds")
-```
-
----
-
-# Making a Choropleth Map with tmap
-
-## Quick mapping: qtm()
-
-`qtm()` is short for "quick thematic map" — one line, good for a first look while exploring.
-
-```{r}
-tmap_mode("plot")   # "plot" = static map; "view" = interactive map
-qtm(shp = mpsz_pop2024, fill = "DEPENDENCY")
-```
-
-It's not really customisable though, so the layer-stacking syntax below is what actually gets used for the real output.
-
-## tmap's layer grammar
-
-Like ggplot2, tmap stacks layers with `+`:
-
-```
-tm_shape(data) +        # first declare which spatial data to draw
-  tm_polygons(...) +    # then decide how to draw it (fill, borders...)
-  tm_compass() + ...    # finally add cartographic decorations
-```
-
-### A blank base map
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons()
-```
-
-### Adding a fill variable
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY")
-```
-
-### Controlling tm_fill() and tm_borders() separately
-
-`tm_polygons()` is really `tm_fill()` + `tm_borders()` combined — splitting them lets fill and border be controlled independently.
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_fill("DEPENDENCY") +
-  tm_borders()
-```
-
-Customising the border style:
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_fill("DEPENDENCY") +
-  tm_borders(col = "grey60",     # border colour
-             lwd = 0.1,          # line width
-             lty = "dashed")     # line type
-```
-
----
-
-# Data Classification
-
-The key decision in a choropleth map is how to cut a continuous variable into a handful of classes. In tmap v4 this lives under `fill.scale = tm_scale_intervals()`.
-
-## Quantile
-
-Each class gets the same number of subzones, so every colour on the map ends up used.
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                n = 5)) +
-  tm_borders(fill_alpha = 0.5)
-```
-
-## Equal
-
-Splits the value range into n equally-sized intervals — on skewed data, most subzones can end up crammed into a single colour.
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "equal",
-                n = 5)) +
-  tm_borders(fill_alpha = 0.5)
-```
-
-Comparing the two on the same data: quantile spreads colours out evenly, which makes ranking easy to read; equal reflects the actual spacing between values more faithfully. Neither is objectively "correct" — the classification method shapes how a reader interprets the map, so it's a real decision to make on purpose, not just whatever the default happens to be. (`tm_scale_intervals()` also supports `style = "jenks"` for natural breaks, `"sd"` for standard deviation, `"pretty"` for round-number breaks, and a few others.)
-
-## Custom Breaks
-
-Checking the summary statistics first helps pick sensible cut points:
-
-```{r}
-summary(mpsz_pop2024$DEPENDENCY)
+G <- Gest(preschool_ppp_jit)
+plot(G, main = "G-function")
 ```
 
 ```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                breaks = c(0, 0.60, 0.70, 0.80, 0.90, 1.00))) +
-  tm_borders(fill_alpha = 0.5)
+G.csr <- envelope(preschool_ppp_jit, Gest, nsim = 39)
+plot(G.csr, main = "G-function vs CSR envelope")
 ```
 
-`breaks` needs n+1 values (min and max included) and has to cover the full range of the data, otherwise anything outside that range shows up grey as a missing value.
-
----
-
-# Colour Schemes
-
-tmap v4 uses the `values` argument for the colour palette, named as `package.palette_name` — `brewer.blues`, `brewer.greens`, `viridis`, and so on.
-
-## ColorBrewer palettes
+### F-function — empty space distance
 
 ```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                n = 5,
-                values = "brewer.blues")) +
-  tm_borders(fill_alpha = 0.5)
-```
-
-## Reversing a palette: prefix the name with a minus sign
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                n = 5,
-                values = "-brewer.greens")) +
-  tm_borders(fill_alpha = 0.5)
-```
-
-(`cols4all::c4a_gui()` opens an interactive browser for all the available palettes, if you install the `cols4all` package first — useful for finding a name without guessing.)
-
----
-
-# Map Layouts
-
-## Legend
-
-In v4, legend settings live under the matching aesthetic's `.legend` argument — `fill.legend = tm_legend(...)`.
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                n = 5,
-                values = "brewer.blues"),
-              fill.legend = tm_legend(
-                title = "Dependency ratio",
-                position = tm_pos_in("left", "bottom"),
-                frame = TRUE)) +
-  tm_borders(fill_alpha = 0.5) +
-  tm_title("Distribution of Dependency Ratio by Planning Subzone")
-```
-
-## Compass, scale bar, and grid
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                n = 5,
-                values = "brewer.blues"),
-              fill.legend = tm_legend(title = "Dependency ratio")) +
-  tm_borders(fill_alpha = 0.5) +
-  tm_compass(type = "8star", size = 2) +           # compass
-  tm_scalebar() +                                   # scale bar
-  tm_grid(lwd = 0.1, alpha = 0.2) +                 # lat/long grid
-  tm_credits("Source: Planning Sub-zone boundary from URA\nand Population data from DOS",
-             position = c("left", "bottom"))        # data-source credit
-```
-
-A few naming things worth remembering here: `tm_compass(type = ...)` takes `"arrow"`, `"4star"`, `"8star"`, `"radar"`, or `"rose"`; v4 uses `tm_scalebar()` with no underscore (v3's `tm_scale_bar()` is deprecated); and `tm_title()` replaces v3's `tm_layout(main.title = ...)`.
-
-## Switching the overall style
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                n = 5,
-                values = "-brewer.greens")) +
-  tm_borders(fill_alpha = 0.5) +
-  tmap_style("natural")
+F <- Fest(preschool_ppp_jit)
+plot(F, main = "F-function")
 ```
 
 ```{r}
-# remember to switch back to the default style, or every map after this will be affected
-tmap_style("white")
+F.csr <- envelope(preschool_ppp_jit, Fest, nsim = 39)
+plot(F.csr, main = "F-function vs CSR envelope")
 ```
 
----
+### K-function — points within a given radius
 
-# Small Multiples
-
-## Method 1: pass multiple variables at once
-
-Passing a vector of variables to `fill` makes tmap generate one small map per variable automatically.
+This one actually got stuck the first time round. K-function checks every pair of points against every other, already heavier than G or F, and spatstat's default edge correction (isotropic) does extra geometry against the window boundary on top of that — with Singapore's mainland-plus-a-bunch-of-small-islands shape, it basically never finished. Switched to border correction instead: simpler, much faster, still a valid estimate.
 
 ```{r}
-tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = c("YOUNG", "AGED"),
-              fill.scale = tm_scale_intervals(
-                style = "equal",
-                n = 5,
-                values = "brewer.blues"),
-              fill.legend = tm_legend(
-                position = tm_pos_in("right", "bottom"))) +
-  tm_borders(fill_alpha = 0.5)
-```
-
-## Method 2: tmap_arrange() (each map fully independent)
-
-```{r}
-youngmap <- tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "YOUNG",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                values = "brewer.blues"),
-              fill.legend = tm_legend(
-                position = tm_pos_in("right", "bottom"),
-                item.height = 0.8)) +
-  tm_borders(fill_alpha = 0.5) +
-  tm_title("Distribution of young population")
-
-agedmap <- tm_shape(mpsz_pop2024) +
-  tm_polygons(fill = "AGED",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                values = "brewer.blues"),
-              fill.legend = tm_legend(
-                position = tm_pos_in("right", "bottom"),
-                item.height = 0.8)) +
-  tm_borders(fill_alpha = 0.5) +
-  tm_title("Distribution of aged population")
-
-tmap_arrange(youngmap, agedmap, asp = 1, ncol = 2)
-```
-
-## Method 3: tm_facets() (facet by a categorical column)
-
-One small map per region, based on `REGION_N`.
-
-```{r}
-tm_shape(mpsz_pop2024) +
-  tm_fill(fill = "DEPENDENCY",
-          fill.scale = tm_scale_intervals(
-            style = "quantile",
-            values = "brewer.blues")) +
-  tm_facets(by = "REGION_N",
-            nrow = 2, ncols = 3,
-            free.coords = TRUE,    # let each small map zoom to its own extent
-            drop.units = TRUE) +   # don't draw subzones that don't belong to that facet
-  tm_borders(fill_alpha = 0.5)
-```
-
-## Method 4: filter to a specific region
-
-`sf` objects work directly with `dplyr::filter()` — filter first, then hand the result to `tm_shape()`.
-
-```{r}
-mpsz_pop2024 %>%
-  filter(REGION_N == "CENTRAL REGION") %>%
-  tm_shape() +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                values = "brewer.greens"),
-              fill.legend = tm_legend(title = "Dependency ratio")) +
-  tm_borders(fill_alpha = 0.5) +
-  tm_title("Central Region: Dependency Ratio")
-```
-
----
-
-# Combining Maps with Statistical Charts
-
-## Attaching a boxplot next to the map
-
-`fill.chart`, new in v4, attaches a distribution chart directly next to the legend.
-
-```{r}
-mpsz_pop2024 %>%
-  filter(REGION_N == "CENTRAL REGION") %>%
-  tm_shape() +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                values = "brewer.greens"),
-              fill.legend = tm_legend(title = "Dependency ratio"),
-              fill.chart = tm_chart_box()) +   # add a boxplot
-  tm_borders() +
-  tm_layout(asp = 0.8)
-```
-
-(`tm_chart_box()` swaps out for `tm_chart_histogram()`, `tm_chart_donut()`, `tm_chart_violin()`, etc. if a different chart type is wanted.)
-
-## Flagging outliers
-
-The boxplot shows there are outliers, but not where they are on the map. `boxplot.stats()` finds them, then a red outline marks them.
-
-```{r}
-mpsz_selected <- mpsz_pop2024 %>%
-  filter(REGION_N == "CENTRAL REGION")
-
-stats        <- boxplot.stats(mpsz_selected$DEPENDENCY)  # the returned $out is the set of outliers
-outlier_vals <- stats$out
-outlier_sf   <- mpsz_selected[mpsz_selected$DEPENDENCY %in% outlier_vals, ]
-
-outlier_sf %>%
-  st_drop_geometry() %>%
-  select(SUBZONE_N, PLN_AREA_N, DEPENDENCY)
+K <- Kest(preschool_ppp_jit, correction = "border")
+plot(K, . - r ~ r, main = "K-function")
 ```
 
 ```{r}
-tm_shape(mpsz_selected) +
-  tm_polygons(fill = "DEPENDENCY",
-              fill.scale = tm_scale_intervals(
-                style = "quantile",
-                values = "brewer.blues"),
-              fill.legend = tm_legend(title = "Dependency ratio"),
-              fill.chart = tm_chart_box()) +
-  tm_borders(fill_alpha = 0.5) +
-  # stack a second layer: a red outline and label for the outlier subzones
-  tm_shape(outlier_sf) +
-  tm_borders(col = "red", lwd = 2) +
-  tm_text("SUBZONE_N", col = "red", size = 0.7) +
-  tm_layout(asp = 0.8)
+K.csr <- envelope(preschool_ppp_jit, Kest, nsim = 39, correction = "border")
+plot(K.csr, . - r ~ r, main = "K-function vs CSR envelope")
 ```
 
-Worth noting how the layering works here: `tm_shape()` can appear more than once in the same call, and each time it does, everything after it switches to that new data source. That's how the red outline layer above only applies to `outlier_sf` and not the whole map.
-
----
-
-# Interactive Maps
-
-Switching `tmap_mode()` to `"view"` turns the exact same code into a zoomable, clickable Leaflet map.
+### L-function — a rescaled, easier-to-read version of K
 
 ```{r}
-region_selected <- mpsz_pop2024 %>%
-  filter(REGION_N == "CENTRAL REGION")
-
-region_bbox <- st_bbox(region_selected)   # get the region's bounding box, used to set the initial view
-
-stats        <- boxplot.stats(region_selected$DEPENDENCY)
-outlier_vals <- stats$out
-outlier_sf   <- region_selected[region_selected$DEPENDENCY %in% outlier_vals, ]
+L <- Lest(preschool_ppp_jit, correction = "border")
+plot(L, . - r ~ r, main = "L-function")
 ```
 
 ```{r}
-tmap_mode("view")
-
-tm_shape(region_selected, bbox = region_bbox) +
-  tm_fill("DEPENDENCY",
-          id = "SUBZONE_N",              # name shown on hover
-          popup.vars = c(                # fields shown in the popup on click
-            "Name" = "SUBZONE_N",
-            "Dependency" = "DEPENDENCY")) +
-  tm_borders() +
-  tm_shape(outlier_sf) +
-  tm_borders(col = "red", lwd = 2)
+L.csr <- envelope(preschool_ppp_jit, Lest, nsim = 39, correction = "border")
+plot(L.csr, . - r ~ r, main = "L-function vs CSR envelope")
 ```
 
-## Restricting the zoom range
+## Reading the envelope plots
 
-`tm_view(set_zoom_limits = c(min, max))` stops viewers from zooming out to something unreadable, or in far enough that the map breaks.
+The grey band in each plot is the range you'd expect from 39 random simulations in the same window. Where the black (observed) line pokes above the band, points are clustering at that distance; where it dips below, they're more spread out than random; where it just sits inside the band, can't really tell the pattern apart from CSR at that scale.
 
-```{r}
-tm_shape(region_selected, bbox = region_bbox) +
-  tm_fill("DEPENDENCY",
-          id = "SUBZONE_N",
-          popup.vars = c(
-            "Name" = "SUBZONE_N",
-            "Dependency" = "DEPENDENCY")) +
-  tm_borders() +
-  tm_shape(outlier_sf) +
-  tm_borders(col = "red", lwd = 2) +
-  tm_view(set_zoom_limits = c(12, 14))
-```
+## Notes and open questions
 
-```{r}
-# important: always switch back to plot mode after an interactive map
-# otherwise every map after this becomes interactive, bloating the site and slowing rendering
-tmap_mode("plot")
-```
+This still isn't the textbook's actual dataset — it's Ex01's preschool and subzone files again, standing in for the childcare-centre data the chapter uses, and the study boundary is a dissolved subzone outline rather than the real coastline shapefile. Same substitution as before, just flagging it again here since it affects every result in this file.
 
-Every interactive map bundles Leaflet's JS/CSS into the page, which adds up fast — I kept it to just this one interactive map in the whole document and used static maps everywhere else so the site doesn't get too heavy.
-
----
-
-# Summary
-
-Most of what tripped me up this time was the tmap v3→v4 renaming — `fill` for polygon colour vs. `col` for lines, classification moved under `fill.scale = tm_scale_*()`, legends under `fill.legend = tm_legend()`. The classification method itself (quantile vs. equal vs. custom breaks) changes what the map actually tells the reader, so that's a real choice to make each time, not just whatever the default happens to be.
-
-On the data side: some data.gov.sg KML exports hide their attributes inside an HTML table in `Description` and need rvest to open up, though the GeoJSON I actually used here didn't need that. The population wrangling was really just `group_by()` + `summarise()` + `pivot_wider()`, grouping ages by column name rather than position so it doesn't quietly break if the underlying data changes shape. Two easy traps to leave for later: `left_join()` needs the sf object on the left or it silently degrades to a plain data frame, and switching `tmap_mode("view")` or `tmap_style()` means switching back before the next map, or it inherits the setting.
-
-## Data sources
-
-- Master Plan 2019 Subzone Boundary (No Sea): [data.gov.sg](https://data.gov.sg/)
-- Singapore Residents by Planning Area / Subzone, Age Group, Sex and Type of Dwelling, June 2024: [Department of Statistics Singapore](https://www.singstat.gov.sg/)
+Testing CSR against the whole island is a pretty blunt way to ask the question, too — preschools are obviously going to cluster wherever people actually live, so a chunk of what these tests are picking up is probably just population density, not anything specific to where a preschool gets built. Splitting this by planning area and re-running would be a better test of that, if there's time before this needs to be handed in.
