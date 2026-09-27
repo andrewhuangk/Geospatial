@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Kang Chih Huang">
-<meta name="dcterms.date" content="2026-09-19">
+<meta name="dcterms.date" content="2026-09-26">
 
-<title>Inclass Exercise 4 – Huang Kang-Chih | Geospatial</title>
+<title>Inclass Exercise 5 – Huang Kang-Chih | Geospatial</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -217,15 +217,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#get-started" id="toc-get-started" class="nav-link active" data-scroll-target="#get-started">Get started</a></li>
-  <li><a href="#import-data" id="toc-import-data" class="nav-link" data-scroll-target="#import-data">Import data</a></li>
-  <li><a href="#join" id="toc-join" class="nav-link" data-scroll-target="#join">Join</a></li>
-  <li><a href="#mapping-gdppc" id="toc-mapping-gdppc" class="nav-link" data-scroll-target="#mapping-gdppc">Mapping GDPPC</a></li>
-  <li><a href="#preparing-data-for-gwmodel" id="toc-preparing-data-for-gwmodel" class="nav-link" data-scroll-target="#preparing-data-for-gwmodel">Preparing data for GWmodel</a></li>
-  <li><a href="#determine-adaptive-bandwidth" id="toc-determine-adaptive-bandwidth" class="nav-link" data-scroll-target="#determine-adaptive-bandwidth">Determine adaptive bandwidth</a></li>
-  <li><a href="#geographically-weighted-summary-statistics" id="toc-geographically-weighted-summary-statistics" class="nav-link" data-scroll-target="#geographically-weighted-summary-statistics">Geographically weighted summary statistics</a></li>
-  <li><a href="#preparing-the-output-data" id="toc-preparing-the-output-data" class="nav-link" data-scroll-target="#preparing-the-output-data">Preparing the output data</a></li>
-  <li><a href="#visualising-geographically-weighted-summary-statistics" id="toc-visualising-geographically-weighted-summary-statistics" class="nav-link" data-scroll-target="#visualising-geographically-weighted-summary-statistics">Visualising geographically weighted summary statistics</a></li>
+  <li><a href="#getting-started" id="toc-getting-started" class="nav-link active" data-scroll-target="#getting-started">Getting started</a></li>
+  <li><a href="#importing-data" id="toc-importing-data" class="nav-link" data-scroll-target="#importing-data">Importing data</a></li>
+  <li><a href="#deriving-queens-contiguity-weights-sfdep-method" id="toc-deriving-queens-contiguity-weights-sfdep-method" class="nav-link" data-scroll-target="#deriving-queens-contiguity-weights-sfdep-method">Deriving Queen’s contiguity weights: sfdep method</a></li>
+  <li><a href="#computing-global-morans-i" id="toc-computing-global-morans-i" class="nav-link" data-scroll-target="#computing-global-morans-i">Computing Global Moran’s I</a></li>
+  <li><a href="#performing-global-morans-i-permutation-test" id="toc-performing-global-morans-i-permutation-test" class="nav-link" data-scroll-target="#performing-global-morans-i-permutation-test">Performing Global Moran’s I permutation test</a></li>
+  <li><a href="#computing-local-morans-i" id="toc-computing-local-morans-i" class="nav-link" data-scroll-target="#computing-local-morans-i">Computing local Moran’s I</a></li>
+  <li><a href="#visualising-local-morans-i" id="toc-visualising-local-morans-i" class="nav-link" data-scroll-target="#visualising-local-morans-i">Visualising local Moran’s I</a></li>
   </ul>
 </nav>
     </div>
@@ -234,7 +232,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Inclass Exercise 4</h1>
+<h1 class="title">Inclass Exercise 5</h1>
 </div>
 
 
@@ -251,14 +249,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 19, 2026</p>
+      <p class="date">September 26, 2026</p>
     </div>
   </div>
   
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 27, 2026</p>
+      <p class="date-modified">September 26, 2026</p>
     </div>
   </div>
     
@@ -269,19 +267,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="get-started" class="level2">
-<h2 class="anchored" data-anchor-id="get-started">Get started</h2>
+<section id="getting-started" class="level2">
+<h2 class="anchored" data-anchor-id="getting-started">Getting started</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(sf, sfdep, spdep, tmap, tidyverse, knitr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="import-data" class="level2">
-<h2 class="anchored" data-anchor-id="import-data">Import data</h2>
+<section id="importing-data" class="level2">
+<h2 class="anchored" data-anchor-id="importing-data">Importing data</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="at">dsn =</span> <span class="st">"data/geospatial"</span>, <span class="at">layer =</span> <span class="st">"Hunan"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `Hunan' from data source 
-  `C:\Users\User\Desktop\Geospatial\inclass_Ex\inclass week 4\data\geospatial' 
+  `C:\Users\User\Desktop\Geospatial\inclass_Ex\inclass week 5\data\geospatial' 
   using driver `ESRI Shapefile'
 Simple feature collection with 88 features and 7 fields
 Geometry type: POLYGON
@@ -291,113 +289,126 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>hunan2012 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/aspatial/Hunan_2012.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-</section>
-<section id="join" class="level2">
-<h2 class="anchored" data-anchor-id="join">Join</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>hunan <span class="ot">&lt;-</span> <span class="fu">left_join</span>(hunan, hunan2012) <span class="sc">%&gt;%</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(NAME_2, ID_3, NAME_3, County, GDPPC, Agri, Service)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">7</span>, <span class="dv">15</span>,<span class="dv">33</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="mapping-gdppc" class="level2">
-<h2 class="anchored" data-anchor-id="mapping-gdppc">Mapping GDPPC</h2>
+<section id="deriving-queens-contiguity-weights-sfdep-method" class="level2">
+<h2 class="anchored" data-anchor-id="deriving-queens-contiguity-weights-sfdep-method">Deriving Queen’s contiguity weights: sfdep method</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>basemap <span class="ot">&lt;-</span> <span class="fu">tm_shape</span>(hunan) <span class="sc">+</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>() <span class="sc">+</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_text</span>(<span class="st">"NAME_3"</span>, <span class="at">size =</span> <span class="fl">0.5</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>gdppc <span class="ot">&lt;-</span> <span class="fu">qtm</span>(hunan, <span class="st">"GDPPC"</span>) <span class="sc">+</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_arrange</span>(basemap, gdppc, <span class="at">asp =</span> <span class="dv">1</span>, <span class="at">ncol =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>wm_q <span class="ot">&lt;-</span> hunan <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nb =</span> <span class="fu">st_contiguity</span>(geometry),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">wt =</span> <span class="fu">st_weights</span>(nb, <span class="at">style =</span> <span class="st">"W"</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(wm_q<span class="sc">$</span>nb)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Neighbour list object:
+Number of regions: 88 
+Number of nonzero links: 448 
+Percentage nonzero weights: 5.785124 
+Average number of links: 5.090909 
+Link number distribution:
+
+ 1  2  3  4  5  6  7  8  9 11 
+ 2  2 12 16 24 14 11  4  2  1 
+2 least connected regions:
+30 65 with 1 link
+1 most connected region:
+85 with 11 links</code></pre>
+</div>
+</div>
+</section>
+<section id="computing-global-morans-i" class="level2">
+<h2 class="anchored" data-anchor-id="computing-global-morans-i">Computing Global Moran’s I</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>moranI <span class="ot">&lt;-</span> <span class="fu">global_moran</span>(wm_q<span class="sc">$</span>GDPPC, wm_q<span class="sc">$</span>nb, wm_q<span class="sc">$</span>wt)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(moranI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>List of 2
+ $ I: num 0.301
+ $ K: num 7.64</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">global_moran_test</span>(wm_q<span class="sc">$</span>GDPPC, wm_q<span class="sc">$</span>nb, wm_q<span class="sc">$</span>wt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Moran I test under randomisation
+
+data:  x  
+weights: listw    
+
+Moran I statistic standard deviate = 4.7351, p-value = 1.095e-06
+alternative hypothesis: greater
+sample estimates:
+Moran I statistic       Expectation          Variance 
+      0.300749970      -0.011494253       0.004348351 </code></pre>
+</div>
+</div>
+</section>
+<section id="performing-global-morans-i-permutation-test" class="level2">
+<h2 class="anchored" data-anchor-id="performing-global-morans-i-permutation-test">Performing Global Moran’s I permutation test</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">global_moran_perm</span>(wm_q<span class="sc">$</span>GDPPC, wm_q<span class="sc">$</span>nb, wm_q<span class="sc">$</span>wt, <span class="at">nsim =</span> <span class="dv">99</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Monte-Carlo simulation of Moran I
+
+data:  x 
+weights: listw  
+number of simulations + 1: 100 
+
+statistic = 0.30075, observed rank = 100, p-value &lt; 2.2e-16
+alternative hypothesis: two.sided</code></pre>
+</div>
+</div>
+</section>
+<section id="computing-local-morans-i" class="level2">
+<h2 class="anchored" data-anchor-id="computing-local-morans-i">Computing local Moran’s I</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>lisa <span class="ot">&lt;-</span> wm_q <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">local_moran =</span> <span class="fu">local_moran</span>(GDPPC, nb, wt, <span class="at">nsim =</span> <span class="dv">99</span>),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(local_moran)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="visualising-local-morans-i" class="level2">
+<h2 class="anchored" data-anchor-id="visualising-local-morans-i">Visualising local Moran’s I</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa) <span class="sc">+</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"ii"</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">style =</span> <span class="st">"fixed"</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">breaks =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">2</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">values =</span> <span class="st">"brewer.rd_bu"</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">title =</span> <span class="st">"Local Moran's I"</span>)) <span class="sc">+</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">fill_alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"local Moran's I of GDPPC"</span>) <span class="sc">+</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">legend.text.size =</span> <span class="fl">1.2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="inclass-week-4_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="inclass-week-5_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>
 </div>
-</section>
-<section id="preparing-data-for-gwmodel" class="level2">
-<h2 class="anchored" data-anchor-id="preparing-data-for-gwmodel">Preparing data for GWmodel</h2>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>hunan_sp <span class="ot">&lt;-</span> <span class="fu">as_Spatial</span>(hunan)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="determine-adaptive-bandwidth" class="level2">
-<h2 class="anchored" data-anchor-id="determine-adaptive-bandwidth">Determine adaptive bandwidth</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>bw_CV <span class="ot">&lt;-</span> <span class="fu">bw.gwr</span>(GDPPC <span class="sc">~</span> <span class="dv">1</span>,</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">data =</span> hunan_sp,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">approach =</span> <span class="st">"CV"</span>,</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">adaptive =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">kernel =</span> <span class="st">"bisquare"</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Adaptive bandwidth: 62 CV score: 15515442343 
-Adaptive bandwidth: 46 CV score: 14937956887 
-Adaptive bandwidth: 36 CV score: 14408561608 
-Adaptive bandwidth: 29 CV score: 14198527496 
-Adaptive bandwidth: 26 CV score: 13898800611 
-Adaptive bandwidth: 22 CV score: 13662299974 
-Adaptive bandwidth: 22 CV score: 13662299974 </code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bw_AIC <span class="ot">&lt;-</span> <span class="fu">bw.gwr</span>(GDPPC <span class="sc">~</span> <span class="dv">1</span>,</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">data =</span> hunan_sp,</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">approach =</span> <span class="st">"AIC"</span>,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">adaptive =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">kernel =</span> <span class="st">"bisquare"</span>,</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Adaptive bandwidth (number of nearest neighbours): 62 AICc value: 1923.156 
-Adaptive bandwidth (number of nearest neighbours): 46 AICc value: 1920.469 
-Adaptive bandwidth (number of nearest neighbours): 36 AICc value: 1917.324 
-Adaptive bandwidth (number of nearest neighbours): 29 AICc value: 1916.661 
-Adaptive bandwidth (number of nearest neighbours): 26 AICc value: 1914.897 
-Adaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045 
-Adaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045 </code></pre>
-</div>
-</div>
-</section>
-<section id="geographically-weighted-summary-statistics" class="level2">
-<h2 class="anchored" data-anchor-id="geographically-weighted-summary-statistics">Geographically weighted summary statistics</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>gwstat <span class="ot">&lt;-</span> <span class="fu">gwss</span>(<span class="at">data =</span> hunan_sp,</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">vars =</span> <span class="st">"GDPPC"</span>,</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">bw =</span> bw_AIC,</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">kernel =</span> <span class="st">"bisquare"</span>,</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">adaptive =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">longlat =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="preparing-the-output-data" class="level2">
-<h2 class="anchored" data-anchor-id="preparing-the-output-data">Preparing the output data</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>gwstat_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(gwstat<span class="sc">$</span>SDF)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>hunan_gstat <span class="ot">&lt;-</span> <span class="fu">cbind</span>(hunan, gwstat_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="visualising-geographically-weighted-summary-statistics" class="level2">
-<h2 class="anchored" data-anchor-id="visualising-geographically-weighted-summary-statistics">Visualising geographically weighted summary statistics</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(hunan_gstat) <span class="sc">+</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"GDPPC_LM"</span>,</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.scale =</span> <span class="fu">tm_scale_intervals</span>(</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">style =</span> <span class="st">"quantile"</span>,</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">n =</span> <span class="dv">5</span>,</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">values =</span> <span class="st">"brewer.blues"</span>),</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">fill.legend =</span> <span class="fu">tm_legend</span>(</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">title =</span> <span class="st">"local Mean"</span>)) <span class="sc">+</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">fill_alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"Distribution of geographically wieghted mean"</span>) <span class="sc">+</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">legend.position =</span> <span class="fu">c</span>(<span class="st">"left"</span>, <span class="st">"bottom"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tmap_mode</span>(<span class="st">"plot"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tm_shape</span>(lisa) <span class="sc">+</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_polygons</span>(<span class="at">fill =</span> <span class="st">"p_ii_sim"</span>) <span class="sc">+</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_borders</span>(<span class="at">fill_alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_title</span>(<span class="st">"p-value of local Moran's I"</span>) <span class="sc">+</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_layout</span>(<span class="at">legend.title.size =</span> <span class="fl">1.5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="inclass-week-4_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="960"></p>
+<p><img src="inclass-week-5_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="960"></p>
 </figure>
 </div>
 </div>

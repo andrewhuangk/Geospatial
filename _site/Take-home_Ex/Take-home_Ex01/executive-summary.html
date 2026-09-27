@@ -52,6 +52,7 @@
     }
     .reveal .slide:not(.center) {
       height: 100%;
+      overflow-y: auto;
     }
     .reveal .slide.scrollable {
       overflow-y: auto;
@@ -155,7 +156,7 @@ Kang-Chih Huang
 <li>Does the cluster’s location change with time, month, or weather?</li>
 </ul>
 <div style="text-align:center;">
-<p><img src="es_images/fig-motivation.png" style="width:80%;"></p>
+<p><img src="es_images/fig-motivation.png" style="max-height:48vh; width:auto; max-width:80%;"></p>
 </div>
 </section>
 <section id="study-area-data" class="slide level2">
@@ -167,16 +168,16 @@ Kang-Chih Huang
 <li>Projected to EPSG:32647 (UTM 47N, metres)</li>
 </ul>
 <div style="text-align:center;">
-<p><img src="es_images/fig-study-area.png" style="width:70%;"></p>
+<p><img src="es_images/fig-study-area.png" style="max-height:48vh; width:auto; max-width:70%;"></p>
 </div>
 </section>
 <section id="methodology" class="slide level2">
 <h2>Methodology</h2>
 <ul>
-<li>KDE — where is intensity highest</li>
-<li>G / F / K / L + Clark-Evans — is the clustering statistically real</li>
-<li>STKDE — does the hotspot move over time</li>
-<li>segregation.test() — is a day/night or weather split really different</li>
+<li>KDE: where is intensity highest</li>
+<li>G / F / K / L + Clark-Evans: is the clustering statistically real</li>
+<li>STKDE: does the hotspot move over time</li>
+<li>segregation.test(): is a day/night or weather split really different</li>
 </ul>
 </section>
 <section id="first-order-analysis-where" class="slide level2">
@@ -187,7 +188,7 @@ Kang-Chih Huang
 <li>Intensity follows the road network, not spread evenly</li>
 </ul>
 <div style="text-align:center;">
-<p><img src="es_images/fig-first-order.png" style="width:70%;"></p>
+<p><img src="es_images/fig-first-order.png" style="max-height:48vh; width:auto; max-width:70%;"></p>
 </div>
 </section>
 <section id="second-order-analysis-is-it-real" class="slide level2">
@@ -198,7 +199,7 @@ Kang-Chih Huang
 <li>Clustering holds from the shortest to the longest distances tested</li>
 </ul>
 <div style="text-align:center;">
-<p><img src="es_images/fig-second-order.png" style="width:55%;"></p>
+<p><img src="es_images/fig-second-order.png" style="max-height:48vh; width:auto; max-width:55%;"></p>
 </div>
 </section>
 <section id="spatio-temporal-analysis-the-hotspot-moves" class="slide level2">
@@ -208,7 +209,7 @@ Kang-Chih Huang
 <li>By month: same location all year, but intensity jumps October–December</li>
 </ul>
 <div style="text-align:center;">
-<p><img src="es_images/fig-stkde.png" style="width:100%;"></p>
+<p><img src="es_images/fig-stkde.png" style="max-height:48vh; width:auto; max-width:100%;"></p>
 </div>
 </section>
 <section id="day-vs.-night-weekday-vs.-weekend" class="slide level2">
@@ -218,7 +219,7 @@ Kang-Chih Huang
 <li>Weekday vs.&nbsp;weekend: same locations, only volume differs (p = 0.34; 2,549 vs.&nbsp;1,041)</li>
 </ul>
 <div style="text-align:center;">
-<p><img src="es_images/fig-day-night.png" style="width:90%;"></p>
+<p><img src="es_images/fig-day-night.png" style="max-height:48vh; width:auto; max-width:90%;"></p>
 </div>
 </section>
 <section id="value-added-does-weather-matter" class="slide level2">
@@ -229,13 +230,13 @@ Kang-Chih Huang
 <li>Rainy-weather accidents concentrate in the east-central area, not just a smaller version of the usual hotspot</li>
 </ul>
 <div style="text-align:center;">
-<p><img src="es_images/fig-weather.png" style="width:90%;"></p>
+<p><img src="es_images/fig-weather.png" style="max-height:48vh; width:auto; max-width:90%;"></p>
 </div>
 </section>
 <section id="public-safety-implications" class="slide level2">
 <h2>Public Safety Implications</h2>
 <ul>
-<li>Concentrate enforcement at the central-eastern interchange — the hotspot every analysis points to</li>
+<li>Put more enforcement at the central-eastern interchange, since every analysis keeps pointing back to it</li>
 <li>Shift patrol locations between day and night, not just add more patrols</li>
 <li>Check drainage and signage at the east-central cluster before rainy season</li>
 <li>Plan for higher, more concentrated demand October–December</li>
@@ -249,7 +250,7 @@ Kang-Chih Huang
 <li>321 duplicate coordinates jittered to fix a statistical issue</li>
 <li>Day/night split is a fixed clock boundary, not actual daylight</li>
 </ul>
-<p><strong>Conclusion:</strong> 2022 BMR accidents cluster along the road network, the clustering is statistically real, and where it clusters shifts by time of day, month, and weather — not just how many accidents happen.</p>
+<p><strong>Conclusion:</strong> 2022 BMR accidents cluster along the road network. The clustering is statistically real, and where it clusters shifts by time of day, month, and weather, not just how many accidents happen.</p>
 
 
 </section>

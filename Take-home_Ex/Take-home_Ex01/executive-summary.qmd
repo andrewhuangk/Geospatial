@@ -10,6 +10,7 @@ format:
     footer: "ISSS626 Take-home Exercise 1"
     transition: fade
     theme: default
+    scrollable: true
 ---
 
 ## Where this analysis looks
@@ -19,7 +20,7 @@ format:
 - Does the cluster's location change with time, month, or weather?
 
 <div style="text-align:center;">
-<img src="es_images/fig-motivation.png" style="width:80%;">
+<img src="es_images/fig-motivation.png" style="max-height:48vh; width:auto; max-width:80%;">
 </div>
 
 ## Study Area & Data
@@ -30,15 +31,15 @@ format:
 - Projected to EPSG:32647 (UTM 47N, metres)
 
 <div style="text-align:center;">
-<img src="es_images/fig-study-area.png" style="width:70%;">
+<img src="es_images/fig-study-area.png" style="max-height:48vh; width:auto; max-width:70%;">
 </div>
 
 ## Methodology
 
-- KDE — where is intensity highest
-- G / F / K / L + Clark-Evans — is the clustering statistically real
-- STKDE — does the hotspot move over time
-- segregation.test() — is a day/night or weather split really different
+- KDE: where is intensity highest
+- G / F / K / L + Clark-Evans: is the clustering statistically real
+- STKDE: does the hotspot move over time
+- segregation.test(): is a day/night or weather split really different
 
 ## First-Order Analysis: Where
 
@@ -47,7 +48,7 @@ format:
 - Intensity follows the road network, not spread evenly
 
 <div style="text-align:center;">
-<img src="es_images/fig-first-order.png" style="width:70%;">
+<img src="es_images/fig-first-order.png" style="max-height:48vh; width:auto; max-width:70%;">
 </div>
 
 ## Second-Order Analysis: Is It Real?
@@ -57,7 +58,7 @@ format:
 - Clustering holds from the shortest to the longest distances tested
 
 <div style="text-align:center;">
-<img src="es_images/fig-second-order.png" style="width:55%;">
+<img src="es_images/fig-second-order.png" style="max-height:48vh; width:auto; max-width:55%;">
 </div>
 
 ## Spatio-Temporal Analysis: The Hotspot Moves
@@ -66,7 +67,7 @@ format:
 - By month: same location all year, but intensity jumps October–December
 
 <div style="text-align:center;">
-<img src="es_images/fig-stkde.png" style="width:100%;">
+<img src="es_images/fig-stkde.png" style="max-height:48vh; width:auto; max-width:100%;">
 </div>
 
 ## Day vs. Night, Weekday vs. Weekend
@@ -75,7 +76,7 @@ format:
 - Weekday vs. weekend: same locations, only volume differs (p = 0.34; 2,549 vs. 1,041)
 
 <div style="text-align:center;">
-<img src="es_images/fig-day-night.png" style="width:90%;">
+<img src="es_images/fig-day-night.png" style="max-height:48vh; width:auto; max-width:90%;">
 </div>
 
 ## Value-Added: Does Weather Matter?
@@ -85,12 +86,12 @@ format:
 - Rainy-weather accidents concentrate in the east-central area, not just a smaller version of the usual hotspot
 
 <div style="text-align:center;">
-<img src="es_images/fig-weather.png" style="width:90%;">
+<img src="es_images/fig-weather.png" style="max-height:48vh; width:auto; max-width:90%;">
 </div>
 
 ## Public Safety Implications
 
-- Concentrate enforcement at the central-eastern interchange — the hotspot every analysis points to
+- Put more enforcement at the central-eastern interchange, since every analysis keeps pointing back to it
 - Shift patrol locations between day and night, not just add more patrols
 - Check drainage and signage at the east-central cluster before rainy season
 - Plan for higher, more concentrated demand October–December
@@ -102,4 +103,4 @@ format:
 - 321 duplicate coordinates jittered to fix a statistical issue
 - Day/night split is a fixed clock boundary, not actual daylight
 
-**Conclusion:** 2022 BMR accidents cluster along the road network, the clustering is statistically real, and where it clusters shifts by time of day, month, and weather — not just how many accidents happen.
+**Conclusion:** 2022 BMR accidents cluster along the road network. The clustering is statistically real, and where it clusters shifts by time of day, month, and weather, not just how many accidents happen.

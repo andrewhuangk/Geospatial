@@ -240,10 +240,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#second-order-spatial-point-pattern-analysis-csr-testing" id="toc-second-order-spatial-point-pattern-analysis-csr-testing" class="nav-link" data-scroll-target="#second-order-spatial-point-pattern-analysis-csr-testing"><span class="header-section-number">6</span> Second-Order Spatial Point Pattern Analysis (CSR Testing)</a>
   <ul class="collapse">
-  <li><a href="#g-function-nearest-neighbour-distances" id="toc-g-function-nearest-neighbour-distances" class="nav-link" data-scroll-target="#g-function-nearest-neighbour-distances"><span class="header-section-number">6.1</span> G function — nearest-neighbour distances</a></li>
-  <li><a href="#f-function-empty-space-function" id="toc-f-function-empty-space-function" class="nav-link" data-scroll-target="#f-function-empty-space-function"><span class="header-section-number">6.2</span> F function — empty-space function</a></li>
-  <li><a href="#k-function-ripleys-k" id="toc-k-function-ripleys-k" class="nav-link" data-scroll-target="#k-function-ripleys-k"><span class="header-section-number">6.3</span> K function — Ripley’s K</a></li>
-  <li><a href="#l-function-variance-stabilised-k" id="toc-l-function-variance-stabilised-k" class="nav-link" data-scroll-target="#l-function-variance-stabilised-k"><span class="header-section-number">6.4</span> L function — variance-stabilised K</a></li>
+  <li><a href="#g-function-nearest-neighbour-distances" id="toc-g-function-nearest-neighbour-distances" class="nav-link" data-scroll-target="#g-function-nearest-neighbour-distances"><span class="header-section-number">6.1</span> G function: nearest-neighbour distances</a></li>
+  <li><a href="#f-function-empty-space-function" id="toc-f-function-empty-space-function" class="nav-link" data-scroll-target="#f-function-empty-space-function"><span class="header-section-number">6.2</span> F function: empty-space function</a></li>
+  <li><a href="#k-function-ripleys-k" id="toc-k-function-ripleys-k" class="nav-link" data-scroll-target="#k-function-ripleys-k"><span class="header-section-number">6.3</span> K function: Ripley’s K</a></li>
+  <li><a href="#l-function-variance-stabilised-k" id="toc-l-function-variance-stabilised-k" class="nav-link" data-scroll-target="#l-function-variance-stabilised-k"><span class="header-section-number">6.4</span> L function: variance-stabilised K</a></li>
   <li><a href="#clark-evans-test" id="toc-clark-evans-test" class="nav-link" data-scroll-target="#clark-evans-test"><span class="header-section-number">6.5</span> Clark-Evans test</a></li>
   <li><a href="#interpretation-1" id="toc-interpretation-1" class="nav-link" data-scroll-target="#interpretation-1"><span class="header-section-number">6.6</span> Interpretation</a></li>
   </ul></li>
@@ -264,7 +264,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#interpretation-2" id="toc-interpretation-2" class="nav-link" data-scroll-target="#interpretation-2"><span class="header-section-number">7.4</span> Interpretation</a></li>
   </ul></li>
-  <li><a href="#value-added-analysis-does-weather-affect-where-accidents-cluster" id="toc-value-added-analysis-does-weather-affect-where-accidents-cluster" class="nav-link" data-scroll-target="#value-added-analysis-does-weather-affect-where-accidents-cluster"><span class="header-section-number">8</span> Value-Added Analysis: Does Weather Affect Where Accidents Cluster?</a>
+  <li><a href="#weathers-effect-on-where-accidents-cluster" id="toc-weathers-effect-on-where-accidents-cluster" class="nav-link" data-scroll-target="#weathers-effect-on-where-accidents-cluster"><span class="header-section-number">8</span> Weather’s Effect on Where Accidents Cluster</a>
   <ul class="collapse">
   <li><a href="#kde-by-weather-condition" id="toc-kde-by-weather-condition" class="nav-link" data-scroll-target="#kde-by-weather-condition"><span class="header-section-number">8.1</span> KDE by weather condition</a></li>
   <li><a href="#formal-test" id="toc-formal-test" class="nav-link" data-scroll-target="#formal-test"><span class="header-section-number">8.2</span> Formal test</a></li>
@@ -311,7 +311,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">September 24, 2026</p>
+      <p class="date-modified">September 27, 2026</p>
     </div>
   </div>
     
@@ -326,12 +326,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
 <p>The brief has three required parts plus one open-ended one:</p>
 <ol type="1">
-<li><strong>First-order analysis</strong> — kernel density estimation (KDE) to map accident hotspots across the study area.</li>
-<li><strong>Second-order analysis</strong> — G, F, K and L functions with Monte Carlo envelopes to test whether the clustering is statistically real (i.e.&nbsp;not what we’d expect under complete spatial randomness, CSR).</li>
-<li><strong>Spatio-temporal analysis</strong> — the dedicated technique here is spatio-temporal KDE (STKDE) via the <code>sparr</code> package, the method taught in <a href="https://r4gdsa.netlify.app/chap06">Chapter 6 of the course’s R4GDSA reference</a> (that chapter demonstrates it on Indonesian forest-fire data; here it’s applied to accidents). On top of that I also split the pattern into discrete time periods (day/night, weekday/weekend) and run a formal Monte Carlo test for whether the spatial pattern itself differs across those splits.</li>
-<li><strong>Value-added analysis</strong> — my own extension, using one of the extra attribute columns the dataset provides (<code>weather_condition</code>, <code>vehicle_type</code>, <code>presumed_cause</code>) to dig one level deeper.</li>
+<li><strong>First-order analysis</strong>: kernel density estimation (KDE) to map accident hotspots across the study area.</li>
+<li><strong>Second-order analysis</strong>: G, F, K and L functions with Monte Carlo envelopes to test whether the clustering is statistically real (i.e.&nbsp;not what we’d expect under complete spatial randomness, CSR).</li>
+<li><strong>Spatio-temporal analysis</strong>: the dedicated technique here is spatio-temporal KDE (STKDE) via the <code>sparr</code> package, the method taught in <a href="https://r4gdsa.netlify.app/chap06">Chapter 6 of the course’s R4GDSA reference</a> (that chapter demonstrates it on Indonesian forest-fire data; here it’s applied to accidents). On top of that I also split the pattern into discrete time periods (day/night, weekday/weekend) and run a formal Monte Carlo test for whether the spatial pattern itself differs across those splits.</li>
+<li><strong>Value-added analysis</strong>: my own extension, using one of the extra attribute columns the dataset provides (<code>weather_condition</code>, <code>vehicle_type</code>, <code>presumed_cause</code>) to dig one level deeper.</li>
 </ol>
-<p><strong>Study area and scope.</strong> The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the <strong>Bangkok Metropolitan Region (BMR)</strong> — Bangkok plus the five surrounding provinces (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon) that are conventionally grouped with it — restricted to <strong>2022</strong>. Filtering down to that scope is the first thing the data-preparation section below does.</p>
+<p><strong>Study area and scope.</strong> The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the <strong>Bangkok Metropolitan Region (BMR)</strong>, Bangkok plus the five surrounding provinces conventionally grouped with it (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon), restricted to <strong>2022</strong>. Filtering down to that scope is the first thing the data-preparation section below does.</p>
 <hr>
 </section>
 <section id="getting-started" class="level1" data-number="2">
@@ -343,12 +343,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <ul>
 <li><strong>sf</strong>: reading/writing vector geospatial data and all the geometric operations (projection, filtering, union).</li>
-<li><strong>spatstat</strong>: everything point-pattern — <code>ppp</code>, <code>owin</code>, <code>density()</code>, <code>envelope()</code>, <code>Gest</code>/<code>Fest</code>/<code>Kest</code>/<code>Lest</code>, <code>clarkevans.test()</code>, <code>segregation.test()</code>.</li>
-<li><strong>sparr</strong>: <code>spattemp.density()</code> — spatio-temporal kernel density estimation, the technique from Chapter 6.</li>
+<li><strong>spatstat</strong>: everything point-pattern (<code>ppp</code>, <code>owin</code>, <code>density()</code>, <code>envelope()</code>, <code>Gest</code>/<code>Fest</code>/<code>Kest</code>/<code>Lest</code>, <code>clarkevans.test()</code>, <code>segregation.test()</code>).</li>
+<li><strong>sparr</strong>: <code>spattemp.density()</code>, spatio-temporal kernel density estimation, the technique from Chapter 6.</li>
 <li><strong>tidyverse</strong> / <strong>lubridate</strong>: data wrangling and date-time handling.</li>
 <li><strong>knitr</strong> / <strong>kableExtra</strong>: tidy tables.</li>
 </ul>
-<p>I’m not loading <code>tmap</code> here — KDE surfaces and the G/F/K/L plots are <code>spatstat</code> objects (<code>im</code>, <code>fv</code>), so <code>spatstat</code>’s own <code>plot()</code> methods are the standard way to look at them. <code>ggplot2</code> + <code>sf</code> covers the handful of ordinary vector maps/charts I need elsewhere in this document.</p>
+<p>I’m not loading <code>tmap</code> here: KDE surfaces and the G/F/K/L plots are <code>spatstat</code> objects (<code>im</code>, <code>fv</code>), so <code>spatstat</code>’s own <code>plot()</code> methods are the standard way to look at them. <code>ggplot2</code> + <code>sf</code> covers the handful of ordinary vector maps/charts I need elsewhere in this document.</p>
 </section>
 <section id="data-sources" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="data-sources"><span class="header-section-number">2.2</span> Data sources</h2>
@@ -369,7 +369,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td>Thailand ADM1 (province) boundaries</td>
 <td>Geospatial (polygon)</td>
-<td><a href="https://www.geoboundaries.org/">geoBoundaries</a> — <code>geoBoundaries-THA-ADM1</code></td>
+<td><a href="https://www.geoboundaries.org/">geoBoundaries</a>, <code>geoBoundaries-THA-ADM1</code></td>
 </tr>
 </tbody>
 </table>
@@ -390,7 +390,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1 data-number="3"><span class="header-section-number">3</span> Importing and Preparing the Data</h1>
 <section id="geospatial-the-bangkok-metropolitan-region-boundary" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="geospatial-the-bangkok-metropolitan-region-boundary"><span class="header-section-number">3.1</span> Geospatial: the Bangkok Metropolitan Region boundary</h2>
-<p>The accident CSV has no polygon layer of its own — it’s just latitude/longitude per row — so I need an administrative boundary from elsewhere to (a) define the BMR study area and clip out-of-scope points, and (b) give <code>spatstat</code> an observation window (<code>owin</code>) to compute intensity and edge corrections against. I used geoBoundaries’ Thailand province-level (ADM1) layer.</p>
+<p>The accident CSV has no polygon layer of its own (it’s just latitude/longitude per row), so I need an administrative boundary from elsewhere to (a) define the BMR study area and clip out-of-scope points, and (b) give <code>spatstat</code> an observation window (<code>owin</code>) to compute intensity and edge corrections against. I used geoBoundaries’ Thailand province-level (ADM1) layer.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>adm1 <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"data/geospatial/tha_adm1.geojson"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">st_crs</span>(adm1)<span class="sc">$</span>input</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -402,7 +402,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] 77</code></pre>
 </div>
 </div>
-<p>77 provinces nationwide, in WGS84 (EPSG:4326). BMR isn’t an official administrative unit in this file — it’s Bangkok plus five neighbouring provinces that get treated as one metro area by convention — so I filter by name:</p>
+<p>77 provinces nationwide, in WGS84 (EPSG:4326). BMR isn’t an official administrative unit in this file (it’s Bangkok plus five neighbouring provinces that get treated as one metro area by convention), so I filter by name:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bmr_names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Bangkok"</span>, <span class="st">"Nonthaburi Province"</span>, <span class="st">"Pathum Thani Province"</span>,</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Samut Prakan Province"</span>, <span class="st">"Nakhon Pathom Province"</span>, <span class="st">"Samut Sakhon Province"</span>)</span>
@@ -416,8 +416,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] 6</code></pre>
 </div>
 </div>
-<p><code>EPSG:32647</code> is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok — a projected CRS with metre units, needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently distort every one of those.</p>
-<p>I also build a single dissolved polygon (<code>bmr_union</code>) — the six provinces merged into one shape with the internal borders removed. This is what becomes the <code>spatstat</code> observation window; point-pattern statistics don’t care about which province a point falls in, only whether it falls inside <em>the</em> window.</p>
+<p><code>EPSG:32647</code> is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok, a projected CRS with metre units needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently distort every one of those.</p>
+<p>I also build a single dissolved polygon (<code>bmr_union</code>): the six provinces merged into one shape with the internal borders removed. This is what becomes the <code>spatstat</code> observation window; point-pattern statistics don’t care about which province a point falls in, only whether it falls inside <em>the</em> window.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>bmr_union <span class="ot">&lt;-</span> <span class="fu">st_union</span>(bmr) <span class="sc">|&gt;</span> <span class="fu">st_sf</span>() <span class="sc">|&gt;</span> <span class="fu">st_make_valid</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -450,7 +450,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] 81735</code></pre>
 </div>
 </div>
-<p><strong>Gotcha worth flagging:</strong> the first time I read this without specifying <code>col_types</code>, <code>read_csv()</code> auto-guessed <code>incident_datetime</code> as a datetime column already — which sounds convenient, but then calling <code>lubridate::ymd_hms()</code> on it (to be safe/explicit) silently failed on 118 rows, because <code>ymd_hms()</code> expects a <em>character</em> string and readr’s auto-parsed <code>POSIXct</code> prints with a <code>UTC</code> suffix and sometimes drops the time part in its internal string form, which doesn’t match the <code>ymd_hms</code> pattern. The fix is to pin the column type explicitly at read time as above (<code>col_datetime(format = "%Y-%m-%d %H:%M:%S")</code>), which then needs no further parsing at all. I only caught this because my BMR/2022 filter count came out 3 rows short of a plain Python/pandas cross-check.</p>
+<p><strong>Gotcha worth flagging:</strong> the first time I read this without specifying <code>col_types</code>, <code>read_csv()</code> auto-guessed <code>incident_datetime</code> as a datetime column already, which sounds convenient, but then calling <code>lubridate::ymd_hms()</code> on it (to be safe/explicit) silently failed on 118 rows, because <code>ymd_hms()</code> expects a <em>character</em> string and readr’s auto-parsed <code>POSIXct</code> prints with a <code>UTC</code> suffix and sometimes drops the time part in its internal string form, which doesn’t match the <code>ymd_hms</code> pattern. The fix is to pin the column type explicitly at read time as above (<code>col_datetime(format = "%Y-%m-%d %H:%M:%S")</code>), which then needs no further parsing at all. I only caught this because my BMR/2022 filter count came out 3 rows short of a plain Python/pandas cross-check.</p>
 </section>
 <section id="filtering-to-the-bangkok-metropolitan-region-2022" class="level2" data-number="3.3">
 <h2 data-number="3.3" class="anchored" data-anchor-id="filtering-to-the-bangkok-metropolitan-region-2022"><span class="header-section-number">3.3</span> Filtering to the Bangkok Metropolitan Region, 2022</h2>
@@ -473,7 +473,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] 189</code></pre>
 </div>
 </div>
-<p>21,032 accidents nationwide in 2022, of which 3,782 are in the six BMR provinces. 189 of those (5%) have no latitude/longitude — I drop them, since a point pattern needs a location for every point:</p>
+<p>21,032 accidents nationwide in 2022, of which 3,782 are in the six BMR provinces. 189 of those (5%) have no latitude/longitude; I drop them, since a point pattern needs a location for every point:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>acc_bmr <span class="ot">&lt;-</span> acc_bmr_all <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(latitude), <span class="sc">!</span><span class="fu">is.na</span>(longitude))</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(acc_bmr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -489,7 +489,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>acc_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(acc_bmr, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>), <span class="at">crs =</span> <span class="dv">4326</span>) <span class="sc">|&gt;</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="dv">32647</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary sliver) — <code>st_filter()</code> keeps only the ones genuinely inside the window <code>spatstat</code> will use:</p>
+<p>A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary sliver). <code>st_filter()</code> keeps only the ones genuinely inside the window <code>spatstat</code> will use:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>acc_sf <span class="ot">&lt;-</span> <span class="fu">st_filter</span>(acc_sf, bmr_union)</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(acc_sf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -497,7 +497,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] 3590</code></pre>
 </div>
 </div>
-<p>3,590 points make it through. Now the <code>spatstat</code> conversion — an <code>owin</code> from the polygon, then a <code>ppp</code> (planar point pattern) built from the point coordinates against that window:</p>
+<p>3,590 points make it through. Now the <code>spatstat</code> conversion: an <code>owin</code> from the polygon, then a <code>ppp</code> (planar point pattern) built from the point coordinates against that window:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>owin_bmr <span class="ot">&lt;-</span> <span class="fu">as.owin</span>(<span class="fu">st_geometry</span>(bmr_union))</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>coords <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(acc_sf)</span>
@@ -515,7 +515,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 <pre><code>[1] 321</code></pre>
 </div>
 </div>
-<p><strong>321 exact duplicate coordinates</strong> — different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren’t a problem for KDE, but they <em>are</em> a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two “different” points is a degenerate case rather than a genuine measurement. The standard fix is <code>rjitter()</code> — nudge every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:</p>
+<p><strong>321 exact duplicate coordinates</strong>: different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren’t a problem for KDE, but they <em>are</em> a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two “different” points is a degenerate case rather than a genuine measurement. The standard fix is <code>rjitter()</code>, which nudges every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">415</span>)</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>acc_ppp <span class="ot">&lt;-</span> <span class="fu">rjitter</span>(acc_ppp, <span class="at">retry =</span> <span class="cn">TRUE</span>, <span class="at">nsim =</span> <span class="dv">1</span>, <span class="at">radius =</span> <span class="dv">5</span>)</span>
@@ -598,7 +598,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </div>
 </div>
 </div>
-<p>Even at this raw-point stage the pattern is obviously not random — points trace out the road network rather than filling space evenly, which is exactly what the first-order and second-order analyses below go on to quantify.</p>
+<p>Even at this raw-point stage the pattern is obviously not random: points trace out the road network rather than filling space evenly, which is exactly what the first-order and second-order analyses below go on to quantify.</p>
 <hr>
 </section>
 <section id="first-order-spatial-point-pattern-analysis-kde" class="level1" data-number="5">
@@ -606,7 +606,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 <p>First-order analysis asks: <strong>where is accident intensity highest?</strong> Kernel density estimation smooths the discrete point pattern into a continuous surface, so instead of 3,590 dots I get a map of “accidents per unit area” that’s readable at a glance.</p>
 <section id="choosing-a-bandwidth" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="choosing-a-bandwidth"><span class="header-section-number">5.1</span> Choosing a bandwidth</h2>
-<p>The bandwidth (<code>sigma</code>) controls how much smoothing happens — too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one diffuse blob. <code>spatstat</code> offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:</p>
+<p>The bandwidth (<code>sigma</code>) controls how much smoothing happens: too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one diffuse blob. <code>spatstat</code> offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.diggle</span>(acc_ppp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -619,7 +619,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 786.232 </code></pre>
 </div>
 </div>
-<p><code>bw.diggle()</code> — usually a solid default — comes back at essentially <strong>23 metres</strong>, which is far too small to be useful over an area the size of the BMR. That’s the duplicate/near-duplicate points again: <code>bw.diggle()</code> is tuned by minimising a criterion sensitive to the very shortest inter-point distances, so a cluster of points sitting almost on top of each other drags it toward zero. <code>bw.ppl()</code> — Baddeley’s likelihood cross-validation selector, generally recommended over <code>bw.diggle()</code> specifically <em>when the pattern is clustered</em> (Baddeley, Rubak &amp; Turner, <em>Spatial Point Patterns</em>, 2015) — comes back at a much more sensible <strong>~750 m</strong>, and gives the same answer whether duplicates are jittered out first or not. I used <code>bw.ppl()</code> throughout.</p>
+<p><code>bw.diggle()</code> (usually a solid default) comes back at essentially <strong>23 metres</strong>, which is far too small to be useful over an area the size of the BMR. That’s the duplicate/near-duplicate points again: <code>bw.diggle()</code> is tuned by minimising a criterion sensitive to the very shortest inter-point distances, so a cluster of points sitting almost on top of each other drags it toward zero. <code>bw.ppl()</code>, Baddeley’s likelihood cross-validation selector (generally recommended over <code>bw.diggle()</code> specifically <em>when the pattern is clustered</em>: Baddeley, Rubak &amp; Turner, <em>Spatial Point Patterns</em>, 2015), comes back at a much more sensible <strong>~750 m</strong>, and gives the same answer whether duplicates are jittered out first or not. I used <code>bw.ppl()</code> throughout.</p>
 </section>
 <section id="fixed-bandwidth-kde" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="fixed-bandwidth-kde"><span class="header-section-number">5.2</span> Fixed-bandwidth KDE</h2>
@@ -660,8 +660,8 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </section>
 <section id="second-order-spatial-point-pattern-analysis-csr-testing" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> Second-Order Spatial Point Pattern Analysis (CSR Testing)</h1>
-<p>First-order analysis shows <em>where</em> intensity is high, but it doesn’t prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern’s G, F, K and L functions against what complete spatial randomness (CSR — points scattered independently at random, i.e.&nbsp;a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.</p>
-<p>For all four functions I use <code>nsim = 99</code> simulated CSR patterns, which gives a 1/(99+1) = <strong>1% two-sided significance level</strong> for the envelope test — the standard convention.</p>
+<p>First-order analysis shows <em>where</em> intensity is high, but it doesn’t prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern’s G, F, K and L functions against what complete spatial randomness (CSR, points scattered independently at random, i.e.&nbsp;a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.</p>
+<p>For all four functions I use <code>nsim = 99</code> simulated CSR patterns, which gives a 1/(99+1) = <strong>1% two-sided significance level</strong> for the envelope test, the standard convention.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">415</span>)</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>G_env <span class="ot">&lt;-</span> <span class="fu">envelope</span>(acc_ppp, Gest, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
@@ -669,23 +669,23 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 <span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>K_env <span class="ot">&lt;-</span> <span class="fu">envelope</span>(acc_ppp, Kest, <span class="at">correction =</span> <span class="st">"border"</span>, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>L_env <span class="ot">&lt;-</span> <span class="fu">envelope</span>(acc_ppp, Lest, <span class="at">correction =</span> <span class="st">"border"</span>, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>I fixed <code>correction = "border"</code> for <code>Kest</code>/<code>Lest</code> explicitly — <code>spatstat</code>’s default edge-correction choice (isotropic) is far more expensive to compute on a polygon window this irregular (the BMR outline has 300+ vertices) and, with <code>nsim = 99</code> simulations to run, the isotropic version didn’t finish in a reasonable time. Border correction is simpler (it just discards the area near the window edge rather than reweighting it) but is a standard, valid choice and doesn’t change the CSR conclusion here.</p>
+<p>I fixed <code>correction = "border"</code> for <code>Kest</code>/<code>Lest</code> explicitly: <code>spatstat</code>’s default edge-correction choice (isotropic) is far more expensive to compute on a polygon window this irregular (the BMR outline has 300+ vertices) and, with <code>nsim = 99</code> simulations to run, the isotropic version didn’t finish in a reasonable time. Border correction is simpler (it just discards the area near the window edge rather than reweighting it) but is a standard, valid choice and doesn’t change the CSR conclusion here.</p>
 <section id="g-function-nearest-neighbour-distances" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="g-function-nearest-neighbour-distances"><span class="header-section-number">6.1</span> G function — nearest-neighbour distances</h2>
+<h2 data-number="6.1" class="anchored" data-anchor-id="g-function-nearest-neighbour-distances"><span class="header-section-number">6.1</span> G function: nearest-neighbour distances</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(G_env, <span class="at">main =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="index_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption>G function envelope. Observed (black) above the grey CSR envelope means points have closer neighbours than CSR would predict — i.e.&nbsp;clustering.</figcaption>
+<figcaption>G function envelope. Observed (black) above the grey CSR envelope means points have closer neighbours than CSR would predict, i.e.&nbsp;clustering.</figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
 <section id="f-function-empty-space-function" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="f-function-empty-space-function"><span class="header-section-number">6.2</span> F function — empty-space function</h2>
+<h2 data-number="6.2" class="anchored" data-anchor-id="f-function-empty-space-function"><span class="header-section-number">6.2</span> F function: empty-space function</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(F_env, <span class="at">main =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
@@ -699,7 +699,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </div>
 </section>
 <section id="k-function-ripleys-k" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="k-function-ripleys-k"><span class="header-section-number">6.3</span> K function — Ripley’s K</h2>
+<h2 data-number="6.3" class="anchored" data-anchor-id="k-function-ripleys-k"><span class="header-section-number">6.3</span> K function: Ripley’s K</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(K_env, <span class="at">main =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
@@ -713,7 +713,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </div>
 </section>
 <section id="l-function-variance-stabilised-k" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="l-function-variance-stabilised-k"><span class="header-section-number">6.4</span> L function — variance-stabilised K</h2>
+<h2 data-number="6.4" class="anchored" data-anchor-id="l-function-variance-stabilised-k"><span class="header-section-number">6.4</span> L function: variance-stabilised K</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(L_env, . <span class="sc">-</span> r <span class="sc">~</span> r, <span class="at">main =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
@@ -751,7 +751,7 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 </section>
 <section id="spatio-temporal-analysis" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Spatio-Temporal Analysis</h1>
-<p>Does <em>where</em> accidents cluster change depending on <em>when</em> they happen? <code>incident_datetime</code> gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this — spatio-temporal KDE.</p>
+<p>Does <em>where</em> accidents cluster change depending on <em>when</em> they happen? <code>incident_datetime</code> gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this: spatio-temporal KDE.</p>
 <section id="deriving-time-attributes" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="deriving-time-attributes"><span class="header-section-number">7.1</span> Deriving time attributes</h2>
 <div class="cell">
@@ -782,11 +782,11 @@ alternative hypothesis: clustered (R &lt; 1)</code></pre>
 2 Weekend  1041</code></pre>
 </div>
 </div>
-<p><code>hour_of_day</code> (0–24, continuous) and <code>month_num</code> (1–12) feed the STKDE below; <code>period</code>/<code>daytype</code> are the discrete bins used further down for the formal Monte Carlo test. “Day” is 06:00–17:59 and “Night” is 18:00–05:59 — a plain 12h/12h split rather than anything tied to actual sunrise/sunset, a simplification worth naming but reasonable at Bangkok’s latitude where day length barely varies across the year.</p>
+<p><code>hour_of_day</code> (0–24, continuous) and <code>month_num</code> (1–12) feed the STKDE below; <code>period</code>/<code>daytype</code> are the discrete bins used further down for the formal Monte Carlo test. “Day” is 06:00–17:59 and “Night” is 18:00–05:59, a plain 12h/12h split rather than anything tied to actual sunrise/sunset, a simplification worth naming but reasonable at Bangkok’s latitude where day length barely varies across the year.</p>
 </section>
 <section id="spatio-temporal-kde-stkde" class="level2" data-number="7.2">
 <h2 data-number="7.2" class="anchored" data-anchor-id="spatio-temporal-kde-stkde"><span class="header-section-number">7.2</span> Spatio-temporal KDE (STKDE)</h2>
-<p>This follows <a href="https://r4gdsa.netlify.app/chap06">Chapter 6</a> of the course’s R4GDSA reference directly — that chapter runs <code>sparr::spattemp.density()</code> on forest-fire points with month/day-of-year as the time mark; the same recipe applies here with accident points and hour-of-day/month as the marks. The trick is <code>as.ppp()</code> on an <code>sf</code> object with exactly one numeric column selected: that column becomes the point pattern’s <strong>mark</strong>, and <code>spattemp.density()</code> reads it as the time dimension, producing a smooth density surface over <em>(x, y, t)</em> jointly rather than one KDE per discrete bin.</p>
+<p>This follows <a href="https://r4gdsa.netlify.app/chap06">Chapter 6</a> of the course’s R4GDSA reference directly: that chapter runs <code>sparr::spattemp.density()</code> on forest-fire points with month/day-of-year as the time mark; the same recipe applies here with accident points and hour-of-day/month as the marks. The trick is <code>as.ppp()</code> on an <code>sf</code> object with exactly one numeric column selected: that column becomes the point pattern’s <strong>mark</strong>, and <code>spattemp.density()</code> reads it as the time dimension, producing a smooth density surface over <em>(x, y, t)</em> jointly rather than one KDE per discrete bin.</p>
 <section id="by-hour-of-day" class="level3" data-number="7.2.1">
 <h3 data-number="7.2.1" class="anchored" data-anchor-id="by-hour-of-day"><span class="header-section-number">7.2.1</span> By hour of day</h3>
 <div class="cell">
@@ -817,7 +817,7 @@ Evaluation
   Density range: [4.269527e-19, 5.665265e-11]</code></pre>
 </div>
 </div>
-<p><code>spattemp.density()</code> picks its own bandwidths by cross-validation — a spatial one (here ≈ 4,880 m) and a temporal one (here ≈ 0.6 hours) — so I’m not hand-tuning <code>sigma</code> the way I did for the plain KDE earlier.</p>
+<p><code>spattemp.density()</code> picks its own bandwidths by cross-validation (a spatial one, here ≈ 4,880 m, and a temporal one, here ≈ 0.6 hours), so I’m not hand-tuning <code>sigma</code> the way I did for the plain KDE earlier.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>tims <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">12</span>, <span class="dv">16</span>, <span class="dv">20</span>)</span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfcol =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">3</span>))</span>
@@ -882,15 +882,15 @@ Evaluation
 </div>
 </div>
 </div>
-<p>The clearest signal here is intensity, not location: the dominant hotspot is present all year at roughly the same place, but it sharpens and brightens noticeably from October through December — the same three months that had the highest raw accident counts in the EDA table earlier (394, 367, 369 respectively). Year-end isn’t just busier everywhere; it’s busier in a more spatially concentrated way at the existing hotspot rather than spread evenly across the network.</p>
+<p>The clearest signal here is intensity, not location: the dominant hotspot is present all year at roughly the same place, but it sharpens and brightens noticeably from October through December, the same three months that had the highest raw accident counts in the EDA table earlier (394, 367, 369 respectively). Year-end isn’t just busier everywhere; it’s busier in a more spatially concentrated way at the existing hotspot rather than spread evenly across the network.</p>
 </section>
 </section>
 <section id="discrete-time-splits-a-formal-significance-test" class="level2" data-number="7.3">
 <h2 data-number="7.3" class="anchored" data-anchor-id="discrete-time-splits-a-formal-significance-test"><span class="header-section-number">7.3</span> Discrete time splits: a formal significance test</h2>
-<p>STKDE is the right tool for <em>seeing</em> how the surface moves continuously through time, but it doesn’t on its own hand me a p-value for a specific, policy-relevant question like “is day genuinely different from night.” For that I fall back to discrete bins — the <code>period</code>/<code>daytype</code> columns from above — compared with <code>spatstat::segregation.test()</code>, which does have a significance test built in.</p>
+<p>STKDE is the right tool for <em>seeing</em> how the surface moves continuously through time, but it doesn’t on its own hand me a p-value for a specific, policy-relevant question like “is day genuinely different from night.” For that I fall back to discrete bins (the <code>period</code>/<code>daytype</code> columns from above), compared with <code>spatstat::segregation.test()</code>, which does have a significance test built in.</p>
 <section id="building-comparable-point-patterns" class="level3" data-number="7.3.1">
 <h3 data-number="7.3.1" class="anchored" data-anchor-id="building-comparable-point-patterns"><span class="header-section-number">7.3.1</span> Building comparable point patterns</h3>
-<p>To compare the discrete-bin KDE surfaces fairly, I smooth every subset with the <strong>same bandwidth</strong> — <code>bw.ppl()</code> computed on the <em>full</em> pattern — rather than letting each subset pick its own (a smaller subset naturally wants a larger bandwidth, which would make “less smoothed because there happen to be more points here” look like a real spatial difference when it isn’t).</p>
+<p>To compare the discrete-bin KDE surfaces fairly, I smooth every subset with the <strong>same bandwidth</strong>, <code>bw.ppl()</code> computed on the <em>full</em> pattern, rather than letting each subset pick its own (a smaller subset naturally wants a larger bandwidth, which would make “less smoothed because there happen to be more points here” look like a real spatial difference when it isn’t).</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>make_ppp <span class="ot">&lt;-</span> <span class="cf">function</span>(sf_subset) {</span>
 <span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  co <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(sf_subset)</span>
@@ -950,7 +950,7 @@ Evaluation
 </section>
 <section id="formal-test-is-the-spatial-pattern-actually-different" class="level3" data-number="7.3.4">
 <h3 data-number="7.3.4" class="anchored" data-anchor-id="formal-test-is-the-spatial-pattern-actually-different"><span class="header-section-number">7.3.4</span> Formal test: is the spatial pattern actually different?</h3>
-<p>Eyeballing two KDE panels side by side is suggestive but not a statistical test. <code>spatstat::segregation.test()</code> is built for exactly this: given a marked point pattern (here, the mark is the time category), it tests whether the <em>relative</em> spatial risk surface between the two marks is significantly non-constant — i.e.&nbsp;whether one category is genuinely more concentrated in some places than the other, beyond what you’d expect if every point’s mark were just randomly relabelled.</p>
+<p>Eyeballing two KDE panels side by side is suggestive but not a statistical test. <code>spatstat::segregation.test()</code> is built for exactly this: given a marked point pattern (here, the mark is the time category), it tests whether the <em>relative</em> spatial risk surface between the two marks is significantly non-constant, i.e.&nbsp;whether one category is genuinely more concentrated in some places than the other, beyond what you’d expect if every point’s mark were just randomly relabelled.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>seg_test <span class="ot">&lt;-</span> <span class="cf">function</span>(sf_data, mark_col, sigma, <span class="at">nsim =</span> <span class="dv">99</span>, <span class="at">seed =</span> <span class="dv">415</span>) {</span>
 <span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  co <span class="ot">&lt;-</span> <span class="fu">st_coordinates</span>(sf_data)</span>
@@ -999,7 +999,7 @@ data:  pm
 T = 26.787, p-value = 0.34</code></pre>
 </div>
 </div>
-<p>I used a larger, fixed <code>sigma = 3000</code> m for this test specifically — <code>segregation.test()</code> calls <code>relrisk()</code> internally to estimate the spatial risk surface, and at the <code>bw.ppl()</code> scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a <code>spatstat</code> warning flags this directly). A larger bandwidth is needed for a <em>relative-risk</em> surface to stay numerically well-behaved across an area this size than for a plain density surface — the two are estimating different things even though both use “sigma.”</p>
+<p>I used a larger, fixed <code>sigma = 3000</code> m for this test specifically: <code>segregation.test()</code> calls <code>relrisk()</code> internally to estimate the spatial risk surface, and at the <code>bw.ppl()</code> scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a <code>spatstat</code> warning flags this directly). A larger bandwidth is needed for a <em>relative-risk</em> surface to stay numerically well-behaved across an area this size than for a plain density surface; the two are estimating different things even though both use “sigma.”</p>
 </section>
 </section>
 <section id="interpretation-2" class="level2" data-number="7.4">
@@ -1014,9 +1014,9 @@ T = 26.787, p-value = 0.34</code></pre>
 <hr>
 </section>
 </section>
-<section id="value-added-analysis-does-weather-affect-where-accidents-cluster" class="level1" data-number="8">
-<h1 data-number="8"><span class="header-section-number">8</span> Value-Added Analysis: Does Weather Affect Where Accidents Cluster?</h1>
-<p>The brief calls out <code>weather_condition</code>, <code>vehicle_type</code> and <code>presumed_cause</code> as optional extra angles. I went with <strong>weather</strong>, because it’s the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as <code>clear</code> and 309 as <code>rainy</code> (the remaining <code>dark</code>/<code>foggy</code>/<code>other</code> categories are too small — 18 points combined — for a meaningful spatial test on their own). <code>presumed_cause</code> looked tempting too (alcohol-related accidents in particular), but the largest single non-“speeding”/“other” category, alcohol, is only 39 points BMR-wide in 2022 — too thin to say anything statistically defensible about its spatial pattern specifically.</p>
+<section id="weathers-effect-on-where-accidents-cluster" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Weather’s Effect on Where Accidents Cluster</h1>
+<p>The brief calls out <code>weather_condition</code>, <code>vehicle_type</code> and <code>presumed_cause</code> as optional extra angles. I went with <strong>weather</strong>, because it’s the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as <code>clear</code> and 309 as <code>rainy</code> (the remaining <code>dark</code>/<code>foggy</code>/<code>other</code> categories are too small, 18 points combined, for a meaningful spatial test on their own). <code>presumed_cause</code> looked tempting too (alcohol-related accidents in particular), but the largest single non-“speeding”/“other” category, alcohol, is only 39 points BMR-wide in 2022, too thin to say anything statistically defensible about its spatial pattern specifically.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>acc_sf <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span> <span class="fu">count</span>(weather_condition, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -1105,27 +1105,22 @@ T = 28.983, p-value = 0.01</code></pre>
 <h1 data-number="10"><span class="header-section-number">10</span> Summary</h1>
 <section id="key-findings" class="level2" data-number="10.1">
 <h2 data-number="10.1" class="anchored" data-anchor-id="key-findings"><span class="header-section-number">10.1</span> Key findings</h2>
-<ol type="1">
-<li><strong>First-order</strong>: 2022 BMR accidents are heavily concentrated along the expressway/arterial network, with the sharpest hotspot at a central-eastern interchange in Bangkok. Both fixed and adaptive KDE agree on the location.</li>
-<li><strong>Second-order</strong>: G, F, K and L function envelopes, plus a Clark-Evans R of 0.215 (p &lt; 2.2 × 10⁻¹⁶), all confirm the clustering is statistically real and holds from the shortest to the longest spatial scales tested — this is not an artefact of random chance.</li>
-<li><strong>Spatio-temporal</strong>: STKDE (<code>sparr::spattemp.density()</code>, Chapter 6’s method) shows the hotspot’s location and shape reshaping continuously across the 24-hour cycle, and intensifying at the same location from October–December. The discrete formal test confirms day vs.&nbsp;night is a real spatial effect (<code>segregation.test</code> p ≈ 0.01) while weekday vs.&nbsp;weekend is not (p ≈ 0.34, volume-only).</li>
-<li><strong>Value-added (weather)</strong>: rainy-weather accidents cluster in a significantly different part of the BMR than clear-weather accidents do (p ≈ 0.01), not just in smaller numbers.</li>
-</ol>
+<p>The sharpest hotspot is at a central-eastern Bangkok interchange; G, F, K, L and a Clark-Evans R of 0.215 (p &lt; 2.2 × 10⁻¹⁶) confirm this clustering is statistically real, not chance. STKDE shows that same hotspot shifting across the 24-hour cycle and sharpening again from October–December; the formal test backs this up for day vs.&nbsp;night (p ≈ 0.01, a real spatial shift) but not for weekday vs.&nbsp;weekend (p ≈ 0.34, volume-only, same locations). Weather follows the day/night pattern: rainy-weather accidents cluster in a significantly different part of the BMR than clear-weather accidents do (p ≈ 0.01), not just in smaller numbers.</p>
 </section>
 <section id="limitations" class="level2" data-number="10.2">
 <h2 data-number="10.2" class="anchored" data-anchor-id="limitations"><span class="header-section-number">10.2</span> Limitations</h2>
 <ul>
-<li>The BMR boundary is a name-based union of six provinces, not an official metro-area polygon — some edge effects near provincial borders are possible.</li>
+<li>The BMR boundary is a name-based union of six provinces, not an official metro-area polygon, so some edge effects near provincial borders are possible.</li>
 <li>5% of BMR 2022 accident records have no coordinates and were dropped; if missingness isn’t spatially random (e.g.&nbsp;concentrated in a particular reporting agency or district), the hotspots shown here could be mildly biased.</li>
-<li>321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations — jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.</li>
-<li>The day/night split (06:00–17:59 vs.&nbsp;18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight — a reasonable approximation at this latitude but not exact.</li>
+<li>321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.</li>
+<li>The day/night split (06:00–17:59 vs.&nbsp;18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight, a reasonable approximation at this latitude but not exact.</li>
 </ul>
 </section>
 <section id="data-sources-1" class="level2" data-number="10.3">
 <h2 data-number="10.3" class="anchored" data-anchor-id="data-sources-1"><span class="header-section-number">10.3</span> Data sources</h2>
 <ul>
-<li>Thailand Road Accident 2019–2022 dataset — <a href="https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022">Kaggle</a></li>
-<li>Thailand ADM1 province boundaries — <a href="https://www.geoboundaries.org/">geoBoundaries</a></li>
+<li>Thailand Road Accident 2019–2022 dataset, <a href="https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022">Kaggle</a></li>
+<li>Thailand ADM1 province boundaries, <a href="https://www.geoboundaries.org/">geoBoundaries</a></li>
 </ul>
 <hr>
 </section>
