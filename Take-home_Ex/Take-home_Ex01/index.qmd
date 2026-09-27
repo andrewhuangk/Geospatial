@@ -28,7 +28,7 @@ The brief has three required parts plus one open-ended one:
 3. **Spatio-temporal analysis**: the dedicated technique here is spatio-temporal KDE (STKDE) via the `sparr` package, the method taught in [Chapter 6 of the course's R4GDSA reference](https://r4gdsa.netlify.app/chap06) (that chapter demonstrates it on Indonesian forest-fire data; here it's applied to accidents). On top of that I also split the pattern into discrete time periods (day/night, weekday/weekend) and run a formal Monte Carlo test for whether the spatial pattern itself differs across those splits.
 4. **Value-added analysis**: my own extension, using one of the extra attribute columns the dataset provides (`weather_condition`, `vehicle_type`, `presumed_cause`) to dig one level deeper.
 
-**Study area and scope.** The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the **Bangkok Metropolitan Region (BMR)**, Bangkok plus the five surrounding provinces conventionally grouped with it (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon), restricted to **2022**. Filtering down to that scope is the first thing the data-preparation section below does.
+**Study area and scope.** The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the **Bangkok Metropolitan Region (BMR)**, Bangkok plus the five surrounding provinces usually grouped with it (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon), restricted to **2022**. Filtering down to that scope is the first thing the data-preparation section below does.
 
 ---
 
@@ -87,7 +87,7 @@ bmr <- adm1 |>
 nrow(bmr)
 ```
 
-`EPSG:32647` is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok, a projected CRS with metre units needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently distort every one of those.
+`EPSG:32647` is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok, a projected CRS with metre units needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently throw off every one of those.
 
 I also build a single dissolved polygon (`bmr_union`): the six provinces merged into one shape with the internal borders removed. This is what becomes the `spatstat` observation window; point-pattern statistics don't care about which province a point falls in, only whether it falls inside *the* window.
 
@@ -148,7 +148,7 @@ acc_sf <- st_as_sf(acc_bmr, coords = c("longitude", "latitude"), crs = 4326) |>
   st_transform(32647)
 ```
 
-A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary sliver). `st_filter()` keeps only the ones genuinely inside the window `spatstat` will use:
+A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary edge). `st_filter()` keeps only the ones genuinely inside the window `spatstat` will use:
 
 ```{r}
 acc_sf <- st_filter(acc_sf, bmr_union)
@@ -168,7 +168,7 @@ acc_ppp
 sum(duplicated(acc_ppp))
 ```
 
-**321 exact duplicate coordinates**: different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren't a problem for KDE, but they *are* a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two "different" points is a degenerate case rather than a genuine measurement. The standard fix is `rjitter()`, which nudges every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:
+**321 exact duplicate coordinates**: different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren't a problem for KDE, but they *are* a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two "different" points is a broken case, not a real measurement. The standard fix is `rjitter()`, which nudges every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:
 
 ```{r}
 set.seed(415)
@@ -191,7 +191,7 @@ acc_sf |>
         caption = "2022 BMR accidents by province")
 ```
 
-Bangkok alone accounts for half of all BMR accidents, unsurprising given it's the urban core with by far the densest road network and traffic volume; the outer provinces trail off roughly with distance from the centre. Over the whole sample, these accidents recorded **176 fatalities and 2,093 injuries**.
+Bangkok alone accounts for half of all BMR accidents, not surprising since it's the urban core with by far the densest road network and traffic volume; the outer provinces trail off roughly with distance from the centre. Over the whole sample, these accidents recorded **176 fatalities and 2,093 injuries**.
 
 ```{r}
 #| fig-cap: "Every geolocated 2022 accident in the BMR, coloured by province."
@@ -212,7 +212,7 @@ First-order analysis asks: **where is accident intensity highest?** Kernel densi
 
 ## Choosing a bandwidth
 
-The bandwidth (`sigma`) controls how much smoothing happens: too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one diffuse blob. `spatstat` offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:
+The bandwidth (`sigma`) controls how much smoothing happens: too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one blurry blob. `spatstat` offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:
 
 ```{r}
 bw.diggle(acc_ppp)
@@ -247,7 +247,7 @@ Both surfaces agree: intensity isn't spread evenly across the BMR, it follows th
 
 # Second-Order Spatial Point Pattern Analysis (CSR Testing)
 
-First-order analysis shows *where* intensity is high, but it doesn't prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern's G, F, K and L functions against what complete spatial randomness (CSR, points scattered independently at random, i.e. a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.
+First-order analysis shows *where* intensity is high, but it doesn't prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern's G, F, K and L functions against what complete spatial randomness (CSR, points that just happened to land where they are by chance, i.e. a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.
 
 For all four functions I use `nsim = 99` simulated CSR patterns, which gives a 1/(99+1) = **1% two-sided significance level** for the envelope test, the standard convention.
 
@@ -354,7 +354,7 @@ for (i in tims) {
 }
 ```
 
-The hotspot doesn't just dim and brighten in place — it visibly *moves*. Overnight (hour 0–4) it's a single tight, isolated peak; by the morning commute (hour 8) it stretches into a corridor with several near-equal sub-peaks; by midday (hour 12) intensity concentrates sharply back into one dominant peak, now shifted slightly from the overnight location; by evening (hour 16–20) it broadens out again into multiple simultaneous hotspots. A single "the" hotspot from the first-order KDE earlier is really an average over a location that's constantly reshaping through the day.
+The hotspot doesn't just dim and brighten in place — it visibly *moves*. Overnight (hour 0–4) it's a single tight, isolated peak; by the morning commute (hour 8) it stretches into a strip with several near-equal sub-peaks; by midday (hour 12) intensity concentrates sharply back into one dominant peak, now shifted slightly from the overnight location; by evening (hour 16–20) it broadens out again into multiple simultaneous hotspots. A single "the" hotspot from the first-order KDE earlier is really an average over a location that's constantly reshaping through the day.
 
 ### By month
 
@@ -453,7 +453,7 @@ seg_period
 seg_daytype
 ```
 
-I used a larger, fixed `sigma = 3000` m for this test specifically: `segregation.test()` calls `relrisk()` internally to estimate the spatial risk surface, and at the `bw.ppl()` scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a `spatstat` warning flags this directly). A *relative-risk* surface needs a larger bandwidth to stay numerically well-behaved across an area this size than a plain density surface does; the two are estimating different things even though both use "sigma."
+I used a larger, fixed `sigma = 3000` m for this test specifically: `segregation.test()` calls `relrisk()` internally to estimate the spatial risk surface, and at the `bw.ppl()` scale (~750 m) that surface collapses to numerically unstable 0/1 values over large stretches of the study area (a `spatstat` warning flags this directly). A *relative-risk* surface needs a larger bandwidth to stay numerically well-behaved across an area this size than a plain density surface does; the two are estimating different things even though both use "sigma."
 
 ## Interpretation
 
@@ -469,7 +469,7 @@ That lines up with how traffic actually works: time-of-day changes *what kind* o
 
 # Weather's Effect on Where Accidents Cluster
 
-The brief calls out `weather_condition`, `vehicle_type` and `presumed_cause` as optional extra angles. I went with **weather**, because it's the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as `clear` and 309 as `rainy` (the remaining `dark`/`foggy`/`other` categories are too small, 18 points combined, for a meaningful spatial test on their own). `presumed_cause` looked tempting too (alcohol-related accidents in particular), but the largest single non-"speeding"/"other" category, alcohol, is only 39 points BMR-wide in 2022, too thin to say anything statistically defensible about its spatial pattern specifically.
+The brief calls out `weather_condition`, `vehicle_type` and `presumed_cause` as optional extra angles. I went with **weather**, because it's the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as `clear` and 309 as `rainy` (the remaining `dark`/`foggy`/`other` categories are too small, 18 points combined, for a meaningful spatial test on their own). `presumed_cause` looked tempting too (alcohol-related accidents in particular), but the largest single non-"speeding"/"other" category, alcohol, is only 39 points BMR-wide in 2022, too thin to say anything statistically solid about its spatial pattern specifically.
 
 ```{r}
 acc_sf |> st_drop_geometry() |> count(weather_condition, sort = TRUE)
@@ -537,7 +537,7 @@ The sharpest hotspot is at a central-eastern Bangkok interchange; G, F, K, L and
 
 - No official BMR boundary exists, so I combined the six provinces by name; that could cause some edge effects near the provincial borders.
 - 5% of BMR 2022 accident records have no coordinates and were dropped; if missingness isn't spatially random (e.g. concentrated in a particular reporting agency or district), the hotspots shown here could be mildly biased.
-- 321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.
+- 321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes that statistical problem, but the true precision of any individual point is uncertain.
 - The day/night split (06:00–17:59 vs. 18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight, a reasonable approximation at this latitude but not exact.
 
 ## Data sources

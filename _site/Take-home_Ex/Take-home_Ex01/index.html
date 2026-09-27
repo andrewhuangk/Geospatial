@@ -331,7 +331,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Spatio-temporal analysis</strong>: the dedicated technique here is spatio-temporal KDE (STKDE) via the <code>sparr</code> package, the method taught in <a href="https://r4gdsa.netlify.app/chap06">Chapter 6 of the course’s R4GDSA reference</a> (that chapter demonstrates it on Indonesian forest-fire data; here it’s applied to accidents). On top of that I also split the pattern into discrete time periods (day/night, weekday/weekend) and run a formal Monte Carlo test for whether the spatial pattern itself differs across those splits.</li>
 <li><strong>Value-added analysis</strong>: my own extension, using one of the extra attribute columns the dataset provides (<code>weather_condition</code>, <code>vehicle_type</code>, <code>presumed_cause</code>) to dig one level deeper.</li>
 </ol>
-<p><strong>Study area and scope.</strong> The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the <strong>Bangkok Metropolitan Region (BMR)</strong>, Bangkok plus the five surrounding provinces conventionally grouped with it (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon), restricted to <strong>2022</strong>. Filtering down to that scope is the first thing the data-preparation section below does.</p>
+<p><strong>Study area and scope.</strong> The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the <strong>Bangkok Metropolitan Region (BMR)</strong>, Bangkok plus the five surrounding provinces usually grouped with it (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon), restricted to <strong>2022</strong>. Filtering down to that scope is the first thing the data-preparation section below does.</p>
 <hr>
 </section>
 <section id="getting-started" class="level1" data-number="2">
@@ -416,7 +416,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] 6</code></pre>
 </div>
 </div>
-<p><code>EPSG:32647</code> is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok, a projected CRS with metre units needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently distort every one of those.</p>
+<p><code>EPSG:32647</code> is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok, a projected CRS with metre units needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently throw off every one of those.</p>
 <p>I also build a single dissolved polygon (<code>bmr_union</code>): the six provinces merged into one shape with the internal borders removed. This is what becomes the <code>spatstat</code> observation window; point-pattern statistics don’t care about which province a point falls in, only whether it falls inside <em>the</em> window.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>bmr_union <span class="ot">&lt;-</span> <span class="fu">st_union</span>(bmr) <span class="sc">|&gt;</span> <span class="fu">st_sf</span>() <span class="sc">|&gt;</span> <span class="fu">st_make_valid</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -489,7 +489,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>acc_sf <span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(acc_bmr, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"longitude"</span>, <span class="st">"latitude"</span>), <span class="at">crs =</span> <span class="dv">4326</span>) <span class="sc">|&gt;</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="dv">32647</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary sliver). <code>st_filter()</code> keeps only the ones genuinely inside the window <code>spatstat</code> will use:</p>
+<p>A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary edge). <code>st_filter()</code> keeps only the ones genuinely inside the window <code>spatstat</code> will use:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>acc_sf <span class="ot">&lt;-</span> <span class="fu">st_filter</span>(acc_sf, bmr_union)</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(acc_sf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -515,7 +515,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 <pre><code>[1] 321</code></pre>
 </div>
 </div>
-<p><strong>321 exact duplicate coordinates</strong>: different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren’t a problem for KDE, but they <em>are</em> a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two “different” points is a degenerate case rather than a genuine measurement. The standard fix is <code>rjitter()</code>, which nudges every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:</p>
+<p><strong>321 exact duplicate coordinates</strong>: different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren’t a problem for KDE, but they <em>are</em> a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two “different” points is a broken case, not a real measurement. The standard fix is <code>rjitter()</code>, which nudges every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">415</span>)</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>acc_ppp <span class="ot">&lt;-</span> <span class="fu">rjitter</span>(acc_ppp, <span class="at">retry =</span> <span class="cn">TRUE</span>, <span class="at">nsim =</span> <span class="dv">1</span>, <span class="at">radius =</span> <span class="dv">5</span>)</span>
@@ -582,7 +582,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </table>
 </div>
 </div>
-<p>Bangkok alone accounts for half of all BMR accidents, unsurprising given it’s the urban core with by far the densest road network and traffic volume; the outer provinces trail off roughly with distance from the centre. Over the whole sample, these accidents recorded <strong>176 fatalities and 2,093 injuries</strong>.</p>
+<p>Bangkok alone accounts for half of all BMR accidents, not surprising since it’s the urban core with by far the densest road network and traffic volume; the outer provinces trail off roughly with distance from the centre. Over the whole sample, these accidents recorded <strong>176 fatalities and 2,093 injuries</strong>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="at">data =</span> bmr, <span class="at">fill =</span> <span class="st">"grey97"</span>, <span class="at">colour =</span> <span class="st">"grey70"</span>) <span class="sc">+</span></span>
@@ -606,7 +606,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 <p>First-order analysis asks: <strong>where is accident intensity highest?</strong> Kernel density estimation smooths the discrete point pattern into a continuous surface, so instead of 3,590 dots I get a map of “accidents per unit area” that’s readable at a glance.</p>
 <section id="choosing-a-bandwidth" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="choosing-a-bandwidth"><span class="header-section-number">5.1</span> Choosing a bandwidth</h2>
-<p>The bandwidth (<code>sigma</code>) controls how much smoothing happens: too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one diffuse blob. <code>spatstat</code> offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:</p>
+<p>The bandwidth (<code>sigma</code>) controls how much smoothing happens: too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one blurry blob. <code>spatstat</code> offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bw.diggle</span>(acc_ppp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -660,7 +660,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </section>
 <section id="second-order-spatial-point-pattern-analysis-csr-testing" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> Second-Order Spatial Point Pattern Analysis (CSR Testing)</h1>
-<p>First-order analysis shows <em>where</em> intensity is high, but it doesn’t prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern’s G, F, K and L functions against what complete spatial randomness (CSR, points scattered independently at random, i.e.&nbsp;a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.</p>
+<p>First-order analysis shows <em>where</em> intensity is high, but it doesn’t prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern’s G, F, K and L functions against what complete spatial randomness (CSR, points that just happened to land where they are by chance, i.e.&nbsp;a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.</p>
 <p>For all four functions I use <code>nsim = 99</code> simulated CSR patterns, which gives a 1/(99+1) = <strong>1% two-sided significance level</strong> for the envelope test, the standard convention.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">415</span>)</span>
@@ -834,7 +834,7 @@ Evaluation
 </div>
 </div>
 </div>
-<p>The hotspot doesn’t just dim and brighten in place — it visibly <em>moves</em>. Overnight (hour 0–4) it’s a single tight, isolated peak; by the morning commute (hour 8) it stretches into a corridor with several near-equal sub-peaks; by midday (hour 12) intensity concentrates sharply back into one dominant peak, now shifted slightly from the overnight location; by evening (hour 16–20) it broadens out again into multiple simultaneous hotspots. A single “the” hotspot from the first-order KDE earlier is really an average over a location that’s constantly reshaping through the day.</p>
+<p>The hotspot doesn’t just dim and brighten in place — it visibly <em>moves</em>. Overnight (hour 0–4) it’s a single tight, isolated peak; by the morning commute (hour 8) it stretches into a strip with several near-equal sub-peaks; by midday (hour 12) intensity concentrates sharply back into one dominant peak, now shifted slightly from the overnight location; by evening (hour 16–20) it broadens out again into multiple simultaneous hotspots. A single “the” hotspot from the first-order KDE earlier is really an average over a location that’s constantly reshaping through the day.</p>
 </section>
 <section id="by-month" class="level3" data-number="7.2.2">
 <h3 data-number="7.2.2" class="anchored" data-anchor-id="by-month"><span class="header-section-number">7.2.2</span> By month</h3>
@@ -999,7 +999,7 @@ data:  pm
 T = 26.787, p-value = 0.34</code></pre>
 </div>
 </div>
-<p>I used a larger, fixed <code>sigma = 3000</code> m for this test specifically: <code>segregation.test()</code> calls <code>relrisk()</code> internally to estimate the spatial risk surface, and at the <code>bw.ppl()</code> scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a <code>spatstat</code> warning flags this directly). A <em>relative-risk</em> surface needs a larger bandwidth to stay numerically well-behaved across an area this size than a plain density surface does; the two are estimating different things even though both use “sigma.”</p>
+<p>I used a larger, fixed <code>sigma = 3000</code> m for this test specifically: <code>segregation.test()</code> calls <code>relrisk()</code> internally to estimate the spatial risk surface, and at the <code>bw.ppl()</code> scale (~750 m) that surface collapses to numerically unstable 0/1 values over large stretches of the study area (a <code>spatstat</code> warning flags this directly). A <em>relative-risk</em> surface needs a larger bandwidth to stay numerically well-behaved across an area this size than a plain density surface does; the two are estimating different things even though both use “sigma.”</p>
 </section>
 </section>
 <section id="interpretation-2" class="level2" data-number="7.4">
@@ -1016,7 +1016,7 @@ T = 26.787, p-value = 0.34</code></pre>
 </section>
 <section id="weathers-effect-on-where-accidents-cluster" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> Weather’s Effect on Where Accidents Cluster</h1>
-<p>The brief calls out <code>weather_condition</code>, <code>vehicle_type</code> and <code>presumed_cause</code> as optional extra angles. I went with <strong>weather</strong>, because it’s the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as <code>clear</code> and 309 as <code>rainy</code> (the remaining <code>dark</code>/<code>foggy</code>/<code>other</code> categories are too small, 18 points combined, for a meaningful spatial test on their own). <code>presumed_cause</code> looked tempting too (alcohol-related accidents in particular), but the largest single non-“speeding”/“other” category, alcohol, is only 39 points BMR-wide in 2022, too thin to say anything statistically defensible about its spatial pattern specifically.</p>
+<p>The brief calls out <code>weather_condition</code>, <code>vehicle_type</code> and <code>presumed_cause</code> as optional extra angles. I went with <strong>weather</strong>, because it’s the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as <code>clear</code> and 309 as <code>rainy</code> (the remaining <code>dark</code>/<code>foggy</code>/<code>other</code> categories are too small, 18 points combined, for a meaningful spatial test on their own). <code>presumed_cause</code> looked tempting too (alcohol-related accidents in particular), but the largest single non-“speeding”/“other” category, alcohol, is only 39 points BMR-wide in 2022, too thin to say anything statistically solid about its spatial pattern specifically.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>acc_sf <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span> <span class="fu">count</span>(weather_condition, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -1112,7 +1112,7 @@ T = 28.983, p-value = 0.01</code></pre>
 <ul>
 <li>No official BMR boundary exists, so I combined the six provinces by name; that could cause some edge effects near the provincial borders.</li>
 <li>5% of BMR 2022 accident records have no coordinates and were dropped; if missingness isn’t spatially random (e.g.&nbsp;concentrated in a particular reporting agency or district), the hotspots shown here could be mildly biased.</li>
-<li>321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.</li>
+<li>321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes that statistical problem, but the true precision of any individual point is uncertain.</li>
 <li>The day/night split (06:00–17:59 vs.&nbsp;18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight, a reasonable approximation at this latitude but not exact.</li>
 </ul>
 </section>
