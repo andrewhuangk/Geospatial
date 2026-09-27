@@ -1,0 +1,92 @@
+---
+title: "Inclass Exercise 5"
+author: "Kang Chih Huang"
+date: "2026-09-26"
+date-modified: "last-modified"
+format: html
+execute:
+  warning: false
+  freeze: auto
+---
+
+## Getting started
+
+```{r}
+pacman::p_load(sf, sfdep, spdep, tmap, tidyverse, knitr)
+```
+
+## Importing data
+
+```{r}
+hunan <- st_read(dsn = "data/geospatial", layer = "Hunan")
+hunan2012 <- read_csv("data/aspatial/Hunan_2012.csv")
+```
+
+```{r}
+hunan <- left_join(hunan, hunan2012) %>%
+  select(1:4, 7, 15,33)
+```
+
+## Deriving Queen's contiguity weights: sfdep method
+
+```{r}
+wm_q <- hunan %>%
+  mutate(nb = st_contiguity(geometry),
+         wt = st_weights(nb, style = "W"),
+         .before = 1)
+
+summary(wm_q$nb)
+```
+
+## Computing Global Moran's I
+
+```{r}
+moranI <- global_moran(wm_q$GDPPC, wm_q$nb, wm_q$wt)
+glimpse(moranI)
+```
+
+```{r}
+global_moran_test(wm_q$GDPPC, wm_q$nb, wm_q$wt)
+```
+
+## Performing Global Moran's I permutation test
+
+```{r}
+set.seed(1234)
+global_moran_perm(wm_q$GDPPC, wm_q$nb, wm_q$wt, nsim = 99)
+```
+
+## Computing local Moran's I
+
+```{r}
+lisa <- wm_q %>%
+  mutate(local_moran = local_moran(GDPPC, nb, wt, nsim = 99),
+         .before = 1) %>%
+  unnest(local_moran)
+```
+
+## Visualising local Moran's I
+
+```{r fig.width=10}
+tmap_mode("plot")
+tm_shape(lisa) +
+  tm_polygons(fill = "ii",
+              fill.scale = tm_scale_intervals(
+                style = "fixed",
+                breaks = c(-2, -1, 0, 1, 2, 3, 4, 5),
+                values = "brewer.rd_bu"),
+              fill.legend = tm_legend(
+                title = "Local Moran's I")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("local Moran's I of GDPPC") +
+  tm_layout(legend.text.size = 1.2)
+```
+
+```{r fig.width=10}
+tmap_mode("plot")
+tm_shape(lisa) +
+  tm_polygons(fill = "p_ii_sim") +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("p-value of local Moran's I") +
+  tm_layout(legend.title.size = 1.5)
+```

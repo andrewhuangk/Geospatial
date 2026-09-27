@@ -23,12 +23,12 @@ execute:
 
 The brief has three required parts plus one open-ended one:
 
-1. **First-order analysis** — kernel density estimation (KDE) to map accident hotspots across the study area.
-2. **Second-order analysis** — G, F, K and L functions with Monte Carlo envelopes to test whether the clustering is statistically real (i.e. not what we'd expect under complete spatial randomness, CSR).
-3. **Spatio-temporal analysis** — the dedicated technique here is spatio-temporal KDE (STKDE) via the `sparr` package, the method taught in [Chapter 6 of the course's R4GDSA reference](https://r4gdsa.netlify.app/chap06) (that chapter demonstrates it on Indonesian forest-fire data; here it's applied to accidents). On top of that I also split the pattern into discrete time periods (day/night, weekday/weekend) and run a formal Monte Carlo test for whether the spatial pattern itself differs across those splits.
-4. **Value-added analysis** — my own extension, using one of the extra attribute columns the dataset provides (`weather_condition`, `vehicle_type`, `presumed_cause`) to dig one level deeper.
+1. **First-order analysis**: kernel density estimation (KDE) to map accident hotspots across the study area.
+2. **Second-order analysis**: G, F, K and L functions with Monte Carlo envelopes to test whether the clustering is statistically real (i.e. not what we'd expect under complete spatial randomness, CSR).
+3. **Spatio-temporal analysis**: the dedicated technique here is spatio-temporal KDE (STKDE) via the `sparr` package, the method taught in [Chapter 6 of the course's R4GDSA reference](https://r4gdsa.netlify.app/chap06) (that chapter demonstrates it on Indonesian forest-fire data; here it's applied to accidents). On top of that I also split the pattern into discrete time periods (day/night, weekday/weekend) and run a formal Monte Carlo test for whether the spatial pattern itself differs across those splits.
+4. **Value-added analysis**: my own extension, using one of the extra attribute columns the dataset provides (`weather_condition`, `vehicle_type`, `presumed_cause`) to dig one level deeper.
 
-**Study area and scope.** The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the **Bangkok Metropolitan Region (BMR)** — Bangkok plus the five surrounding provinces (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon) that are conventionally grouped with it — restricted to **2022**. Filtering down to that scope is the first thing the data-preparation section below does.
+**Study area and scope.** The raw CSV covers the whole of Thailand from 2019–2022. The assignment only asks for the **Bangkok Metropolitan Region (BMR)**, Bangkok plus the five surrounding provinces conventionally grouped with it (Nonthaburi, Pathum Thani, Samut Prakan, Nakhon Pathom, Samut Sakhon), restricted to **2022**. Filtering down to that scope is the first thing the data-preparation section below does.
 
 ---
 
@@ -41,19 +41,19 @@ pacman::p_load(sf, spatstat, sparr, tidyverse, lubridate, knitr, kableExtra)
 ```
 
 - **sf**: reading/writing vector geospatial data and all the geometric operations (projection, filtering, union).
-- **spatstat**: everything point-pattern — `ppp`, `owin`, `density()`, `envelope()`, `Gest`/`Fest`/`Kest`/`Lest`, `clarkevans.test()`, `segregation.test()`.
-- **sparr**: `spattemp.density()` — spatio-temporal kernel density estimation, the technique from Chapter 6.
+- **spatstat**: everything point-pattern (`ppp`, `owin`, `density()`, `envelope()`, `Gest`/`Fest`/`Kest`/`Lest`, `clarkevans.test()`, `segregation.test()`).
+- **sparr**: `spattemp.density()`, spatio-temporal kernel density estimation, the technique from Chapter 6.
 - **tidyverse** / **lubridate**: data wrangling and date-time handling.
 - **knitr** / **kableExtra**: tidy tables.
 
-I'm not loading `tmap` here — KDE surfaces and the G/F/K/L plots are `spatstat` objects (`im`, `fv`), so `spatstat`'s own `plot()` methods are the standard way to look at them. `ggplot2` + `sf` covers the handful of ordinary vector maps/charts I need elsewhere in this document.
+I'm not loading `tmap` here: KDE surfaces and the G/F/K/L plots are `spatstat` objects (`im`, `fv`), so `spatstat`'s own `plot()` methods are the standard way to look at them. `ggplot2` + `sf` covers the handful of ordinary vector maps/charts I need elsewhere in this document.
 
 ## Data sources
 
 | Dataset | Type | Source |
 |---|---|---|
 | `thai_road_accident_2019_2022.csv` | Aspatial (point coordinates as columns) | [Kaggle: Thailand Road Accident 2019–2022](https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022) |
-| Thailand ADM1 (province) boundaries | Geospatial (polygon) | [geoBoundaries](https://www.geoboundaries.org/) — `geoBoundaries-THA-ADM1` |
+| Thailand ADM1 (province) boundaries | Geospatial (polygon) | [geoBoundaries](https://www.geoboundaries.org/), `geoBoundaries-THA-ADM1` |
 
 ```{r}
 list.files("data/geospatial")
@@ -66,7 +66,7 @@ list.files("data/aspatial")
 
 ## Geospatial: the Bangkok Metropolitan Region boundary
 
-The accident CSV has no polygon layer of its own — it's just latitude/longitude per row — so I need an administrative boundary from elsewhere to (a) define the BMR study area and clip out-of-scope points, and (b) give `spatstat` an observation window (`owin`) to compute intensity and edge corrections against. I used geoBoundaries' Thailand province-level (ADM1) layer.
+The accident CSV has no polygon layer of its own (it's just latitude/longitude per row), so I need an administrative boundary from elsewhere to (a) define the BMR study area and clip out-of-scope points, and (b) give `spatstat` an observation window (`owin`) to compute intensity and edge corrections against. I used geoBoundaries' Thailand province-level (ADM1) layer.
 
 ```{r}
 adm1 <- st_read("data/geospatial/tha_adm1.geojson", quiet = TRUE)
@@ -74,7 +74,7 @@ st_crs(adm1)$input
 nrow(adm1)
 ```
 
-77 provinces nationwide, in WGS84 (EPSG:4326). BMR isn't an official administrative unit in this file — it's Bangkok plus five neighbouring provinces that get treated as one metro area by convention — so I filter by name:
+77 provinces nationwide, in WGS84 (EPSG:4326). BMR isn't an official administrative unit in this file (it's Bangkok plus five neighbouring provinces that get treated as one metro area by convention), so I filter by name:
 
 ```{r}
 bmr_names <- c("Bangkok", "Nonthaburi Province", "Pathum Thani Province",
@@ -87,9 +87,9 @@ bmr <- adm1 |>
 nrow(bmr)
 ```
 
-`EPSG:32647` is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok — a projected CRS with metre units, needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently distort every one of those.
+`EPSG:32647` is WGS 84 / UTM zone 47N, which covers central Thailand including Bangkok, a projected CRS with metre units needed for any distance-based calculation (KDE bandwidths, K-function radii, etc.) later on. Working in degrees would silently distort every one of those.
 
-I also build a single dissolved polygon (`bmr_union`) — the six provinces merged into one shape with the internal borders removed. This is what becomes the `spatstat` observation window; point-pattern statistics don't care about which province a point falls in, only whether it falls inside *the* window.
+I also build a single dissolved polygon (`bmr_union`): the six provinces merged into one shape with the internal borders removed. This is what becomes the `spatstat` observation window; point-pattern statistics don't care about which province a point falls in, only whether it falls inside *the* window.
 
 ```{r}
 bmr_union <- st_union(bmr) |> st_sf() |> st_make_valid()
@@ -115,7 +115,7 @@ acc <- read_csv(
 nrow(acc)
 ```
 
-**Gotcha worth flagging:** the first time I read this without specifying `col_types`, `read_csv()` auto-guessed `incident_datetime` as a datetime column already — which sounds convenient, but then calling `lubridate::ymd_hms()` on it (to be safe/explicit) silently failed on 118 rows, because `ymd_hms()` expects a *character* string and readr's auto-parsed `POSIXct` prints with a `UTC` suffix and sometimes drops the time part in its internal string form, which doesn't match the `ymd_hms` pattern. The fix is to pin the column type explicitly at read time as above (`col_datetime(format = "%Y-%m-%d %H:%M:%S")`), which then needs no further parsing at all. I only caught this because my BMR/2022 filter count came out 3 rows short of a plain Python/pandas cross-check.
+**Gotcha worth flagging:** the first time I read this without specifying `col_types`, `read_csv()` auto-guessed `incident_datetime` as a datetime column already, which sounds convenient, but then calling `lubridate::ymd_hms()` on it (to be safe/explicit) silently failed on 118 rows, because `ymd_hms()` expects a *character* string and readr's auto-parsed `POSIXct` prints with a `UTC` suffix and sometimes drops the time part in its internal string form, which doesn't match the `ymd_hms` pattern. The fix is to pin the column type explicitly at read time as above (`col_datetime(format = "%Y-%m-%d %H:%M:%S")`), which then needs no further parsing at all. I only caught this because my BMR/2022 filter count came out 3 rows short of a plain Python/pandas cross-check.
 
 ## Filtering to the Bangkok Metropolitan Region, 2022
 
@@ -132,7 +132,7 @@ nrow(acc_bmr_all)
 sum(is.na(acc_bmr_all$latitude))
 ```
 
-21,032 accidents nationwide in 2022, of which 3,782 are in the six BMR provinces. 189 of those (5%) have no latitude/longitude — I drop them, since a point pattern needs a location for every point:
+21,032 accidents nationwide in 2022, of which 3,782 are in the six BMR provinces. 189 of those (5%) have no latitude/longitude; I drop them, since a point pattern needs a location for every point:
 
 ```{r}
 acc_bmr <- acc_bmr_all |> filter(!is.na(latitude), !is.na(longitude))
@@ -148,14 +148,14 @@ acc_sf <- st_as_sf(acc_bmr, coords = c("longitude", "latitude"), crs = 4326) |>
   st_transform(32647)
 ```
 
-A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary sliver) — `st_filter()` keeps only the ones genuinely inside the window `spatstat` will use:
+A handful of points sit just outside the dissolved BMR polygon (coordinates that round to the coastline/river or a boundary sliver). `st_filter()` keeps only the ones genuinely inside the window `spatstat` will use:
 
 ```{r}
 acc_sf <- st_filter(acc_sf, bmr_union)
 nrow(acc_sf)
 ```
 
-3,590 points make it through. Now the `spatstat` conversion — an `owin` from the polygon, then a `ppp` (planar point pattern) built from the point coordinates against that window:
+3,590 points make it through. Now the `spatstat` conversion: an `owin` from the polygon, then a `ppp` (planar point pattern) built from the point coordinates against that window:
 
 ```{r}
 owin_bmr <- as.owin(st_geometry(bmr_union))
@@ -168,7 +168,7 @@ acc_ppp
 sum(duplicated(acc_ppp))
 ```
 
-**321 exact duplicate coordinates** — different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren't a problem for KDE, but they *are* a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two "different" points is a degenerate case rather than a genuine measurement. The standard fix is `rjitter()` — nudge every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:
+**321 exact duplicate coordinates**: different accidents recorded at the same lat/long to several decimal places, most likely because the source data snapped each report to the nearest intersection or km-marker rather than a precise GPS fix. Exact duplicates aren't a problem for KDE, but they *are* a problem for nearest-neighbour statistics (the G function in particular), where a distance of exactly zero between two "different" points is a degenerate case rather than a genuine measurement. The standard fix is `rjitter()`, which nudges every point by a small random offset (I used a 5 m radius, well below anything meaningful at BMR scale) to break exact ties without disturbing the actual spatial pattern:
 
 ```{r}
 set.seed(415)
@@ -202,7 +202,7 @@ ggplot() +
   theme_minimal()
 ```
 
-Even at this raw-point stage the pattern is obviously not random — points trace out the road network rather than filling space evenly, which is exactly what the first-order and second-order analyses below go on to quantify.
+Even at this raw-point stage the pattern is obviously not random: points trace out the road network rather than filling space evenly, which is exactly what the first-order and second-order analyses below go on to quantify.
 
 ---
 
@@ -212,14 +212,14 @@ First-order analysis asks: **where is accident intensity highest?** Kernel densi
 
 ## Choosing a bandwidth
 
-The bandwidth (`sigma`) controls how much smoothing happens — too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one diffuse blob. `spatstat` offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:
+The bandwidth (`sigma`) controls how much smoothing happens: too small and the map is just noisy dots with a blur radius, too large and every genuine hotspot gets washed into one diffuse blob. `spatstat` offers a few automatic selectors; I checked more than one because of the duplicate-point issue above:
 
 ```{r}
 bw.diggle(acc_ppp)
 bw.ppl(acc_ppp)
 ```
 
-`bw.diggle()` — usually a solid default — comes back at essentially **23 metres**, which is far too small to be useful over an area the size of the BMR. That's the duplicate/near-duplicate points again: `bw.diggle()` is tuned by minimising a criterion sensitive to the very shortest inter-point distances, so a cluster of points sitting almost on top of each other drags it toward zero. `bw.ppl()` — Baddeley's likelihood cross-validation selector, generally recommended over `bw.diggle()` specifically *when the pattern is clustered* (Baddeley, Rubak & Turner, *Spatial Point Patterns*, 2015) — comes back at a much more sensible **~750 m**, and gives the same answer whether duplicates are jittered out first or not. I used `bw.ppl()` throughout.
+`bw.diggle()` (usually a solid default) comes back at essentially **23 metres**, which is far too small to be useful over an area the size of the BMR. That's the duplicate/near-duplicate points again: `bw.diggle()` is tuned by minimising a criterion sensitive to the very shortest inter-point distances, so a cluster of points sitting almost on top of each other drags it toward zero. `bw.ppl()`, Baddeley's likelihood cross-validation selector (generally recommended over `bw.diggle()` specifically *when the pattern is clustered*: Baddeley, Rubak & Turner, *Spatial Point Patterns*, 2015), comes back at a much more sensible **~750 m**, and gives the same answer whether duplicates are jittered out first or not. I used `bw.ppl()` throughout.
 
 ## Fixed-bandwidth KDE
 
@@ -247,9 +247,9 @@ Both surfaces agree: intensity isn't spread evenly across the BMR, it follows th
 
 # Second-Order Spatial Point Pattern Analysis (CSR Testing)
 
-First-order analysis shows *where* intensity is high, but it doesn't prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern's G, F, K and L functions against what complete spatial randomness (CSR — points scattered independently at random, i.e. a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.
+First-order analysis shows *where* intensity is high, but it doesn't prove the clustering is statistically real rather than a chance arrangement of otherwise-random points. Second-order analysis tests this directly: compare the observed pattern's G, F, K and L functions against what complete spatial randomness (CSR, points scattered independently at random, i.e. a homogeneous Poisson process) would produce, using Monte Carlo simulation envelopes.
 
-For all four functions I use `nsim = 99` simulated CSR patterns, which gives a 1/(99+1) = **1% two-sided significance level** for the envelope test — the standard convention.
+For all four functions I use `nsim = 99` simulated CSR patterns, which gives a 1/(99+1) = **1% two-sided significance level** for the envelope test, the standard convention.
 
 ```{r}
 #| cache: true
@@ -260,30 +260,30 @@ K_env <- envelope(acc_ppp, Kest, correction = "border", nsim = 99, verbose = FAL
 L_env <- envelope(acc_ppp, Lest, correction = "border", nsim = 99, verbose = FALSE)
 ```
 
-I fixed `correction = "border"` for `Kest`/`Lest` explicitly — `spatstat`'s default edge-correction choice (isotropic) is far more expensive to compute on a polygon window this irregular (the BMR outline has 300+ vertices) and, with `nsim = 99` simulations to run, the isotropic version didn't finish in a reasonable time. Border correction is simpler (it just discards the area near the window edge rather than reweighting it) but is a standard, valid choice and doesn't change the CSR conclusion here.
+I fixed `correction = "border"` for `Kest`/`Lest` explicitly: `spatstat`'s default edge-correction choice (isotropic) is far more expensive to compute on a polygon window this irregular (the BMR outline has 300+ vertices) and, with `nsim = 99` simulations to run, the isotropic version didn't finish in a reasonable time. Border correction is simpler (it just discards the area near the window edge rather than reweighting it) but is a standard, valid choice and doesn't change the CSR conclusion here.
 
-## G function — nearest-neighbour distances
+## G function: nearest-neighbour distances
 
 ```{r}
-#| fig-cap: "G function envelope. Observed (black) above the grey CSR envelope means points have closer neighbours than CSR would predict — i.e. clustering."
+#| fig-cap: "G function envelope. Observed (black) above the grey CSR envelope means points have closer neighbours than CSR would predict, i.e. clustering."
 plot(G_env, main = "")
 ```
 
-## F function — empty-space function
+## F function: empty-space function
 
 ```{r}
 #| fig-cap: "F function envelope. Observed (black) below the grey CSR envelope also indicates clustering (empty space is easier to find than under CSR, because points are clumped together, leaving larger gaps)."
 plot(F_env, main = "")
 ```
 
-## K function — Ripley's K
+## K function: Ripley's K
 
 ```{r}
 #| fig-cap: "K function envelope. Observed (black) above the CSR envelope across all tested radii indicates clustering at every scale examined."
 plot(K_env, main = "")
 ```
 
-## L function — variance-stabilised K
+## L function: variance-stabilised K
 
 ```{r}
 #| fig-cap: "L function envelope, plotted as L(r) − r so CSR is a flat line at 0. The observed curve sits far above the envelope at every radius."
@@ -306,7 +306,7 @@ All four functions agree with each other and with the KDE maps: the observed cur
 
 # Spatio-Temporal Analysis
 
-Does *where* accidents cluster change depending on *when* they happen? `incident_datetime` gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this — spatio-temporal KDE.
+Does *where* accidents cluster change depending on *when* they happen? `incident_datetime` gives a continuous time value per point, not just a category, so before cutting it into discrete bins (day/night, weekday/weekend) I first use the technique built for exactly this: spatio-temporal KDE.
 
 ## Deriving time attributes
 
@@ -325,11 +325,11 @@ acc_sf |> st_drop_geometry() |> count(period)
 acc_sf |> st_drop_geometry() |> count(daytype)
 ```
 
-`hour_of_day` (0–24, continuous) and `month_num` (1–12) feed the STKDE below; `period`/`daytype` are the discrete bins used further down for the formal Monte Carlo test. "Day" is 06:00–17:59 and "Night" is 18:00–05:59 — a plain 12h/12h split rather than anything tied to actual sunrise/sunset, a simplification worth naming but reasonable at Bangkok's latitude where day length barely varies across the year.
+`hour_of_day` (0–24, continuous) and `month_num` (1–12) feed the STKDE below; `period`/`daytype` are the discrete bins used further down for the formal Monte Carlo test. "Day" is 06:00–17:59 and "Night" is 18:00–05:59, a plain 12h/12h split rather than anything tied to actual sunrise/sunset, a simplification worth naming but reasonable at Bangkok's latitude where day length barely varies across the year.
 
 ## Spatio-temporal KDE (STKDE)
 
-This follows [Chapter 6](https://r4gdsa.netlify.app/chap06) of the course's R4GDSA reference directly — that chapter runs `sparr::spattemp.density()` on forest-fire points with month/day-of-year as the time mark; the same recipe applies here with accident points and hour-of-day/month as the marks. The trick is `as.ppp()` on an `sf` object with exactly one numeric column selected: that column becomes the point pattern's **mark**, and `spattemp.density()` reads it as the time dimension, producing a smooth density surface over *(x, y, t)* jointly rather than one KDE per discrete bin.
+This follows [Chapter 6](https://r4gdsa.netlify.app/chap06) of the course's R4GDSA reference directly: that chapter runs `sparr::spattemp.density()` on forest-fire points with month/day-of-year as the time mark; the same recipe applies here with accident points and hour-of-day/month as the marks. The trick is `as.ppp()` on an `sf` object with exactly one numeric column selected: that column becomes the point pattern's **mark**, and `spattemp.density()` reads it as the time dimension, producing a smooth density surface over *(x, y, t)* jointly rather than one KDE per discrete bin.
 
 ### By hour of day
 
@@ -342,7 +342,7 @@ stkde_hour <- spattemp.density(acc_hour_owin)
 summary(stkde_hour)
 ```
 
-`spattemp.density()` picks its own bandwidths by cross-validation — a spatial one (here ≈ 4,880 m) and a temporal one (here ≈ 0.6 hours) — so I'm not hand-tuning `sigma` the way I did for the plain KDE earlier.
+`spattemp.density()` picks its own bandwidths by cross-validation (a spatial one, here ≈ 4,880 m, and a temporal one, here ≈ 0.6 hours), so I'm not hand-tuning `sigma` the way I did for the plain KDE earlier.
 
 ```{r}
 #| fig-cap: "Spatio-temporal KDE sliced at six hours across the day. Same colour scale throughout (fix.range = TRUE)."
@@ -377,15 +377,15 @@ for (i in tims_m) {
 }
 ```
 
-The clearest signal here is intensity, not location: the dominant hotspot is present all year at roughly the same place, but it sharpens and brightens noticeably from October through December — the same three months that had the highest raw accident counts in the EDA table earlier (394, 367, 369 respectively). Year-end isn't just busier everywhere; it's busier in a more spatially concentrated way at the existing hotspot rather than spread evenly across the network.
+The clearest signal here is intensity, not location: the dominant hotspot is present all year at roughly the same place, but it sharpens and brightens noticeably from October through December, the same three months that had the highest raw accident counts in the EDA table earlier (394, 367, 369 respectively). Year-end isn't just busier everywhere; it's busier in a more spatially concentrated way at the existing hotspot rather than spread evenly across the network.
 
 ## Discrete time splits: a formal significance test
 
-STKDE is the right tool for *seeing* how the surface moves continuously through time, but it doesn't on its own hand me a p-value for a specific, policy-relevant question like "is day genuinely different from night." For that I fall back to discrete bins — the `period`/`daytype` columns from above — compared with `spatstat::segregation.test()`, which does have a significance test built in.
+STKDE is the right tool for *seeing* how the surface moves continuously through time, but it doesn't on its own hand me a p-value for a specific, policy-relevant question like "is day genuinely different from night." For that I fall back to discrete bins (the `period`/`daytype` columns from above), compared with `spatstat::segregation.test()`, which does have a significance test built in.
 
 ### Building comparable point patterns
 
-To compare the discrete-bin KDE surfaces fairly, I smooth every subset with the **same bandwidth** — `bw.ppl()` computed on the *full* pattern — rather than letting each subset pick its own (a smaller subset naturally wants a larger bandwidth, which would make "less smoothed because there happen to be more points here" look like a real spatial difference when it isn't).
+To compare the discrete-bin KDE surfaces fairly, I smooth every subset with the **same bandwidth**, `bw.ppl()` computed on the *full* pattern, rather than letting each subset pick its own (a smaller subset naturally wants a larger bandwidth, which would make "less smoothed because there happen to be more points here" look like a real spatial difference when it isn't).
 
 ```{r}
 make_ppp <- function(sf_subset) {
@@ -434,7 +434,7 @@ These two look a lot more alike than the day/night pair. Same roads light up, sa
 
 ### Formal test: is the spatial pattern actually different?
 
-Eyeballing two KDE panels side by side is suggestive but not a statistical test. `spatstat::segregation.test()` is built for exactly this: given a marked point pattern (here, the mark is the time category), it tests whether the *relative* spatial risk surface between the two marks is significantly non-constant — i.e. whether one category is genuinely more concentrated in some places than the other, beyond what you'd expect if every point's mark were just randomly relabelled.
+Eyeballing two KDE panels side by side is suggestive but not a statistical test. `spatstat::segregation.test()` is built for exactly this: given a marked point pattern (here, the mark is the time category), it tests whether the *relative* spatial risk surface between the two marks is significantly non-constant, i.e. whether one category is genuinely more concentrated in some places than the other, beyond what you'd expect if every point's mark were just randomly relabelled.
 
 ```{r}
 #| cache: true
@@ -453,7 +453,7 @@ seg_period
 seg_daytype
 ```
 
-I used a larger, fixed `sigma = 3000` m for this test specifically — `segregation.test()` calls `relrisk()` internally to estimate the spatial risk surface, and at the `bw.ppl()` scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a `spatstat` warning flags this directly). A larger bandwidth is needed for a *relative-risk* surface to stay numerically well-behaved across an area this size than for a plain density surface — the two are estimating different things even though both use "sigma."
+I used a larger, fixed `sigma = 3000` m for this test specifically: `segregation.test()` calls `relrisk()` internally to estimate the spatial risk surface, and at the `bw.ppl()` scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a `spatstat` warning flags this directly). A larger bandwidth is needed for a *relative-risk* surface to stay numerically well-behaved across an area this size than for a plain density surface; the two are estimating different things even though both use "sigma."
 
 ## Interpretation
 
@@ -467,9 +467,9 @@ That lines up with how traffic actually works: time-of-day changes *what kind* o
 
 ---
 
-# Value-Added Analysis: Does Weather Affect Where Accidents Cluster?
+# Weather's Effect on Where Accidents Cluster
 
-The brief calls out `weather_condition`, `vehicle_type` and `presumed_cause` as optional extra angles. I went with **weather**, because it's the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as `clear` and 309 as `rainy` (the remaining `dark`/`foggy`/`other` categories are too small — 18 points combined — for a meaningful spatial test on their own). `presumed_cause` looked tempting too (alcohol-related accidents in particular), but the largest single non-"speeding"/"other" category, alcohol, is only 39 points BMR-wide in 2022 — too thin to say anything statistically defensible about its spatial pattern specifically.
+The brief calls out `weather_condition`, `vehicle_type` and `presumed_cause` as optional extra angles. I went with **weather**, because it's the one with the cleanest natural comparison and enough data on both sides to trust the result: of the 3,590 points, 3,263 are logged as `clear` and 309 as `rainy` (the remaining `dark`/`foggy`/`other` categories are too small, 18 points combined, for a meaningful spatial test on their own). `presumed_cause` looked tempting too (alcohol-related accidents in particular), but the largest single non-"speeding"/"other" category, alcohol, is only 39 points BMR-wide in 2022, too thin to say anything statistically defensible about its spatial pattern specifically.
 
 ```{r}
 acc_sf |> st_drop_geometry() |> count(weather_condition, sort = TRUE)
@@ -531,22 +531,19 @@ Based on the findings above:
 
 ## Key findings
 
-1. **First-order**: 2022 BMR accidents are heavily concentrated along the expressway/arterial network, with the sharpest hotspot at a central-eastern interchange in Bangkok. Both fixed and adaptive KDE agree on the location.
-2. **Second-order**: G, F, K and L function envelopes, plus a Clark-Evans R of 0.215 (p < 2.2 × 10⁻¹⁶), all confirm the clustering is statistically real and holds from the shortest to the longest spatial scales tested — this is not an artefact of random chance.
-3. **Spatio-temporal**: STKDE (`sparr::spattemp.density()`, Chapter 6's method) shows the hotspot's location and shape reshaping continuously across the 24-hour cycle, and intensifying at the same location from October–December. The discrete formal test confirms day vs. night is a real spatial effect (`segregation.test` p ≈ `r round(seg_period$p.value,3)`) while weekday vs. weekend is not (p ≈ `r round(seg_daytype$p.value,3)`, volume-only).
-4. **Value-added (weather)**: rainy-weather accidents cluster in a significantly different part of the BMR than clear-weather accidents do (p ≈ `r round(seg_weather$p.value,3)`), not just in smaller numbers.
+The sharpest hotspot is at a central-eastern Bangkok interchange; G, F, K, L and a Clark-Evans R of 0.215 (p < 2.2 × 10⁻¹⁶) confirm this clustering is statistically real, not chance. STKDE shows that same hotspot shifting across the 24-hour cycle and sharpening again from October–December; the formal test backs this up for day vs. night (p ≈ `r round(seg_period$p.value,3)`, a real spatial shift) but not for weekday vs. weekend (p ≈ `r round(seg_daytype$p.value,3)`, volume-only, same locations). Weather follows the day/night pattern: rainy-weather accidents cluster in a significantly different part of the BMR than clear-weather accidents do (p ≈ `r round(seg_weather$p.value,3)`), not just in smaller numbers.
 
 ## Limitations
 
-- The BMR boundary is a name-based union of six provinces, not an official metro-area polygon — some edge effects near provincial borders are possible.
+- The BMR boundary is a name-based union of six provinces, not an official metro-area polygon, so some edge effects near provincial borders are possible.
 - 5% of BMR 2022 accident records have no coordinates and were dropped; if missingness isn't spatially random (e.g. concentrated in a particular reporting agency or district), the hotspots shown here could be mildly biased.
-- 321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations — jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.
-- The day/night split (06:00–17:59 vs. 18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight — a reasonable approximation at this latitude but not exact.
+- 321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.
+- The day/night split (06:00–17:59 vs. 18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight, a reasonable approximation at this latitude but not exact.
 
 ## Data sources
 
-- Thailand Road Accident 2019–2022 dataset — [Kaggle](https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022)
-- Thailand ADM1 province boundaries — [geoBoundaries](https://www.geoboundaries.org/)
+- Thailand Road Accident 2019–2022 dataset, [Kaggle](https://www.kaggle.com/datasets/thaweewatboy/thailand-road-accident-2019-2022)
+- Thailand ADM1 province boundaries, [geoBoundaries](https://www.geoboundaries.org/)
 
 ---
 
