@@ -292,7 +292,7 @@ plot(L_env, . - r ~ r, main = "")
 
 ## Clark-Evans test
 
-As a single-number companion to the four envelope plots, the Clark-Evans index compares the mean observed nearest-neighbour distance to the value expected under CSR: R = 1 means CSR, R < 1 means clustering, R > 1 means regularity/dispersion.
+Clark-Evans is a single number that sums up the four envelope plots: it compares the mean observed nearest-neighbour distance to the value expected under CSR. R = 1 means CSR, R < 1 means clustering, R > 1 means regularity/dispersion.
 
 ```{r}
 clarkevans.test(acc_ppp, correction = "cdf", alternative = "clustered")
@@ -453,7 +453,7 @@ seg_period
 seg_daytype
 ```
 
-I used a larger, fixed `sigma = 3000` m for this test specifically: `segregation.test()` calls `relrisk()` internally to estimate the spatial risk surface, and at the `bw.ppl()` scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a `spatstat` warning flags this directly). A larger bandwidth is needed for a *relative-risk* surface to stay numerically well-behaved across an area this size than for a plain density surface; the two are estimating different things even though both use "sigma."
+I used a larger, fixed `sigma = 3000` m for this test specifically: `segregation.test()` calls `relrisk()` internally to estimate the spatial risk surface, and at the `bw.ppl()` scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a `spatstat` warning flags this directly). A *relative-risk* surface needs a larger bandwidth to stay numerically well-behaved across an area this size than a plain density surface does; the two are estimating different things even though both use "sigma."
 
 ## Interpretation
 
@@ -535,7 +535,7 @@ The sharpest hotspot is at a central-eastern Bangkok interchange; G, F, K, L and
 
 ## Limitations
 
-- The BMR boundary is a name-based union of six provinces, not an official metro-area polygon, so some edge effects near provincial borders are possible.
+- No official BMR boundary exists, so I combined the six provinces by name; that could cause some edge effects near the provincial borders.
 - 5% of BMR 2022 accident records have no coordinates and were dropped; if missingness isn't spatially random (e.g. concentrated in a particular reporting agency or district), the hotspots shown here could be mildly biased.
 - 321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.
 - The day/night split (06:00–17:59 vs. 18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight, a reasonable approximation at this latitude but not exact.

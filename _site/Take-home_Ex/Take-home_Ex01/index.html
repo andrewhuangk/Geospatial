@@ -728,7 +728,7 @@ enclosing rectangle: [587130.4, 712441.7] x [1484748.9, 1579087.2] units</code><
 </section>
 <section id="clark-evans-test" class="level2" data-number="6.5">
 <h2 data-number="6.5" class="anchored" data-anchor-id="clark-evans-test"><span class="header-section-number">6.5</span> Clark-Evans test</h2>
-<p>As a single-number companion to the four envelope plots, the Clark-Evans index compares the mean observed nearest-neighbour distance to the value expected under CSR: R = 1 means CSR, R &lt; 1 means clustering, R &gt; 1 means regularity/dispersion.</p>
+<p>Clark-Evans is a single number that sums up the four envelope plots: it compares the mean observed nearest-neighbour distance to the value expected under CSR. R = 1 means CSR, R &lt; 1 means clustering, R &gt; 1 means regularity/dispersion.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clarkevans.test</span>(acc_ppp, <span class="at">correction =</span> <span class="st">"cdf"</span>, <span class="at">alternative =</span> <span class="st">"clustered"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -999,7 +999,7 @@ data:  pm
 T = 26.787, p-value = 0.34</code></pre>
 </div>
 </div>
-<p>I used a larger, fixed <code>sigma = 3000</code> m for this test specifically: <code>segregation.test()</code> calls <code>relrisk()</code> internally to estimate the spatial risk surface, and at the <code>bw.ppl()</code> scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a <code>spatstat</code> warning flags this directly). A larger bandwidth is needed for a <em>relative-risk</em> surface to stay numerically well-behaved across an area this size than for a plain density surface; the two are estimating different things even though both use “sigma.”</p>
+<p>I used a larger, fixed <code>sigma = 3000</code> m for this test specifically: <code>segregation.test()</code> calls <code>relrisk()</code> internally to estimate the spatial risk surface, and at the <code>bw.ppl()</code> scale (~750 m) that surface underflows to numerically unstable 0/1 values over large stretches of the study area (a <code>spatstat</code> warning flags this directly). A <em>relative-risk</em> surface needs a larger bandwidth to stay numerically well-behaved across an area this size than a plain density surface does; the two are estimating different things even though both use “sigma.”</p>
 </section>
 </section>
 <section id="interpretation-2" class="level2" data-number="7.4">
@@ -1110,7 +1110,7 @@ T = 28.983, p-value = 0.01</code></pre>
 <section id="limitations" class="level2" data-number="10.2">
 <h2 data-number="10.2" class="anchored" data-anchor-id="limitations"><span class="header-section-number">10.2</span> Limitations</h2>
 <ul>
-<li>The BMR boundary is a name-based union of six provinces, not an official metro-area polygon, so some edge effects near provincial borders are possible.</li>
+<li>No official BMR boundary exists, so I combined the six provinces by name; that could cause some edge effects near the provincial borders.</li>
 <li>5% of BMR 2022 accident records have no coordinates and were dropped; if missingness isn’t spatially random (e.g.&nbsp;concentrated in a particular reporting agency or district), the hotspots shown here could be mildly biased.</li>
 <li>321 points shared exact duplicate coordinates before jittering, most likely reflecting reporting granularity (nearest landmark/km-marker) rather than true identical locations; jittering fixes the statistical degeneracy but the true precision of any individual point is uncertain.</li>
 <li>The day/night split (06:00–17:59 vs.&nbsp;18:00–05:59) is a fixed clock-time boundary, not tied to actual daylight, a reasonable approximation at this latitude but not exact.</li>
