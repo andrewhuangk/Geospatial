@@ -97,7 +97,7 @@ format:
 
 ## Limitations & Conclusion
 
-- BMR boundary is a province-name union, not an official metro polygon
+- No official BMR boundary exists, so I just combined the 6 provinces by name
 - 5% of records had no coordinates and were dropped
 - 321 duplicate coordinates jittered to fix a statistical issue
 - Day/night split is a fixed clock boundary, not actual daylight
