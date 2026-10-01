@@ -1,6 +1,6 @@
 ---
 title: "Hands-on Exercise 4: Spatial Weights and Applications"
-author: "Andrew Huang"
+author: "Kang-Chih Huang"
 date: "2026-09-17"
 date-modified: "last-modified"
 format: html

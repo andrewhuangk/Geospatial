@@ -1,7 +1,7 @@
 ---
 title: "Hands-on Exercise 1b: Thematic Mapping and GeoVisualisation with R"
 subtitle: "Choropleth mapping with tmap (v4)"
-author: "Andrew Huang"
+author: "Kang-Chih Huang"
 date: "2026-08-27"
 date-modified: "last-modified"
 format:

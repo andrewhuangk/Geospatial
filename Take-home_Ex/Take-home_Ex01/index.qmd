@@ -1,7 +1,7 @@
 ---
 title: "Take-home Exercise 1: Spatio-temporal Analysis of Road Traffic Accidents"
 subtitle: "First-order and second-order spatial point pattern analysis of 2022 accidents in the Bangkok Metropolitan Region"
-author: "Andrew Huang"
+author: "Kang-Chih Huang"
 date: "2026-09-09"
 date-modified: "last-modified"
 format:

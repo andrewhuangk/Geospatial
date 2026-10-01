@@ -1,6 +1,6 @@
 ---
 title: "Hands-on Exercise 2: Point Pattern Analysis"
-author: "Andrew Huang"
+author: "Kang-Chih Huang"
 date: "2026-09-04"
 date-modified: "last-modified"
 format: html

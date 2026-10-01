@@ -1,0 +1,301 @@
+---
+title: "Hands-on Exercise 6: Geographical Segmentation with Spatially Constrained Clustering Techniques"
+author: "Kang-Chih Huang"
+date: "2026-10-01"
+date-modified: "last-modified"
+format: html
+execute:
+  warning: false
+  freeze: auto
+---
+
+## Getting started
+
+```{r}
+pacman::p_load(sf, spdep, tmap, tidyverse, corrplot, ggpubr, heatmaply, GGally, cluster, ClustGeo, factoextra, NbClust, psych)
+```
+
+## Importing geospatial data
+
+```{r}
+shan_sf <- st_read(dsn = "data/geospatial",
+                    layer = "myanmar_township_boundaries") %>%
+  filter(ST %in% c("Shan (East)", "Shan (North)", "Shan (South)"))
+```
+
+## Importing aspatial data
+
+```{r}
+ict <- read_csv("data/aspatial/Shan-ICT.csv")
+```
+
+## Deriving ICT penetration rate
+
+```{r}
+ict_derived <- ict %>%
+  mutate(RADIO_PR = Radio / `Total households` * 1000,
+         TV_PR = Television / `Total households` * 1000,
+         LLPHONE_PR = `Land line phone` / `Total households` * 1000,
+         MPHONE_PR = `Mobile phone` / `Total households` * 1000,
+         COMPUTER_PR = Computer / `Total households` * 1000,
+         INTERNET_PR = `Internet at home` / `Total households` * 1000) %>%
+  rename(TS_PCODE = `Township Pcode`)
+```
+
+## Joining spatial and aspatial data
+
+```{r}
+shan_sf <- left_join(shan_sf, ict_derived, by = "TS_PCODE")
+```
+
+## Exploratory data analysis
+
+```{r}
+ggplot(data = ict_derived, aes(x = RADIO_PR)) +
+  geom_histogram(bins = 20, color = "black", fill = "lightblue") +
+  labs(title = "Distribution of Radio penetration rate")
+```
+
+```{r}
+ggplot(data = ict_derived, aes(x = RADIO_PR)) +
+  geom_boxplot(color = "black", fill = "lightblue")
+```
+
+```{r fig.width=10}
+tm_shape(shan_sf) +
+  tm_polygons(fill = "RADIO_PR",
+              fill.scale = tm_scale_intervals(
+                style = "jenks",
+                n = 5,
+                values = "brewer.blues"),
+              fill.legend = tm_legend(title = "Radio penetration rate")) +
+  tm_borders(fill_alpha = 0.5) +
+  tm_title("Distribution of Radio penetration rate by township")
+```
+
+## Correlation analysis
+
+```{r}
+cluster_vars.cor <- cor(ict_derived[, 12:17])
+corrplot.mixed(cluster_vars.cor,
+                lower = "ellipse",
+                upper = "number",
+                tl.pos = "lt",
+                diag = "l",
+                tl.col = "black")
+```
+
+## Hierarchical clustering
+
+### Extracting clustering variables
+
+```{r}
+cluster_vars <- shan_sf %>%
+  st_drop_geometry() %>%
+  select(`Township Name`, RADIO_PR, TV_PR, LLPHONE_PR, MPHONE_PR, COMPUTER_PR) %>%
+  rename(TS_NAME = `Township Name`)
+
+row.names(cluster_vars) <- cluster_vars$TS_NAME
+shan_ict <- select(cluster_vars, -TS_NAME)
+```
+
+### Standardising the clustering variables
+
+```{r}
+shan_ict.std <- normalize(shan_ict)
+summary(shan_ict.std)
+```
+
+### Computing proximity matrix
+
+```{r}
+proxmat <- dist(shan_ict, method = "euclidean")
+```
+
+### Computing hierarchical clustering
+
+```{r}
+hclust_ward <- hclust(proxmat, method = "ward.D")
+plot(hclust_ward, cex = 0.6)
+```
+
+### Comparing clustering linkage methods
+
+```{r}
+m <- c("average", "single", "complete", "ward")
+names(m) <- m
+
+ac <- function(x) {
+  agnes(shan_ict, method = x)$ac
+}
+
+map_dbl(m, ac)
+```
+
+### Determining optimal number of clusters
+
+```{r}
+set.seed(1234)
+gap_stat <- clusGap(shan_ict, FUN = hcut, nstart = 25, K.max = 10, B = 50)
+fviz_gap_stat(gap_stat)
+```
+
+### Interpreting the dendrogram
+
+```{r}
+plot(hclust_ward, cex = 0.6)
+rect.hclust(hclust_ward, k = 6, border = 2:5)
+```
+
+### Visually-driven hierarchical clustering with heatmaply
+
+```{r fig.width=10, fig.height=8}
+heatmaply(normalize(shan_ict),
+          Colv = NA,
+          dist_method = "euclidean",
+          hclust_method = "ward.D",
+          seriate = "OLO",
+          k_row = 6,
+          margins = c(NA, 200, 60, NA),
+          fontsize_row = 4,
+          fontsize_col = 5,
+          main = "Geographic segmentation of Shan State by ICT indicators",
+          xlab = "ICT indicators",
+          ylab = "Townships")
+```
+
+### Mapping the clusters
+
+```{r}
+groups <- as.factor(cutree(hclust_ward, k = 6))
+
+shan_sf_cluster <- cbind(shan_sf, as.matrix(groups)) %>%
+  rename(CLUSTER = `as.matrix.groups.`)
+```
+
+```{r fig.width=10}
+qtm(shan_sf_cluster, "CLUSTER")
+```
+
+## Spatially constrained clustering: SKATER method
+
+### Converting to SpatialPolygonsDataFrame
+
+```{r}
+shan_sp <- as_Spatial(shan_sf)
+```
+
+### Computing neighbour list
+
+```{r}
+shan.nb <- poly2nb(shan_sp)
+summary(shan.nb)
+```
+
+```{r fig.width=10}
+plot(st_geometry(shan_sf), border = grey(.5))
+pts <- st_coordinates(st_centroid(shan_sf))
+plot(shan.nb, pts, col = "blue", add = TRUE)
+```
+
+### Computing minimum spanning tree
+
+```{r}
+lcosts <- nbcosts(shan.nb, shan_ict)
+```
+
+```{r}
+shan.w <- nb2listw(shan.nb, lcosts, style = "B")
+summary(shan.w)
+```
+
+```{r}
+shan.mst <- mstree(shan.w)
+```
+
+```{r fig.width=10}
+plot(st_geometry(shan_sf), border = gray(.5))
+plot(shan.mst, pts, col = "blue", cex.lab = 0.7, cex.circles = 0.005, add = TRUE)
+```
+
+### Computing spatially constrained clusters using SKATER
+
+```{r}
+clust6 <- skater(edges = shan.mst[, 1:2],
+                  data = shan_ict,
+                  method = "euclidean",
+                  ncuts = 5)
+```
+
+```{r}
+groups_mat <- as.matrix(clust6$groups)
+shan_sf_spatialcluster <- cbind(shan_sf_cluster, as.factor(groups_mat)) %>%
+  rename(SP_CLUSTER = `as.factor.groups_mat.`)
+```
+
+```{r fig.width=10}
+qtm(shan_sf_spatialcluster, "SP_CLUSTER")
+```
+
+## Spatially constrained clustering: ClustGeo method
+
+### Non-spatially constrained hierarchical clustering
+
+```{r}
+nongeo_cluster <- hclustgeo(proxmat)
+plot(nongeo_cluster, cex = 0.5)
+rect.hclust(nongeo_cluster, k = 6, border = 2:5)
+```
+
+```{r}
+groups <- as.factor(cutree(nongeo_cluster, k = 6))
+shan_sf_ngeo_cluster <- cbind(shan_sf, as.matrix(groups)) %>%
+  rename(CLUSTER = `as.matrix.groups.`)
+```
+
+```{r fig.width=10}
+qtm(shan_sf_ngeo_cluster, "CLUSTER")
+```
+
+### Spatially constrained hierarchical clustering
+
+```{r}
+dist <- st_distance(shan_sf, shan_sf)
+distmat <- as.dist(dist)
+```
+
+```{r}
+cr <- choicealpha(proxmat, distmat, range.alpha = seq(0, 1, 0.1), K = 6, graph = TRUE)
+```
+
+```{r}
+clustG <- hclustgeo(proxmat, distmat, alpha = 0.2)
+
+groups <- as.factor(cutree(clustG, k = 6))
+shan_sf_Gcluster <- cbind(shan_sf, as.matrix(groups)) %>%
+  rename(CLUSTER = `as.matrix.groups.`)
+```
+
+```{r fig.width=10}
+qtm(shan_sf_Gcluster, "CLUSTER")
+```
+
+## Visual interpretation of clusters
+
+```{r}
+ggplot(data = shan_sf_ngeo_cluster, aes(x = CLUSTER, y = RADIO_PR)) +
+  geom_boxplot()
+```
+
+```{r fig.width=10}
+keep_vars <- c("RADIO_PR", "TV_PR", "LLPHONE_PR", "MPHONE_PR", "COMPUTER_PR")
+
+ggparcoord(data = shan_sf_ngeo_cluster,
+           columns = match(keep_vars, names(shan_sf_ngeo_cluster)),
+           scale = "globalminmax",
+           alphaLines = 0.2,
+           boxplot = TRUE,
+           title = "Multiple parallel coordinates plot of ICT variables by cluster") +
+  facet_wrap(~ CLUSTER) +
+  theme(axis.text.x = element_text(angle = 30))
+```
