@@ -45,6 +45,8 @@ website:
             text: "Ex04: Spatial Weights and Applications"
           - href: "inclass_Ex/inclass week 5/inclass week 5.qmd"
             text: "Ex05: Global and Local Measures of Spatial Autocorrelation"
+          - href: "inclass_Ex/inclass week 6/inclass week 6.qmd"
+            text: "Ex06: Emerging Hot Spot Analysis"
 
       - href: about.qmd
         text: About
