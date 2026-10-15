@@ -31,6 +31,8 @@ website:
             text: "Ex05b: Local Measures of Spatial Autocorrelation"
           - href: Hands-on_Ex/Hands-on_Ex06/Hands-on_Ex06.qmd
             text: "Ex06: Geographical Segmentation"
+          - href: Hands-on_Ex/Hands-on_Ex07/Hands-on_Ex07.qmd
+            text: "Ex07: Modelling Geographical Accessibility"
 
       - text: "Take-home Exercise"
         menu:
