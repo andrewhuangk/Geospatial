@@ -7,67 +7,263 @@
     "text": "Welcome to my coursework website for Geospatial Analytics."
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html",
-    "title": "Inclass Exercise 5",
+    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html",
+    "href": "inclass_Ex/inclass week 6/inclass week 6.html",
+    "title": "Inclass Exercise 6",
     "section": "",
-    "text": "pacman::p_load(sf, sfdep, spdep, tmap, tidyverse, knitr)"
+    "text": "pacman::p_load(sf, sfdep, tmap, plotly, tidyverse, Kendall)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#getting-started",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html#getting-started",
-    "title": "Inclass Exercise 5",
+    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#getting-started",
+    "href": "inclass_Ex/inclass week 6/inclass week 6.html#getting-started",
+    "title": "Inclass Exercise 6",
     "section": "",
-    "text": "pacman::p_load(sf, sfdep, spdep, tmap, tidyverse, knitr)"
+    "text": "pacman::p_load(sf, sfdep, tmap, plotly, tidyverse, Kendall)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#importing-data",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html#importing-data",
-    "title": "Inclass Exercise 5",
-    "section": "Importing data",
-    "text": "Importing data\n\nhunan &lt;- st_read(dsn = \"data/geospatial\", layer = \"Hunan\")\n\nReading layer `Hunan' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 5\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\nhunan2012 &lt;- read_csv(\"data/aspatial/Hunan_2012.csv\")\n\n\nhunan &lt;- left_join(hunan, hunan2012) %&gt;%\n  select(1:4, 7, 15,33)"
+    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#the-data",
+    "href": "inclass_Ex/inclass week 6/inclass week 6.html#the-data",
+    "title": "Inclass Exercise 6",
+    "section": "The Data",
+    "text": "The Data\n\nImporting geospatial data\n\nhunan &lt;- st_read(dsn = \"data/geospatial\",\n                  layer = \"Hunan\") %&gt;%\n  st_transform(crs = 32650)\n\nReading layer `Hunan' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 6\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\n\n\n\nImporting attribute table\n\nGDPPC &lt;- read_csv(\"data/aspatial/Hunan_GDPPC.csv\")"
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#deriving-queens-contiguity-weights-sfdep-method",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html#deriving-queens-contiguity-weights-sfdep-method",
-    "title": "Inclass Exercise 5",
-    "section": "Deriving Queen’s contiguity weights: sfdep method",
-    "text": "Deriving Queen’s contiguity weights: sfdep method\n\nwm_q &lt;- hunan %&gt;%\n  mutate(nb = st_contiguity(geometry),\n         wt = st_weights(nb, style = \"W\"),\n         .before = 1)\n\nsummary(wm_q$nb)\n\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 448 \nPercentage nonzero weights: 5.785124 \nAverage number of links: 5.090909 \nLink number distribution:\n\n 1  2  3  4  5  6  7  8  9 11 \n 2  2 12 16 24 14 11  4  2  1 \n2 least connected regions:\n30 65 with 1 link\n1 most connected region:\n85 with 11 links"
+    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#creating-a-time-series-cube",
+    "href": "inclass_Ex/inclass week 6/inclass week 6.html#creating-a-time-series-cube",
+    "title": "Inclass Exercise 6",
+    "section": "Creating a Time Series Cube",
+    "text": "Creating a Time Series Cube\n\nGDPPC_st &lt;- spacetime(GDPPC, hunan,\n                       .loc_col = \"County\",\n                       .time_col = \"Year\")\n\nis_spacetime_cube(GDPPC_st)\n\n[1] TRUE"
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#computing-global-morans-i",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html#computing-global-morans-i",
-    "title": "Inclass Exercise 5",
-    "section": "Computing Global Moran’s I",
-    "text": "Computing Global Moran’s I\n\nmoranI &lt;- global_moran(wm_q$GDPPC, wm_q$nb, wm_q$wt)\nglimpse(moranI)\n\nList of 2\n $ I: num 0.301\n $ K: num 7.64\n\n\n\nglobal_moran_test(wm_q$GDPPC, wm_q$nb, wm_q$wt)\n\n\n    Moran I test under randomisation\n\ndata:  x  \nweights: listw    \n\nMoran I statistic standard deviate = 4.7351, p-value = 1.095e-06\nalternative hypothesis: greater\nsample estimates:\nMoran I statistic       Expectation          Variance \n      0.300749970      -0.011494253       0.004348351"
+    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#computing-gi",
+    "href": "inclass_Ex/inclass week 6/inclass week 6.html#computing-gi",
+    "title": "Inclass Exercise 6",
+    "section": "Computing Gi*",
+    "text": "Computing Gi*\n\nDeriving the spatial weights\n\nGDPPC_nb &lt;- GDPPC_st %&gt;%\n  activate(\"geometry\") %&gt;%\n  mutate(nb = include_self(st_contiguity(geometry)),\n         wt = st_inverse_distance(nb, geometry,\n                                   scale = 1,\n                                   alpha = 1),\n         .before = 1) %&gt;%\n  set_nbs(\"nb\") %&gt;%\n  set_wts(\"wt\")\n\n\ngi_stars &lt;- GDPPC_nb %&gt;%\n  group_by(Year) %&gt;%\n  mutate(gi_star = local_gstar_perm(GDPPC, nb, wt)) %&gt;%\n  tidyr::unnest(gi_star)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#performing-global-morans-i-permutation-test",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html#performing-global-morans-i-permutation-test",
-    "title": "Inclass Exercise 5",
-    "section": "Performing Global Moran’s I permutation test",
-    "text": "Performing Global Moran’s I permutation test\n\nset.seed(1234)\nglobal_moran_perm(wm_q$GDPPC, wm_q$nb, wm_q$wt, nsim = 99)\n\n\n    Monte-Carlo simulation of Moran I\n\ndata:  x \nweights: listw  \nnumber of simulations + 1: 100 \n\nstatistic = 0.30075, observed rank = 100, p-value &lt; 2.2e-16\nalternative hypothesis: two.sided"
+    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#mann-kendall-test",
+    "href": "inclass_Ex/inclass week 6/inclass week 6.html#mann-kendall-test",
+    "title": "Inclass Exercise 6",
+    "section": "Mann-Kendall Test",
+    "text": "Mann-Kendall Test\n\nMann-Kendall Test on Gi\n\ncbg &lt;- gi_stars %&gt;%\n  ungroup() %&gt;%\n  filter(County == \"Changsha\") %&gt;%\n  select(County, Year, gi_star)\n\nggplot(data = cbg, aes(x = Year, y = gi_star)) +\n  geom_line() +\n  theme_light()\n\n\n\n\n\n\n\n\n\n\nInteractive Mann-Kendall Plot\n\np &lt;- ggplot(data = cbg, aes(x = Year, y = gi_star)) +\n  geom_line() +\n  theme_light()\n\nggplotly(p)\n\n\n\n\n\n\n\nPrinting Mann-Kendall test report\n\ncbg %&gt;%\n  summarise(mk = list(unclass(Kendall::MannKendall(gi_star)))) %&gt;%\n  tidyr::unnest_wider(mk)\n\n# A tibble: 1 × 5\n    tau      sl     S     D  varS\n  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;\n1 0.485 0.00742    66  136.  589.\n\n\n\n\nMann-Kendall test data.frame\n\nehsa_mk &lt;- gi_stars %&gt;%\n  group_by(County) %&gt;%\n  summarise(mk = list(unclass(Kendall::MannKendall(gi_star)))) %&gt;%\n  tidyr::unnest_wider(mk)\n\nhead(ehsa_mk)\n\n# A tibble: 6 × 6\n  County        tau        sl     S     D  varS\n  &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;\n1 Anhua      0.191  0.303        26  136.  589.\n2 Anren     -0.294  0.108       -40  136.  589.\n3 Anxiang    0      1             0  136.  589.\n4 Baojing   -0.691  0.000128    -94  136.  589.\n5 Chaling   -0.0882 0.650       -12  136.  589.\n6 Changning -0.750  0.0000318  -102  136.  589.\n\n\n\nemerging &lt;- ehsa_mk %&gt;%\n  arrange(sl, abs(tau)) %&gt;%\n  slice(1:10)\n\nhead(emerging)\n\n# A tibble: 6 × 6\n  County        tau         sl     S     D  varS\n  &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;\n1 Shuangfeng  0.868 0.00000143   118  136.  589.\n2 Xiangtan    0.868 0.00000143   118  136.  589.\n3 Xiangxiang  0.868 0.00000143   118  136.  589.\n4 Chengbu    -0.824 0.00000482  -112  136.  589.\n5 Dongan     -0.824 0.00000482  -112  136.  589.\n6 Wugang     -0.809 0.00000712  -110  136.  589."
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#computing-local-morans-i",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html#computing-local-morans-i",
-    "title": "Inclass Exercise 5",
-    "section": "Computing local Moran’s I",
-    "text": "Computing local Moran’s I\n\nlisa &lt;- wm_q %&gt;%\n  mutate(local_moran = local_moran(GDPPC, nb, wt, nsim = 99),\n         .before = 1) %&gt;%\n  unnest(local_moran)"
+    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#performing-emerging-hotspot-analysis",
+    "href": "inclass_Ex/inclass week 6/inclass week 6.html#performing-emerging-hotspot-analysis",
+    "title": "Inclass Exercise 6",
+    "section": "Performing Emerging Hotspot Analysis",
+    "text": "Performing Emerging Hotspot Analysis\n\nehsa &lt;- emerging_hotspot_analysis(\n  x = GDPPC_st,\n  .var = \"GDPPC\",\n  k = 1,\n  nsim = 99\n)\n\n\nVisualising the distribution of EHSA classes\n\nggplot(data = ehsa, aes(x = classification)) +\n  geom_bar()\n\n\n\n\n\n\n\n\n\n\nVisualising EHSA\n\nhunan_ehsa &lt;- hunan %&gt;%\n  left_join(ehsa, by = join_by(County == location))\n\nehsa_sig &lt;- hunan_ehsa %&gt;%\n  filter(p_value &lt; 0.05)\n\ntmap_mode(\"plot\")\ntm_shape(hunan_ehsa) +\n  tm_polygons() +\n  tm_borders(fill_alpha = 0.5) +\n  tm_shape(ehsa_sig) +\n  tm_fill(\"classification\") +\n  tm_borders(fill_alpha = 0.4)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#visualising-local-morans-i",
-    "href": "inclass_Ex/inclass week 5/inclass week 5.html#visualising-local-morans-i",
-    "title": "Inclass Exercise 5",
-    "section": "Visualising local Moran’s I",
-    "text": "Visualising local Moran’s I\n\ntmap_mode(\"plot\")\ntm_shape(lisa) +\n  tm_polygons(fill = \"ii\",\n              fill.scale = tm_scale_intervals(\n                style = \"fixed\",\n                breaks = c(-2, -1, 0, 1, 2, 3, 4, 5),\n                values = \"brewer.rd_bu\"),\n              fill.legend = tm_legend(\n                title = \"Local Moran's I\")) +\n  tm_borders(fill_alpha = 0.5) +\n  tm_title(\"local Moran's I of GDPPC\") +\n  tm_layout(legend.text.size = 1.2)\n\n\n\n\n\n\n\n\n\ntmap_mode(\"plot\")\ntm_shape(lisa) +\n  tm_polygons(fill = \"p_ii_sim\") +\n  tm_borders(fill_alpha = 0.5) +\n  tm_title(\"p-value of local Moran's I\") +\n  tm_layout(legend.title.size = 1.5)"
-  },
-  {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html",
+    "title": "Inclass Exercise 4",
     "section": "",
-    "text": "About this site"
+    "text": "pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#get-started",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#get-started",
+    "title": "Inclass Exercise 4",
+    "section": "",
+    "text": "pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#import-data",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#import-data",
+    "title": "Inclass Exercise 4",
+    "section": "Import data",
+    "text": "Import data\n\nhunan &lt;- st_read(dsn = \"data/geospatial\", layer = \"Hunan\")\n\nReading layer `Hunan' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 4\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\nhunan2012 &lt;- read_csv(\"data/aspatial/Hunan_2012.csv\")"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#join",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#join",
+    "title": "Inclass Exercise 4",
+    "section": "Join",
+    "text": "Join\n\nhunan &lt;- left_join(hunan, hunan2012) %&gt;%\n  select(NAME_2, ID_3, NAME_3, County, GDPPC, Agri, Service)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#mapping-gdppc",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#mapping-gdppc",
+    "title": "Inclass Exercise 4",
+    "section": "Mapping GDPPC",
+    "text": "Mapping GDPPC\n\nbasemap &lt;- tm_shape(hunan) +\n  tm_polygons() +\n  tm_text(\"NAME_3\", size = 0.5)\n\ngdppc &lt;- qtm(hunan, \"GDPPC\") +\n  tm_layout(legend.position = c(\"left\", \"bottom\"))\n\ntmap_arrange(basemap, gdppc, asp = 1, ncol = 2)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-data-for-gwmodel",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-data-for-gwmodel",
+    "title": "Inclass Exercise 4",
+    "section": "Preparing data for GWmodel",
+    "text": "Preparing data for GWmodel\n\nhunan_sp &lt;- as_Spatial(hunan)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#determine-adaptive-bandwidth",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#determine-adaptive-bandwidth",
+    "title": "Inclass Exercise 4",
+    "section": "Determine adaptive bandwidth",
+    "text": "Determine adaptive bandwidth\n\nbw_CV &lt;- bw.gwr(GDPPC ~ 1,\n                data = hunan_sp,\n                approach = \"CV\",\n                adaptive = TRUE,\n                kernel = \"bisquare\",\n                longlat = TRUE)\n\nAdaptive bandwidth: 62 CV score: 15515442343 \nAdaptive bandwidth: 46 CV score: 14937956887 \nAdaptive bandwidth: 36 CV score: 14408561608 \nAdaptive bandwidth: 29 CV score: 14198527496 \nAdaptive bandwidth: 26 CV score: 13898800611 \nAdaptive bandwidth: 22 CV score: 13662299974 \nAdaptive bandwidth: 22 CV score: 13662299974 \n\n\n\nbw_AIC &lt;- bw.gwr(GDPPC ~ 1,\n                 data = hunan_sp,\n                 approach = \"AIC\",\n                 adaptive = TRUE,\n                 kernel = \"bisquare\",\n                 longlat = TRUE)\n\nAdaptive bandwidth (number of nearest neighbours): 62 AICc value: 1923.156 \nAdaptive bandwidth (number of nearest neighbours): 46 AICc value: 1920.469 \nAdaptive bandwidth (number of nearest neighbours): 36 AICc value: 1917.324 \nAdaptive bandwidth (number of nearest neighbours): 29 AICc value: 1916.661 \nAdaptive bandwidth (number of nearest neighbours): 26 AICc value: 1914.897 \nAdaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045 \nAdaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#geographically-weighted-summary-statistics",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#geographically-weighted-summary-statistics",
+    "title": "Inclass Exercise 4",
+    "section": "Geographically weighted summary statistics",
+    "text": "Geographically weighted summary statistics\n\ngwstat &lt;- gwss(data = hunan_sp,\n               vars = \"GDPPC\",\n               bw = bw_AIC,\n               kernel = \"bisquare\",\n               adaptive = TRUE,\n               longlat = TRUE)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-the-output-data",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-the-output-data",
+    "title": "Inclass Exercise 4",
+    "section": "Preparing the output data",
+    "text": "Preparing the output data\n\ngwstat_df &lt;- as.data.frame(gwstat$SDF)\nhunan_gstat &lt;- cbind(hunan, gwstat_df)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#visualising-geographically-weighted-summary-statistics",
+    "href": "inclass_Ex/inclass week 4/inclass week 4.html#visualising-geographically-weighted-summary-statistics",
+    "title": "Inclass Exercise 4",
+    "section": "Visualising geographically weighted summary statistics",
+    "text": "Visualising geographically weighted summary statistics\n\ntm_shape(hunan_gstat) +\n  tm_polygons(fill = \"GDPPC_LM\",\n              fill.scale = tm_scale_intervals(\n                style = \"quantile\",\n                n = 5,\n                values = \"brewer.blues\"),\n              fill.legend = tm_legend(\n                title = \"local Mean\")) +\n  tm_borders(fill_alpha = 0.5) +\n  tm_title(\"Distribution of geographically wieghted mean\") +\n  tm_layout(legend.position = c(\"left\", \"bottom\"))"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "",
+    "text": "The brief has three required parts plus one open-ended one:\n\nGeospatial data wrangling: aggregate conflict fatalities to the township (ADM3) level, build a space-time cube, and geovisualise the distribution and pattern.\nLocal Measures of Spatial Association (LMSA): compute a local spatial association statistic on a hexagon grid, and map the statistically significant results (p &lt; 0.05).\nEmerging Hot Spot Analysis (EHSA): run the Mann-Kendall trend test on spatio-temporal Gi* values to classify how each location’s hotspot status evolves over time.\nValue-added analysis: my own extension using a geospatial method not covered in the core exercise. (to be decided — not written yet)\n\nStudy area and scope. The data covers Myanmar nationwide (325 townships), 1 January 2021 to 30 September 2025. I use conflict fatalities (not raw event counts) as the intensity measure throughout — see Choosing the conflict metric for why.\nKey methodology choices made up front (and why):\n\n\n\n\n\n\n\n\nChoice\nDecision\nWhy\n\n\n\n\nConflict metric\nFatalities, not event count\nEvent count is swamped by Strategic developments/Protests (33k events, only 821 deaths combined); fatalities naturally isolate the actual armed-violence signal without extra filtering.\n\n\nTime bin\nQuarterly (19 bins)\nMonthly bins leave 40% of township-months empty (too sparse for stable statistics); yearly bins (5) are too few for a trend test. Quarterly: only 20% empty, ~18 events/active cell.\n\n\nHexagon size\n25 km edge\nMatches township scale (~1,600 km² per hex vs. ~2,080 km² average township); smaller hexes (5-10km) are mostly empty and noise-dominated.\n\n\nLMSA statistic\nGetis-Ord Gi*\nSame family as the EHSA’s Gi*, so Part 2 (static snapshot) and Part 3 (temporal evolution) tell one continuous story."
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#packages-used",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#packages-used",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "2.1 Packages used",
+    "text": "2.1 Packages used\n\npacman::p_load(sf, sfdep, tmap, tidyverse, lubridate, knitr, kableExtra)\n\n\nsf: reading/writing vector geospatial data, projection, geometric operations (hex grid, joins).\nsfdep: tidy, sf-native spatial dependence — neighbour lists, Gi*, and the space-time cube + Mann-Kendall EHSA workflow.\ntmap: thematic maps (v4), used for every map in this document.\ntidyverse / lubridate: data wrangling and date handling.\nknitr / kableExtra: tidy tables."
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#data-sources",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#data-sources",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "2.2 Data sources",
+    "text": "2.2 Data sources\n\n\n\nDataset\nType\nSource\n\n\n\n\nACLED Myanmar conflict events, Jan 2021-Sep 2025\nAspatial (point coordinates as columns)\nProvided via eLearn, ACLED\n\n\nMyanmar Township Boundaries (ADM3), MIMU v9.4\nGeospatial (polygon)\nMIMU Geonode\n\n\n\n\nlist.files(\"data/geospatial\")\n\n[1] \"mmr_polbnda_adm3_250k_mimu_1.cst\" \"mmr_polbnda_adm3_250k_mimu_1.dbf\"\n[3] \"mmr_polbnda_adm3_250k_mimu_1.prj\" \"mmr_polbnda_adm3_250k_mimu_1.shp\"\n[5] \"mmr_polbnda_adm3_250k_mimu_1.shx\" \"wfsrequest.txt\"                  \n\nlist.files(\"data/aspatial\")\n\n[1] \"ACLED_Data_Myanmar_Jan2021-Sep2025.csv\""
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#geospatial-myanmar-township-adm3-boundaries",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#geospatial-myanmar-township-adm3-boundaries",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "3.1 Geospatial: Myanmar township (ADM3) boundaries",
+    "text": "3.1 Geospatial: Myanmar township (ADM3) boundaries\n\nadm3 &lt;- st_read(\"data/geospatial/mmr_polbnda_adm3_250k_mimu_1.shp\", quiet = TRUE)\nst_crs(adm3)$input\n\n[1] \"WGS 84\"\n\nnrow(adm3)\n\n[1] 330\n\n\nThe boundaries come in WGS84 (EPSG:4326). Myanmar spans UTM zones 46N and 47N (roughly 92°E-101°E); I project to EPSG:32646 (WGS 84 / UTM Zone 46N), which covers the densely-populated central belt (Yangon, Mandalay, Naypyidaw all sit right at the 46/47 boundary). This means the Shan State area in the far east (closer to zone 47N) picks up slightly more distortion in area/distance calculations — a reasonable trade-off for a single national CRS, and worth naming as a limitation later.\n\nadm3 &lt;- adm3 |&gt; st_transform(32646)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#aspatial-acled-conflict-events",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#aspatial-acled-conflict-events",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "3.2 Aspatial: ACLED conflict events",
+    "text": "3.2 Aspatial: ACLED conflict events\n\nacled &lt;- read_csv(\n  \"data/aspatial/ACLED_Data_Myanmar_Jan2021-Sep2025.csv\",\n  show_col_types = FALSE\n)\nnrow(acled)\n\n[1] 87109"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#choosing-the-conflict-metric",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#choosing-the-conflict-metric",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "3.3 Choosing the conflict metric",
+    "text": "3.3 Choosing the conflict metric\nACLED categorises events by event_type. Counting raw events treats a protest the same as a battle:\n\nacled |&gt; count(event_type, wt = fatalities, sort = TRUE, name = \"fatalities\") |&gt;\n  left_join(acled |&gt; count(event_type, name = \"events\"), by = \"event_type\") |&gt;\n  relocate(events, .after = event_type) |&gt;\n  kable(caption = \"Events vs. fatalities by event type\")\n\n\nEvents vs. fatalities by event type\n\n\nevent_type\nevents\nfatalities\n\n\n\n\nBattles\n21121\n59287\n\n\nExplosions/Remote violence\n22925\n20735\n\n\nViolence against civilians\n9958\n9205\n\n\nProtests\n15203\n509\n\n\nStrategic developments\n17833\n164\n\n\nRiots\n69\n148\n\n\n\n\n\nBattles and Explosions/Remote violence alone account for the overwhelming majority of deaths, while Strategic developments, Protests and Riots are almost entirely non-lethal (821 deaths combined, under 1% of the total). Using fatalities as the intensity measure for every subsequent step automatically downweights that non-violent noise, without needing to hand-filter event_type."
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#deriving-quarter-and-geometry",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#deriving-quarter-and-geometry",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "3.4 Deriving quarter and geometry",
+    "text": "3.4 Deriving quarter and geometry\n\nacled &lt;- acled |&gt;\n  mutate(\n    event_date = ymd(event_date),\n    year = year(event_date),\n    quarter = quarter(event_date),\n    yq = paste0(year, \"-Q\", quarter)\n  ) |&gt;\n  filter(!is.na(latitude), !is.na(longitude))\n\nacled_sf &lt;- st_as_sf(acled, coords = c(\"longitude\", \"latitude\"), crs = 4326) |&gt;\n  st_transform(32646)\n\nn_distinct(acled_sf$yq)\n\n[1] 19\n\n\n19 quarters, as planned (2021 Q1 through 2025 Q3)."
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#aggregating-fatalities-to-the-township-level",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#aggregating-fatalities-to-the-township-level",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "4.1 Aggregating fatalities to the township level",
+    "text": "4.1 Aggregating fatalities to the township level\nSpatial join each event to the township polygon it falls in, then sum fatalities per township per quarter:\n\nacled_adm3 &lt;- st_join(acled_sf, adm3 |&gt; select(TS_PCODE, TS, ST), join = st_within)\n\ntownship_quarter &lt;- acled_adm3 |&gt;\n  st_drop_geometry() |&gt;\n  group_by(TS_PCODE, TS, yq) |&gt;\n  summarise(fatalities = sum(fatalities), .groups = \"drop\")\n\n(Note: TS_PCODE/TS/ST are my best guess at the MIMU attribute column names from the shapefile’s .dbf — confirm the actual column names with names(adm3) and adjust if they differ.)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#building-the-space-time-cube",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#building-the-space-time-cube",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "4.2 Building the space-time cube",
+    "text": "4.2 Building the space-time cube\n\n# full township x quarter grid, filling the gaps left/right-joined above with 0\nall_quarters &lt;- acled$yq |&gt; unique() |&gt; sort()\n\nstcube_adm3 &lt;- adm3 |&gt;\n  st_drop_geometry() |&gt;\n  select(TS_PCODE, TS) |&gt;\n  distinct() |&gt;\n  cross_join(tibble(yq = all_quarters)) |&gt;\n  left_join(township_quarter, by = c(\"TS_PCODE\", \"TS\", \"yq\")) |&gt;\n  mutate(fatalities = replace_na(fatalities, 0))"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#geovisualisation",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#geovisualisation",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "4.3 Geovisualisation",
+    "text": "4.3 Geovisualisation\n\nfatalities_total &lt;- stcube_adm3 |&gt;\n  group_by(TS_PCODE) |&gt;\n  summarise(fatalities = sum(fatalities))\n\nadm3_fatalities &lt;- adm3 |&gt; left_join(fatalities_total, by = \"TS_PCODE\")\n\ntm_shape(adm3_fatalities) +\n  tm_fill(\"fatalities\", style = \"jenks\", palette = \"Reds\", title = \"Fatalities\") +\n  tm_borders(lwd = 0.2) +\n  tm_layout(legend.outside = TRUE)\n\n\n\n\nTotal conflict fatalities by township, 2021-2025.\n\n\n\n\n(Written description, ≤200 words, goes here once the map is confirmed correct.)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#building-the-25km-hexagon-grid",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#building-the-25km-hexagon-grid",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "5.1 Building the 25km hexagon grid",
+    "text": "5.1 Building the 25km hexagon grid\n\nmyanmar_boundary &lt;- adm3 |&gt; st_union() |&gt; st_make_valid()\n\nhex_grid &lt;- st_make_grid(myanmar_boundary, cellsize = 25000, square = FALSE) |&gt;\n  st_sf() |&gt;\n  mutate(hex_id = row_number()) |&gt;\n  st_filter(myanmar_boundary)\n\nnrow(hex_grid)\n\n[1] 1497"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#aggregating-fatalities-into-hexagons",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#aggregating-fatalities-into-hexagons",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "5.2 Aggregating fatalities into hexagons",
+    "text": "5.2 Aggregating fatalities into hexagons\n\nacled_hex &lt;- st_join(acled_sf, hex_grid, join = st_within)\n\nhex_fatalities &lt;- acled_hex |&gt;\n  st_drop_geometry() |&gt;\n  group_by(hex_id) |&gt;\n  summarise(fatalities = sum(fatalities), .groups = \"drop\")\n\nhex_grid_fat &lt;- hex_grid |&gt;\n  left_join(hex_fatalities, by = \"hex_id\") |&gt;\n  mutate(fatalities = replace_na(fatalities, 0))"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#computing-getis-ord-gi",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#computing-getis-ord-gi",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "5.3 Computing Getis-Ord Gi*",
+    "text": "5.3 Computing Getis-Ord Gi*\n\nhex_nb &lt;- hex_grid_fat |&gt;\n  mutate(\n    nb = st_contiguity(st_geometry(hex_grid_fat)),\n    wt = st_weights(nb, style = \"W\")\n  )\n\ngi_star &lt;- hex_nb |&gt;\n  mutate(gi_star = local_gstar_perm(fatalities, nb, wt, nsim = 99)) |&gt;\n  unnest(gi_star)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#significance-map-p-0.05",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#significance-map-p-0.05",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "5.4 Significance map (p < 0.05)",
+    "text": "5.4 Significance map (p &lt; 0.05)\n\ngi_star_sig &lt;- gi_star |&gt; filter(p_folded_sim &lt; 0.05)\n\ntm_shape(adm3) + tm_borders(lwd = 0.2, col = \"grey70\") +\ntm_shape(gi_star_sig) +\n  tm_fill(\"gi_star\", palette = \"-RdBu\", midpoint = 0, title = \"Gi* (p&lt;0.05)\") +\n  tm_layout(legend.outside = TRUE)\n\n\n\n\nSignificant Gi* hotspots (p &lt; 0.05), 25km hexagon grid.\n\n\n\n\n(Written conclusion, ≤200 words, goes here.)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#space-time-cube-hexagon-x-quarter",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#space-time-cube-hexagon-x-quarter",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "6.1 Space-time cube: hexagon x quarter",
+    "text": "6.1 Space-time cube: hexagon x quarter\n\n# TODO: .time_col (yq) 型別不對,spacetime() 報錯,先關掉,Take-home Ex02 之後再修\nhex_quarter &lt;- st_join(acled_sf, hex_grid, join = st_within) |&gt;\n  st_drop_geometry() |&gt;\n  group_by(hex_id, yq) |&gt;\n  summarise(fatalities = sum(fatalities), .groups = \"drop\")\n\nhex_stcube_full &lt;- hex_grid |&gt;\n  st_drop_geometry() |&gt;\n  select(hex_id) |&gt;\n  cross_join(tibble(yq = all_quarters)) |&gt;\n  left_join(hex_quarter, by = c(\"hex_id\", \"yq\")) |&gt;\n  mutate(fatalities = replace_na(fatalities, 0))\n\nhex_spt &lt;- spacetime(hex_stcube_full, hex_grid, \".loc_col\" = \"hex_id\", \".time_col\" = \"yq\")"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#mann-kendall-gi",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#mann-kendall-gi",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "6.2 Mann-Kendall + Gi*",
+    "text": "6.2 Mann-Kendall + Gi*\n\nehsa &lt;- emerging_hotspot_analysis(\n  x = hex_spt,\n  .var = \"fatalities\",\n  k = 1,\n  nsim = 99\n)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#ehsa-classification-map",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#ehsa-classification-map",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "6.3 EHSA classification map",
+    "text": "6.3 EHSA classification map\n\nhex_ehsa &lt;- hex_grid |&gt; left_join(ehsa, by = c(\"hex_id\" = \"location\"))\n\ntm_shape(adm3) + tm_borders(lwd = 0.2, col = \"grey70\") +\ntm_shape(hex_ehsa) +\n  tm_fill(\"classification\", title = \"EHSA pattern\") +\n  tm_layout(legend.outside = TRUE)\n\n(Description per significant cluster, ≤250 words, goes here.)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#key-findings",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#key-findings",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "9.1 Key findings",
+    "text": "9.1 Key findings\n(To write last, once everything above is confirmed.)"
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#limitations",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#limitations",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "9.2 Limitations",
+    "text": "9.2 Limitations\n\nUTM Zone 46N is used nationwide; the far eastern part of Shan State (closer to zone 47N) has slightly more projection distortion in area/distance calculations.\nFatalities as the intensity measure means high-frequency, low-lethality conflict areas may appear quieter than they are — a deliberate trade-off, named in Choosing the conflict metric.\nQuarterly time bins smooth over any sub-quarter escalation or de-escalation."
+  },
+  {
+    "objectID": "Take-home_Ex/Take-home_Ex02/index.html#data-sources-1",
+    "href": "Take-home_Ex/Take-home_Ex02/index.html#data-sources-1",
+    "title": "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar",
+    "section": "9.3 Data sources",
+    "text": "9.3 Data sources\n\nArmed Conflict Location & Event Data Project (ACLED), Myanmar, Jan 2021-Sep 2025 (via eLearn)\nMyanmar Township Boundaries (ADM3), MIMU v9.4, MIMU Geonode"
   },
   {
     "objectID": "Take-home_Ex/Take-home_Ex01/executive-summary.html#where-this-analysis-looks",
@@ -1085,122 +1281,101 @@
     "text": "10.3 Data sources\n\nThailand Road Accident 2019–2022 dataset, Kaggle\nThailand ADM1 province boundaries, geoBoundaries"
   },
   {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html",
-    "title": "Inclass Exercise 4",
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
     "section": "",
-    "text": "pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)"
+    "text": "About this site"
   },
   {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#get-started",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#get-started",
-    "title": "Inclass Exercise 4",
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html",
+    "title": "Inclass Exercise 5",
     "section": "",
-    "text": "pacman::p_load(sf, spdep, tmap, tidyverse, knitr, GWmodel, ggstatsplot)"
+    "text": "pacman::p_load(sf, sfdep, spdep, tmap, tidyverse, knitr)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#import-data",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#import-data",
-    "title": "Inclass Exercise 4",
-    "section": "Import data",
-    "text": "Import data\n\nhunan &lt;- st_read(dsn = \"data/geospatial\", layer = \"Hunan\")\n\nReading layer `Hunan' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 4\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\nhunan2012 &lt;- read_csv(\"data/aspatial/Hunan_2012.csv\")"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#join",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#join",
-    "title": "Inclass Exercise 4",
-    "section": "Join",
-    "text": "Join\n\nhunan &lt;- left_join(hunan, hunan2012) %&gt;%\n  select(NAME_2, ID_3, NAME_3, County, GDPPC, Agri, Service)"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#mapping-gdppc",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#mapping-gdppc",
-    "title": "Inclass Exercise 4",
-    "section": "Mapping GDPPC",
-    "text": "Mapping GDPPC\n\nbasemap &lt;- tm_shape(hunan) +\n  tm_polygons() +\n  tm_text(\"NAME_3\", size = 0.5)\n\ngdppc &lt;- qtm(hunan, \"GDPPC\") +\n  tm_layout(legend.position = c(\"left\", \"bottom\"))\n\ntmap_arrange(basemap, gdppc, asp = 1, ncol = 2)"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-data-for-gwmodel",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-data-for-gwmodel",
-    "title": "Inclass Exercise 4",
-    "section": "Preparing data for GWmodel",
-    "text": "Preparing data for GWmodel\n\nhunan_sp &lt;- as_Spatial(hunan)"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#determine-adaptive-bandwidth",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#determine-adaptive-bandwidth",
-    "title": "Inclass Exercise 4",
-    "section": "Determine adaptive bandwidth",
-    "text": "Determine adaptive bandwidth\n\nbw_CV &lt;- bw.gwr(GDPPC ~ 1,\n                data = hunan_sp,\n                approach = \"CV\",\n                adaptive = TRUE,\n                kernel = \"bisquare\",\n                longlat = TRUE)\n\nAdaptive bandwidth: 62 CV score: 15515442343 \nAdaptive bandwidth: 46 CV score: 14937956887 \nAdaptive bandwidth: 36 CV score: 14408561608 \nAdaptive bandwidth: 29 CV score: 14198527496 \nAdaptive bandwidth: 26 CV score: 13898800611 \nAdaptive bandwidth: 22 CV score: 13662299974 \nAdaptive bandwidth: 22 CV score: 13662299974 \n\n\n\nbw_AIC &lt;- bw.gwr(GDPPC ~ 1,\n                 data = hunan_sp,\n                 approach = \"AIC\",\n                 adaptive = TRUE,\n                 kernel = \"bisquare\",\n                 longlat = TRUE)\n\nAdaptive bandwidth (number of nearest neighbours): 62 AICc value: 1923.156 \nAdaptive bandwidth (number of nearest neighbours): 46 AICc value: 1920.469 \nAdaptive bandwidth (number of nearest neighbours): 36 AICc value: 1917.324 \nAdaptive bandwidth (number of nearest neighbours): 29 AICc value: 1916.661 \nAdaptive bandwidth (number of nearest neighbours): 26 AICc value: 1914.897 \nAdaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045 \nAdaptive bandwidth (number of nearest neighbours): 22 AICc value: 1914.045"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#geographically-weighted-summary-statistics",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#geographically-weighted-summary-statistics",
-    "title": "Inclass Exercise 4",
-    "section": "Geographically weighted summary statistics",
-    "text": "Geographically weighted summary statistics\n\ngwstat &lt;- gwss(data = hunan_sp,\n               vars = \"GDPPC\",\n               bw = bw_AIC,\n               kernel = \"bisquare\",\n               adaptive = TRUE,\n               longlat = TRUE)"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-the-output-data",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#preparing-the-output-data",
-    "title": "Inclass Exercise 4",
-    "section": "Preparing the output data",
-    "text": "Preparing the output data\n\ngwstat_df &lt;- as.data.frame(gwstat$SDF)\nhunan_gstat &lt;- cbind(hunan, gwstat_df)"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 4/inclass week 4.html#visualising-geographically-weighted-summary-statistics",
-    "href": "inclass_Ex/inclass week 4/inclass week 4.html#visualising-geographically-weighted-summary-statistics",
-    "title": "Inclass Exercise 4",
-    "section": "Visualising geographically weighted summary statistics",
-    "text": "Visualising geographically weighted summary statistics\n\ntm_shape(hunan_gstat) +\n  tm_polygons(fill = \"GDPPC_LM\",\n              fill.scale = tm_scale_intervals(\n                style = \"quantile\",\n                n = 5,\n                values = \"brewer.blues\"),\n              fill.legend = tm_legend(\n                title = \"local Mean\")) +\n  tm_borders(fill_alpha = 0.5) +\n  tm_title(\"Distribution of geographically wieghted mean\") +\n  tm_layout(legend.position = c(\"left\", \"bottom\"))"
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html",
-    "href": "inclass_Ex/inclass week 6/inclass week 6.html",
-    "title": "Inclass Exercise 6",
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#getting-started",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html#getting-started",
+    "title": "Inclass Exercise 5",
     "section": "",
-    "text": "pacman::p_load(sf, sfdep, tmap, plotly, tidyverse, Kendall)"
+    "text": "pacman::p_load(sf, sfdep, spdep, tmap, tidyverse, knitr)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#getting-started",
-    "href": "inclass_Ex/inclass week 6/inclass week 6.html#getting-started",
-    "title": "Inclass Exercise 6",
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#importing-data",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html#importing-data",
+    "title": "Inclass Exercise 5",
+    "section": "Importing data",
+    "text": "Importing data\n\nhunan &lt;- st_read(dsn = \"data/geospatial\", layer = \"Hunan\")\n\nReading layer `Hunan' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 5\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\nhunan2012 &lt;- read_csv(\"data/aspatial/Hunan_2012.csv\")\n\n\nhunan &lt;- left_join(hunan, hunan2012) %&gt;%\n  select(1:4, 7, 15,33)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#deriving-queens-contiguity-weights-sfdep-method",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html#deriving-queens-contiguity-weights-sfdep-method",
+    "title": "Inclass Exercise 5",
+    "section": "Deriving Queen’s contiguity weights: sfdep method",
+    "text": "Deriving Queen’s contiguity weights: sfdep method\n\nwm_q &lt;- hunan %&gt;%\n  mutate(nb = st_contiguity(geometry),\n         wt = st_weights(nb, style = \"W\"),\n         .before = 1)\n\nsummary(wm_q$nb)\n\nNeighbour list object:\nNumber of regions: 88 \nNumber of nonzero links: 448 \nPercentage nonzero weights: 5.785124 \nAverage number of links: 5.090909 \nLink number distribution:\n\n 1  2  3  4  5  6  7  8  9 11 \n 2  2 12 16 24 14 11  4  2  1 \n2 least connected regions:\n30 65 with 1 link\n1 most connected region:\n85 with 11 links"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#computing-global-morans-i",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html#computing-global-morans-i",
+    "title": "Inclass Exercise 5",
+    "section": "Computing Global Moran’s I",
+    "text": "Computing Global Moran’s I\n\nmoranI &lt;- global_moran(wm_q$GDPPC, wm_q$nb, wm_q$wt)\nglimpse(moranI)\n\nList of 2\n $ I: num 0.301\n $ K: num 7.64\n\n\n\nglobal_moran_test(wm_q$GDPPC, wm_q$nb, wm_q$wt)\n\n\n    Moran I test under randomisation\n\ndata:  x  \nweights: listw    \n\nMoran I statistic standard deviate = 4.7351, p-value = 1.095e-06\nalternative hypothesis: greater\nsample estimates:\nMoran I statistic       Expectation          Variance \n      0.300749970      -0.011494253       0.004348351"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#performing-global-morans-i-permutation-test",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html#performing-global-morans-i-permutation-test",
+    "title": "Inclass Exercise 5",
+    "section": "Performing Global Moran’s I permutation test",
+    "text": "Performing Global Moran’s I permutation test\n\nset.seed(1234)\nglobal_moran_perm(wm_q$GDPPC, wm_q$nb, wm_q$wt, nsim = 99)\n\n\n    Monte-Carlo simulation of Moran I\n\ndata:  x \nweights: listw  \nnumber of simulations + 1: 100 \n\nstatistic = 0.30075, observed rank = 100, p-value &lt; 2.2e-16\nalternative hypothesis: two.sided"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#computing-local-morans-i",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html#computing-local-morans-i",
+    "title": "Inclass Exercise 5",
+    "section": "Computing local Moran’s I",
+    "text": "Computing local Moran’s I\n\nlisa &lt;- wm_q %&gt;%\n  mutate(local_moran = local_moran(GDPPC, nb, wt, nsim = 99),\n         .before = 1) %&gt;%\n  unnest(local_moran)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 5/inclass week 5.html#visualising-local-morans-i",
+    "href": "inclass_Ex/inclass week 5/inclass week 5.html#visualising-local-morans-i",
+    "title": "Inclass Exercise 5",
+    "section": "Visualising local Moran’s I",
+    "text": "Visualising local Moran’s I\n\ntmap_mode(\"plot\")\ntm_shape(lisa) +\n  tm_polygons(fill = \"ii\",\n              fill.scale = tm_scale_intervals(\n                style = \"fixed\",\n                breaks = c(-2, -1, 0, 1, 2, 3, 4, 5),\n                values = \"brewer.rd_bu\"),\n              fill.legend = tm_legend(\n                title = \"Local Moran's I\")) +\n  tm_borders(fill_alpha = 0.5) +\n  tm_title(\"local Moran's I of GDPPC\") +\n  tm_layout(legend.text.size = 1.2)\n\n\n\n\n\n\n\n\n\ntmap_mode(\"plot\")\ntm_shape(lisa) +\n  tm_polygons(fill = \"p_ii_sim\") +\n  tm_borders(fill_alpha = 0.5) +\n  tm_title(\"p-value of local Moran's I\") +\n  tm_layout(legend.title.size = 1.5)"
+  },
+  {
+    "objectID": "inclass_Ex/inclass week 7/inclass week 7.html",
+    "href": "inclass_Ex/inclass week 7/inclass week 7.html",
+    "title": "In-class Exercise 7: Modelling Geographical Accessibility",
     "section": "",
-    "text": "pacman::p_load(sf, sfdep, tmap, plotly, tidyverse, Kendall)"
+    "text": "remotes::install_github(\"uva-bi-sdad/catchment\")\n\n\npacman::p_load(sf, tidyverse, tmap, accessibility, catchment)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#the-data",
-    "href": "inclass_Ex/inclass week 6/inclass week 6.html#the-data",
-    "title": "Inclass Exercise 6",
-    "section": "The Data",
-    "text": "The Data\n\nImporting geospatial data\n\nhunan &lt;- st_read(dsn = \"data/geospatial\",\n                  layer = \"Hunan\") %&gt;%\n  st_transform(crs = 32650)\n\nReading layer `Hunan' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 6\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 88 features and 7 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 108.7831 ymin: 24.6342 xmax: 114.2544 ymax: 30.12812\nGeodetic CRS:  WGS 84\n\n\n\n\nImporting attribute table\n\nGDPPC &lt;- read_csv(\"data/aspatial/Hunan_GDPPC.csv\")"
+    "objectID": "inclass_Ex/inclass week 7/inclass week 7.html#getting-started",
+    "href": "inclass_Ex/inclass week 7/inclass week 7.html#getting-started",
+    "title": "In-class Exercise 7: Modelling Geographical Accessibility",
+    "section": "",
+    "text": "remotes::install_github(\"uva-bi-sdad/catchment\")\n\n\npacman::p_load(sf, tidyverse, tmap, accessibility, catchment)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#creating-a-time-series-cube",
-    "href": "inclass_Ex/inclass week 6/inclass week 6.html#creating-a-time-series-cube",
-    "title": "Inclass Exercise 6",
-    "section": "Creating a Time Series Cube",
-    "text": "Creating a Time Series Cube\n\nGDPPC_st &lt;- spacetime(GDPPC, hunan,\n                       .loc_col = \"County\",\n                       .time_col = \"Year\")\n\nis_spacetime_cube(GDPPC_st)\n\n[1] TRUE"
+    "objectID": "inclass_Ex/inclass week 7/inclass week 7.html#geospatial-data-wrangling",
+    "href": "inclass_Ex/inclass week 7/inclass week 7.html#geospatial-data-wrangling",
+    "title": "In-class Exercise 7: Modelling Geographical Accessibility",
+    "section": "Geospatial Data Wrangling",
+    "text": "Geospatial Data Wrangling\n\nImporting geospatial data\n\nmpsz &lt;- st_read(dsn = \"data/geospatial\",\n                 layer = \"MP14_SUBZONE_NO_SEA_PL\") %&gt;%\n  st_transform(crs = 3414)\n\nReading layer `MP14_SUBZONE_NO_SEA_PL' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 7\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 323 features and 15 fields\nGeometry type: MULTIPOLYGON\nDimension:     XY\nBounding box:  xmin: 2667.538 ymin: 15748.72 xmax: 56396.44 ymax: 50256.33\nProjected CRS: SVY21\n\n\n\nhexagons &lt;- st_read(dsn = \"data/geospatial\",\n                     layer = \"hexagons\") %&gt;%\n  st_transform(crs = 3414)\n\nReading layer `hexagons' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 7\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 3125 features and 6 fields\nGeometry type: POLYGON\nDimension:     XY\nBounding box:  xmin: 2667.538 ymin: 21506.33 xmax: 50010.26 ymax: 50256.33\nProjected CRS: SVY21 / Singapore TM\n\n\n\neldercare &lt;- st_read(dsn = \"data/geospatial\",\n                      layer = \"ELDERCARE\") %&gt;%\n  st_transform(crs = 3414)\n\nReading layer `ELDERCARE' from data source \n  `C:\\Users\\User\\Desktop\\Geospatial\\inclass_Ex\\inclass week 7\\data\\geospatial' \n  using driver `ESRI Shapefile'\nSimple feature collection with 120 features and 19 fields\nGeometry type: POINT\nDimension:     XY\nBounding box:  xmin: 14481.92 ymin: 28218.43 xmax: 41665.14 ymax: 46804.9\nProjected CRS: SVY21 / Singapore TM"
   },
   {
-    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#computing-gi",
-    "href": "inclass_Ex/inclass week 6/inclass week 6.html#computing-gi",
-    "title": "Inclass Exercise 6",
-    "section": "Computing Gi*",
-    "text": "Computing Gi*\n\nDeriving the spatial weights\n\nGDPPC_nb &lt;- GDPPC_st %&gt;%\n  activate(\"geometry\") %&gt;%\n  mutate(nb = include_self(st_contiguity(geometry)),\n         wt = st_inverse_distance(nb, geometry,\n                                   scale = 1,\n                                   alpha = 1),\n         .before = 1) %&gt;%\n  set_nbs(\"nb\") %&gt;%\n  set_wts(\"wt\")\n\n\ngi_stars &lt;- GDPPC_nb %&gt;%\n  group_by(Year) %&gt;%\n  mutate(gi_star = local_gstar_perm(GDPPC, nb, wt)) %&gt;%\n  tidyr::unnest(gi_star)"
+    "objectID": "inclass_Ex/inclass week 7/inclass week 7.html#aspatial-data-handling-and-wrangling",
+    "href": "inclass_Ex/inclass week 7/inclass week 7.html#aspatial-data-handling-and-wrangling",
+    "title": "In-class Exercise 7: Modelling Geographical Accessibility",
+    "section": "Aspatial Data Handling and Wrangling",
+    "text": "Aspatial Data Handling and Wrangling\n\nImporting Distance Matrix\n\nODMatrix &lt;- read_csv(\"data/aspatial/OD_Matrix.csv\", skip = 0)\n\n\n\nCleaning and updating attribute fields\n\neldercare &lt;- eldercare %&gt;%\n  select(fid) %&gt;%\n  mutate(capacity = 100) %&gt;%\n  rename(id = fid)\n\n\nhexagons &lt;- hexagons %&gt;%\n  select(fid) %&gt;%\n  mutate(demand = 100) %&gt;%\n  rename(id = fid)\n\n\n\nTidying distance matrix\n\nODMatrix_tidied &lt;- ODMatrix %&gt;%\n  select(origin_id, destination_id, total_cost) %&gt;%\n  rename(from_id = origin_id,\n         to_id = destination_id,\n         dist = total_cost)\n\n\n\nDeriving the distance matrix\n\ndistmat &lt;- ODMatrix %&gt;%\n  select(origin_id, destination_id, total_cost) %&gt;%\n  spread(destination_id, total_cost) %&gt;%\n  select(c(-c('origin_id')))\n\n\ndistmat_km &lt;- as.matrix(distmat/1000)"
   },
   {
-    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#mann-kendall-test",
-    "href": "inclass_Ex/inclass week 6/inclass week 6.html#mann-kendall-test",
-    "title": "Inclass Exercise 6",
-    "section": "Mann-Kendall Test",
-    "text": "Mann-Kendall Test\n\nMann-Kendall Test on Gi\n\ncbg &lt;- gi_stars %&gt;%\n  ungroup() %&gt;%\n  filter(County == \"Changsha\") %&gt;%\n  select(County, Year, gi_star)\n\nggplot(data = cbg, aes(x = Year, y = gi_star)) +\n  geom_line() +\n  theme_light()\n\n\n\n\n\n\n\n\n\n\nInteractive Mann-Kendall Plot\n\np &lt;- ggplot(data = cbg, aes(x = Year, y = gi_star)) +\n  geom_line() +\n  theme_light()\n\nggplotly(p)\n\n\n\n\n\n\n\nPrinting Mann-Kendall test report\n\ncbg %&gt;%\n  summarise(mk = list(unclass(Kendall::MannKendall(gi_star)))) %&gt;%\n  tidyr::unnest_wider(mk)\n\n# A tibble: 1 × 5\n    tau      sl     S     D  varS\n  &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;\n1 0.485 0.00742    66  136.  589.\n\n\n\n\nMann-Kendall test data.frame\n\nehsa_mk &lt;- gi_stars %&gt;%\n  group_by(County) %&gt;%\n  summarise(mk = list(unclass(Kendall::MannKendall(gi_star)))) %&gt;%\n  tidyr::unnest_wider(mk)\n\nhead(ehsa_mk)\n\n# A tibble: 6 × 6\n  County        tau        sl     S     D  varS\n  &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;\n1 Anhua      0.191  0.303        26  136.  589.\n2 Anren     -0.294  0.108       -40  136.  589.\n3 Anxiang    0      1             0  136.  589.\n4 Baojing   -0.691  0.000128    -94  136.  589.\n5 Chaling   -0.0882 0.650       -12  136.  589.\n6 Changning -0.750  0.0000318  -102  136.  589.\n\n\n\nemerging &lt;- ehsa_mk %&gt;%\n  arrange(sl, abs(tau)) %&gt;%\n  slice(1:10)\n\nhead(emerging)\n\n# A tibble: 6 × 6\n  County        tau         sl     S     D  varS\n  &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;\n1 Shuangfeng  0.868 0.00000143   118  136.  589.\n2 Xiangtan    0.868 0.00000143   118  136.  589.\n3 Xiangxiang  0.868 0.00000143   118  136.  589.\n4 Chengbu    -0.824 0.00000482  -112  136.  589.\n5 Dongan     -0.824 0.00000482  -112  136.  589.\n6 Wugang     -0.809 0.00000712  -110  136.  589."
-  },
-  {
-    "objectID": "inclass_Ex/inclass week 6/inclass week 6.html#performing-emerging-hotspot-analysis",
-    "href": "inclass_Ex/inclass week 6/inclass week 6.html#performing-emerging-hotspot-analysis",
-    "title": "Inclass Exercise 6",
-    "section": "Performing Emerging Hotspot Analysis",
-    "text": "Performing Emerging Hotspot Analysis\n\nehsa &lt;- emerging_hotspot_analysis(\n  x = GDPPC_st,\n  .var = \"GDPPC\",\n  k = 1,\n  nsim = 99\n)\n\n\nVisualising the distribution of EHSA classes\n\nggplot(data = ehsa, aes(x = classification)) +\n  geom_bar()\n\n\n\n\n\n\n\n\n\n\nVisualising EHSA\n\nhunan_ehsa &lt;- hunan %&gt;%\n  left_join(ehsa, by = join_by(County == location))\n\nehsa_sig &lt;- hunan_ehsa %&gt;%\n  filter(p_value &lt; 0.05)\n\ntmap_mode(\"plot\")\ntm_shape(hunan_ehsa) +\n  tm_polygons() +\n  tm_borders(fill_alpha = 0.5) +\n  tm_shape(ehsa_sig) +\n  tm_fill(\"classification\") +\n  tm_borders(fill_alpha = 0.4)"
+    "objectID": "inclass_Ex/inclass week 7/inclass week 7.html#modelling-accessibility-using-the-catchment-package",
+    "href": "inclass_Ex/inclass week 7/inclass week 7.html#modelling-accessibility-using-the-catchment-package",
+    "title": "In-class Exercise 7: Modelling Geographical Accessibility",
+    "section": "Modelling Accessibility using the catchment Package",
+    "text": "Modelling Accessibility using the catchment Package\n\nComputing 2SFCA\n\ndf_2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  max_cost = 5) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"2SFCA\" = \".\")\n\n\n\nVisualising 2SFCA accessibility\n\nmapex &lt;- st_bbox(hexagons)\n\n\nhex_2SFCA &lt;- bind_cols(hexagons, df_2sfca)\n\ntm_shape(hex_2SFCA,\n         bbox = mapex) + \n  tm_polygons(fill = \"2SFCA\", \n              fill.scale = tm_scale_intervals(\n                style = \"quantile\",\n                n = 10,\n                values = \"-brewer.blues\")) +\ntm_shape(eldercare) +\n  tm_dots(size = 0.3,\n          fill = \"red\",\n          col = \"black\") +\n  tm_title(\"2SFCA Accessibility measures\") +\n  tm_layout(frame = TRUE) +\n  tm_compass(type = \"8star\", size = 2) +\n  tm_scalebar() +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\n\n\n\n\n\nComputing E2SFCA\n\nstep_weights &lt;- list(c(5, .01), c(4, .05), c(3, .1), c(2, .4), c(1, 1))\n\ndf_e2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  weight = step_weights) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"E2SFCA\" = \".\")\n\n\n\nMapping E2SFCA\n\nhex_E2SFCA &lt;- bind_cols(hexagons, df_e2sfca)\n\ntm_shape(hex_E2SFCA,\n         bbox = mapex) + \n  tm_polygons(fill = \"E2SFCA\", \n              fill.scale = tm_scale_intervals(\n                style = \"quantile\",\n                n = 10,\n                values = \"-brewer.blues\")) +\ntm_shape(eldercare) +\n  tm_dots(size = 0.3,\n          fill = \"red\",\n          col = \"black\") +\n  tm_title(\"E2SFCA Accessibility measures\") +\n  tm_layout(frame = TRUE) +\n  tm_compass(type = \"8star\", size = 2) +\n  tm_scalebar() +\n  tm_grid(alpha = 0.2)\n\n\n\n\n\n\n\n\n\n\nComputing KD2SFCA (Kernel Density, Gaussian)\n\ndf_kd2sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  weight = \"gaussian\") %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"KD2SFCA\" = \".\")\n\n\n\nComputing 3SFCA\n\ndf_3sfca &lt;- catchment_ratio(\n  consumers = hexagons$demand,\n  providers = eldercare$capacity,\n  cost = distmat_km,\n  step_weights,\n  normalize_weight = TRUE) %&gt;%\n  as.data.frame() %&gt;%\n  rename(\"3SFCA\" = \".\")"
   }
 ]

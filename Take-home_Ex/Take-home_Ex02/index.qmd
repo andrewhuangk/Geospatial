@@ -1,0 +1,334 @@
+---
+title: "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar"
+subtitle: "Geospatial data wrangling, local spatial association, and emerging hot spot analysis of ACLED conflict events, 2021-2025"
+author: "Andrew Huang"
+date: "2026-10-16"
+date-modified: "last-modified"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: false
+    code-copy: true
+execute:
+  eval: true
+  echo: true
+  warning: false
+  message: false
+  freeze: auto
+---
+
+# Overview
+
+The brief has three required parts plus one open-ended one:
+
+1. **Geospatial data wrangling**: aggregate conflict fatalities to the township (ADM3) level, build a space-time cube, and geovisualise the distribution and pattern.
+2. **Local Measures of Spatial Association (LMSA)**: compute a local spatial association statistic on a hexagon grid, and map the statistically significant results (p < 0.05).
+3. **Emerging Hot Spot Analysis (EHSA)**: run the Mann-Kendall trend test on spatio-temporal Gi* values to classify how each location's hotspot status evolves over time.
+4. **Value-added analysis**: my own extension using a geospatial method not covered in the core exercise. *(to be decided — not written yet)*
+
+**Study area and scope.** The data covers Myanmar nationwide (325 townships), 1 January 2021 to 30 September 2025. I use **conflict fatalities** (not raw event counts) as the intensity measure throughout — see [Choosing the conflict metric](#choosing-the-conflict-metric) for why.
+
+**Key methodology choices made up front (and why):**
+
+| Choice | Decision | Why |
+|---|---|---|
+| Conflict metric | Fatalities, not event count | Event count is swamped by `Strategic developments`/`Protests` (33k events, only 821 deaths combined); fatalities naturally isolate the actual armed-violence signal without extra filtering. |
+| Time bin | Quarterly (19 bins) | Monthly bins leave 40% of township-months empty (too sparse for stable statistics); yearly bins (5) are too few for a trend test. Quarterly: only 20% empty, ~18 events/active cell. |
+| Hexagon size | 25 km edge | Matches township scale (~1,600 km² per hex vs. ~2,080 km² average township); smaller hexes (5-10km) are mostly empty and noise-dominated. |
+| LMSA statistic | Getis-Ord Gi* | Same family as the EHSA's Gi*, so Part 2 (static snapshot) and Part 3 (temporal evolution) tell one continuous story. |
+
+---
+
+# Getting Started
+
+## Packages used
+
+```{r}
+pacman::p_load(sf, sfdep, tmap, tidyverse, lubridate, knitr, kableExtra)
+```
+
+- **sf**: reading/writing vector geospatial data, projection, geometric operations (hex grid, joins).
+- **sfdep**: tidy, `sf`-native spatial dependence — neighbour lists, Gi*, and the space-time cube + Mann-Kendall EHSA workflow.
+- **tmap**: thematic maps (v4), used for every map in this document.
+- **tidyverse** / **lubridate**: data wrangling and date handling.
+- **knitr** / **kableExtra**: tidy tables.
+
+## Data sources
+
+| Dataset | Type | Source |
+|---|---|---|
+| ACLED Myanmar conflict events, Jan 2021-Sep 2025 | Aspatial (point coordinates as columns) | Provided via eLearn, [ACLED](https://acleddata.com/) |
+| Myanmar Township Boundaries (ADM3), MIMU v9.4 | Geospatial (polygon) | [MIMU Geonode](https://geonode.themimu.info/) |
+
+```{r}
+list.files("data/geospatial")
+list.files("data/aspatial")
+```
+
+---
+
+# Importing and Preparing the Data
+
+## Geospatial: Myanmar township (ADM3) boundaries
+
+```{r}
+adm3 <- st_read("data/geospatial/mmr_polbnda_adm3_250k_mimu_1.shp", quiet = TRUE)
+st_crs(adm3)$input
+nrow(adm3)
+```
+
+The boundaries come in WGS84 (EPSG:4326). Myanmar spans UTM zones 46N and 47N (roughly 92°E-101°E); I project to **EPSG:32646 (WGS 84 / UTM Zone 46N)**, which covers the densely-populated central belt (Yangon, Mandalay, Naypyidaw all sit right at the 46/47 boundary). This means the Shan State area in the far east (closer to zone 47N) picks up slightly more distortion in area/distance calculations — a reasonable trade-off for a single national CRS, and worth naming as a limitation later.
+
+```{r}
+adm3 <- adm3 |> st_transform(32646)
+```
+
+## Aspatial: ACLED conflict events
+
+```{r}
+acled <- read_csv(
+  "data/aspatial/ACLED_Data_Myanmar_Jan2021-Sep2025.csv",
+  show_col_types = FALSE
+)
+nrow(acled)
+```
+
+## Choosing the conflict metric
+
+ACLED categorises events by `event_type`. Counting raw events treats a protest the same as a battle:
+
+```{r}
+acled |> count(event_type, wt = fatalities, sort = TRUE, name = "fatalities") |>
+  left_join(acled |> count(event_type, name = "events"), by = "event_type") |>
+  relocate(events, .after = event_type) |>
+  kable(caption = "Events vs. fatalities by event type")
+```
+
+`Battles` and `Explosions/Remote violence` alone account for the overwhelming majority of deaths, while `Strategic developments`, `Protests` and `Riots` are almost entirely non-lethal (821 deaths combined, under 1% of the total). Using **fatalities** as the intensity measure for every subsequent step automatically downweights that non-violent noise, without needing to hand-filter `event_type`.
+
+## Deriving quarter and geometry
+
+```{r}
+acled <- acled |>
+  mutate(
+    event_date = ymd(event_date),
+    year = year(event_date),
+    quarter = quarter(event_date),
+    yq = paste0(year, "-Q", quarter)
+  ) |>
+  filter(!is.na(latitude), !is.na(longitude))
+
+acled_sf <- st_as_sf(acled, coords = c("longitude", "latitude"), crs = 4326) |>
+  st_transform(32646)
+
+n_distinct(acled_sf$yq)
+```
+
+**19 quarters**, as planned (2021 Q1 through 2025 Q3).
+
+---
+
+# Part 1: Geospatial Data Wrangling
+
+## Aggregating fatalities to the township level
+
+Spatial join each event to the township polygon it falls in, then sum fatalities per township per quarter:
+
+```{r}
+acled_adm3 <- st_join(acled_sf, adm3 |> select(TS_PCODE, TS, ST), join = st_within)
+
+township_quarter <- acled_adm3 |>
+  st_drop_geometry() |>
+  group_by(TS_PCODE, TS, yq) |>
+  summarise(fatalities = sum(fatalities), .groups = "drop")
+```
+
+*(Note: `TS_PCODE`/`TS`/`ST` are my best guess at the MIMU attribute column names from the shapefile's `.dbf` — confirm the actual column names with `names(adm3)` and adjust if they differ.)*
+
+## Building the space-time cube
+
+```{r}
+# full township x quarter grid, filling the gaps left/right-joined above with 0
+all_quarters <- acled$yq |> unique() |> sort()
+
+stcube_adm3 <- adm3 |>
+  st_drop_geometry() |>
+  select(TS_PCODE, TS) |>
+  distinct() |>
+  cross_join(tibble(yq = all_quarters)) |>
+  left_join(township_quarter, by = c("TS_PCODE", "TS", "yq")) |>
+  mutate(fatalities = replace_na(fatalities, 0))
+```
+
+## Geovisualisation
+
+```{r}
+#| fig-cap: "Total conflict fatalities by township, 2021-2025."
+fatalities_total <- stcube_adm3 |>
+  group_by(TS_PCODE) |>
+  summarise(fatalities = sum(fatalities))
+
+adm3_fatalities <- adm3 |> left_join(fatalities_total, by = "TS_PCODE")
+
+tm_shape(adm3_fatalities) +
+  tm_fill("fatalities", style = "jenks", palette = "Reds", title = "Fatalities") +
+  tm_borders(lwd = 0.2) +
+  tm_layout(legend.outside = TRUE)
+```
+
+*(Written description, ≤200 words, goes here once the map is confirmed correct.)*
+
+---
+
+# Part 2: Local Measures of Spatial Association (LMSA)
+
+## Building the 25km hexagon grid
+
+```{r}
+myanmar_boundary <- adm3 |> st_union() |> st_make_valid()
+
+hex_grid <- st_make_grid(myanmar_boundary, cellsize = 25000, square = FALSE) |>
+  st_sf() |>
+  mutate(hex_id = row_number()) |>
+  st_filter(myanmar_boundary)
+
+nrow(hex_grid)
+```
+
+## Aggregating fatalities into hexagons
+
+```{r}
+acled_hex <- st_join(acled_sf, hex_grid, join = st_within)
+
+hex_fatalities <- acled_hex |>
+  st_drop_geometry() |>
+  group_by(hex_id) |>
+  summarise(fatalities = sum(fatalities), .groups = "drop")
+
+hex_grid_fat <- hex_grid |>
+  left_join(hex_fatalities, by = "hex_id") |>
+  mutate(fatalities = replace_na(fatalities, 0))
+```
+
+## Computing Getis-Ord Gi*
+
+```{r}
+hex_nb <- hex_grid_fat |>
+  mutate(
+    nb = st_contiguity(st_geometry(hex_grid_fat)),
+    wt = st_weights(nb, style = "W")
+  )
+
+gi_star <- hex_nb |>
+  mutate(gi_star = local_gstar_perm(fatalities, nb, wt, nsim = 99)) |>
+  unnest(gi_star)
+```
+
+## Significance map (p < 0.05)
+
+```{r}
+#| fig-cap: "Significant Gi* hotspots (p < 0.05), 25km hexagon grid."
+gi_star_sig <- gi_star |> filter(p_folded_sim < 0.05)
+
+tm_shape(adm3) + tm_borders(lwd = 0.2, col = "grey70") +
+tm_shape(gi_star_sig) +
+  tm_fill("gi_star", palette = "-RdBu", midpoint = 0, title = "Gi* (p<0.05)") +
+  tm_layout(legend.outside = TRUE)
+```
+
+*(Written conclusion, ≤200 words, goes here.)*
+
+---
+
+# Part 3: Emerging Hot Spot Analysis (EHSA)
+
+## Space-time cube: hexagon x quarter
+
+```{r}
+#| eval: false
+# TODO: .time_col (yq) 型別不對,spacetime() 報錯,先關掉,Take-home Ex02 之後再修
+hex_quarter <- st_join(acled_sf, hex_grid, join = st_within) |>
+  st_drop_geometry() |>
+  group_by(hex_id, yq) |>
+  summarise(fatalities = sum(fatalities), .groups = "drop")
+
+hex_stcube_full <- hex_grid |>
+  st_drop_geometry() |>
+  select(hex_id) |>
+  cross_join(tibble(yq = all_quarters)) |>
+  left_join(hex_quarter, by = c("hex_id", "yq")) |>
+  mutate(fatalities = replace_na(fatalities, 0))
+
+hex_spt <- spacetime(hex_stcube_full, hex_grid, ".loc_col" = "hex_id", ".time_col" = "yq")
+```
+
+## Mann-Kendall + Gi*
+
+```{r}
+#| eval: false
+ehsa <- emerging_hotspot_analysis(
+  x = hex_spt,
+  .var = "fatalities",
+  k = 1,
+  nsim = 99
+)
+```
+
+## EHSA classification map
+
+```{r}
+#| eval: false
+#| fig-cap: "Emerging hot spot classification, 25km hexagon grid."
+hex_ehsa <- hex_grid |> left_join(ehsa, by = c("hex_id" = "location"))
+
+tm_shape(adm3) + tm_borders(lwd = 0.2, col = "grey70") +
+tm_shape(hex_ehsa) +
+  tm_fill("classification", title = "EHSA pattern") +
+  tm_layout(legend.outside = TRUE)
+```
+
+*(Description per significant cluster, ≤250 words, goes here.)*
+
+---
+
+# Part 4: Value-Added Analysis
+
+*(To decide — optional, 15% bonus.)*
+
+---
+
+# Public Safety Implications
+
+*(To write once Parts 1-3 are confirmed.)*
+
+---
+
+# Summary
+
+## Key findings
+
+*(To write last, once everything above is confirmed.)*
+
+## Limitations
+
+- UTM Zone 46N is used nationwide; the far eastern part of Shan State (closer to zone 47N) has slightly more projection distortion in area/distance calculations.
+- Fatalities as the intensity measure means high-frequency, low-lethality conflict areas may appear quieter than they are — a deliberate trade-off, named in [Choosing the conflict metric](#choosing-the-conflict-metric).
+- Quarterly time bins smooth over any sub-quarter escalation or de-escalation.
+
+## Data sources
+
+- Armed Conflict Location & Event Data Project (ACLED), Myanmar, Jan 2021-Sep 2025 (via eLearn)
+- Myanmar Township Boundaries (ADM3), MIMU v9.4, [MIMU Geonode](https://geonode.themimu.info/)
+
+---
+
+# References
+
+**R packages**
+
+- Pebesma, E. (2018). Simple Features for R. *sf*. <https://CRAN.R-project.org/package=sf>
+- Prener, C., & Lu, B. *sfdep*: Spatial Dependence for Simple Features. <https://CRAN.R-project.org/package=sfdep>
+- Tennekes, M. (2018). tmap: Thematic Maps in R. *Journal of Statistical Software*. <https://CRAN.R-project.org/package=tmap>
+- Wickham, H., et al. (2019). Welcome to the tidyverse. *Journal of Open Source Software*.

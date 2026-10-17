@@ -1,0 +1,63 @@
+project:
+  type: website
+  render:
+    - "*.qmd"
+    - "Hands-on_Ex/**/*.qmd"
+    - "Take-home_Ex/**/*.qmd"
+    - "inclass_Ex/**/*.qmd"
+
+website:
+  title: "Huang Kang-Chih | Geospatial"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+
+      - text: "Hands-on Exercise"
+        menu:
+          - href: Hands-on_Ex/Hands-on_Ex01a/Hands-on_Ex01a.qmd
+            text: "Ex01a: Geospatial Data Science with R"
+          - href: Hands-on_Ex/Hands-on_Ex01b/Hands-on_Ex01b.qmd
+            text: "Ex01b: Thematic Mapping & GeoVisualisation"
+          - href: Hands-on_Ex/Hands-on_Ex02/Hands-on_Ex02.qmd
+            text: "Ex02: Point Pattern Analysis"
+          - href: Hands-on_Ex/Hands-on_Ex03/Hands-on_Ex03.qmd
+            text: "Ex03: Spatio-Temporal Point Pattern Analysis"
+          - href: Hands-on_Ex/Hands-on_Ex04/Hands-on_Ex04.qmd
+            text: "Ex04: Spatial Weights and Applications"
+          - href: Hands-on_Ex/Hands-on_Ex05a/Hands-on_Ex05a.qmd
+            text: "Ex05a: Global Measures of Spatial Autocorrelation"
+          - href: Hands-on_Ex/Hands-on_Ex05b/Hands-on_Ex05b.qmd
+            text: "Ex05b: Local Measures of Spatial Autocorrelation"
+          - href: Hands-on_Ex/Hands-on_Ex06/Hands-on_Ex06.qmd
+            text: "Ex06: Geographical Segmentation"
+          - href: Hands-on_Ex/Hands-on_Ex07/Hands-on_Ex07.qmd
+            text: "Ex07: Modelling Geographical Accessibility"
+
+      - text: "Take-home Exercise"
+        menu:
+          - href: Take-home_Ex/Take-home_Ex01/index.qmd
+            text: "Ex01: Thailand Road Accident Spatio-temporal Analysis"
+          - href: Take-home_Ex/Take-home_Ex01/executive-summary.qmd
+            text: "Ex01: Executive Summary"
+
+      - text: "In-class Exercise"
+        menu:
+          - href: "inclass_Ex/inclass week 4/inclass week 4.qmd"
+            text: "Ex04: Spatial Weights and Applications"
+          - href: "inclass_Ex/inclass week 5/inclass week 5.qmd"
+            text: "Ex05: Global and Local Measures of Spatial Autocorrelation"
+          - href: "inclass_Ex/inclass week 6/inclass week 6.qmd"
+            text: "Ex06: Emerging Hot Spot Analysis"
+
+      - href: about.qmd
+        text: About
+
+format:
+  html:
+    theme: litera
+    toc: true
+    css: styles.css
+
+execute:
+  freeze: auto
