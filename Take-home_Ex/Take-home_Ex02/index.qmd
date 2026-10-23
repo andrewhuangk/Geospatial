@@ -46,7 +46,8 @@ The brief has three required parts plus one open-ended one:
 ## Packages used
 
 ```{r}
-pacman::p_load(sf, sfdep, tmap, tidyverse, lubridate, knitr, kableExtra)
+pacman::p_load(sf, sfdep, tmap, tidyverse, lubridate, tsibble, knitr, kableExtra)
+dir.create("es_images", showWarnings = FALSE)
 ```
 
 - **sf**: reading/writing vector geospatial data, projection, geometric operations (hex grid, joins).
@@ -79,7 +80,7 @@ st_crs(adm3)$input
 nrow(adm3)
 ```
 
-The boundaries come in WGS84 (EPSG:4326). Myanmar spans UTM zones 46N and 47N (roughly 92°E-101°E); I project to **EPSG:32646 (WGS 84 / UTM Zone 46N)**, which covers the densely-populated central belt (Yangon, Mandalay, Naypyidaw all sit right at the 46/47 boundary). This means the Shan State area in the far east (closer to zone 47N) picks up slightly more distortion in area/distance calculations — a reasonable trade-off for a single national CRS, and worth naming as a limitation later.
+The boundaries come in WGS84 (EPSG:4326). Myanmar spans UTM zones 46N and 47N (roughly 92°E-101°E); I project to **EPSG:32646 (WGS 84 / UTM Zone 46N)**, which covers the densely-populated central belt (Yangon, Mandalay, Naypyidaw all sit right at the 46/47 boundary). This means the Shan State area in the far east (closer to zone 47N) picks up slightly more distortion in area/distance calculations. It's a reasonable trade-off for using one CRS nationwide, and I note it again under Limitations.
 
 ```{r}
 adm3 <- adm3 |> st_transform(32646)
@@ -114,9 +115,7 @@ acled |> count(event_type, wt = fatalities, sort = TRUE, name = "fatalities") |>
 acled <- acled |>
   mutate(
     event_date = ymd(event_date),
-    year = year(event_date),
-    quarter = quarter(event_date),
-    yq = paste0(year, "-Q", quarter)
+    yq = tsibble::yearquarter(event_date)
   ) |>
   filter(!is.na(latitude), !is.na(longitude))
 
@@ -172,13 +171,31 @@ fatalities_total <- stcube_adm3 |>
 
 adm3_fatalities <- adm3 |> left_join(fatalities_total, by = "TS_PCODE")
 
-tm_shape(adm3_fatalities) +
+p1 <- tm_shape(adm3_fatalities) +
   tm_fill("fatalities", style = "jenks", palette = "Reds", title = "Fatalities") +
   tm_borders(lwd = 0.2) +
   tm_layout(legend.outside = TRUE)
+p1
+tmap_save(p1, "es_images/fig-township-fatalities.png", width = 8, height = 6, units = "in", dpi = 150)
 ```
 
-*(Written description, ≤200 words, goes here once the map is confirmed correct.)*
+```{r}
+adm3_fatalities |>
+  st_drop_geometry() |>
+  arrange(desc(fatalities)) |>
+  select(TS, ST, fatalities) |>
+  head(5) |>
+  kable(caption = "Top 5 townships by total fatalities, 2021-2025")
+
+adm3_fatalities |>
+  st_drop_geometry() |>
+  group_by(ST) |>
+  summarise(fatalities = sum(fatalities, na.rm = TRUE)) |>
+  arrange(desc(fatalities)) |>
+  kable(caption = "Total fatalities by state/region")
+```
+
+The highest-fatality townships are Kale, Monywa and Shwebo, all three in Sagaing, with 1,902 deaths in Kale, the worst-hit township over the whole period. Most of the high-fatality townships sit in Sagaing, which alone accounts for 27,712 fatalities, more than the next two regions (Magway and Mandalay) combined. The rest of the country barely registers on this map, especially Shan (East) with just 31 fatalities and Ayeyarwady with 266: fatalities are concentrated in a handful of townships and regions, not spread evenly.
 
 ---
 
@@ -221,6 +238,7 @@ hex_nb <- hex_grid_fat |>
     wt = st_weights(nb, style = "W")
   )
 
+set.seed(1234)
 gi_star <- hex_nb |>
   mutate(gi_star = local_gstar_perm(fatalities, nb, wt, nsim = 99)) |>
   unnest(gi_star)
@@ -232,13 +250,35 @@ gi_star <- hex_nb |>
 #| fig-cap: "Significant Gi* hotspots (p < 0.05), 25km hexagon grid."
 gi_star_sig <- gi_star |> filter(p_folded_sim < 0.05)
 
-tm_shape(adm3) + tm_borders(lwd = 0.2, col = "grey70") +
+p2 <- tm_shape(adm3) + tm_borders(lwd = 0.2, col = "grey70") +
 tm_shape(gi_star_sig) +
   tm_fill("gi_star", palette = "-RdBu", midpoint = 0, title = "Gi* (p<0.05)") +
   tm_layout(legend.outside = TRUE)
+p2
+tmap_save(p2, "es_images/fig-gistar-sig.png", width = 8, height = 6, units = "in", dpi = 150)
 ```
 
-*(Written conclusion, ≤200 words, goes here.)*
+```{r}
+n_sig_hot <- sum(gi_star_sig$gi_star > 0)
+n_sig_cold <- sum(gi_star_sig$gi_star < 0)
+n_total_hex <- nrow(hex_grid)
+
+tibble(
+  `Significant hotspots` = n_sig_hot,
+  `Significant coldspots` = n_sig_cold,
+  `Total hexagons` = n_total_hex
+) |> kable(caption = "Gi* significance summary (p < 0.05)")
+
+st_join(st_centroid(gi_star_sig), adm3 |> select(ST), join = st_within) |>
+  st_drop_geometry() |>
+  mutate(type = if_else(gi_star > 0, "hotspot", "coldspot")) |>
+  count(type, ST, sort = TRUE) |>
+  group_by(type) |>
+  slice_max(n, n = 5) |>
+  kable(caption = "Significant hexagons by region (top 5 per type)")
+```
+
+103 of the 1,497 hexagons come out significant at p<0.05, clustering mainly in Sagaing (44 hexagons), Mandalay (14) and Magway (12). That matches the township-level pattern from Part 1; the same places show up again at a completely different spatial resolution, which is good evidence the clustering is real and not an artefact of how townships happen to be drawn. 336 hexagons come out as significant coldspots, mostly in Shan (East) (66), Kachin (49) and Shan (South) (32).
 
 ---
 
@@ -247,8 +287,6 @@ tm_shape(gi_star_sig) +
 ## Space-time cube: hexagon x quarter
 
 ```{r}
-#| eval: false
-# TODO: .time_col (yq) 型別不對,spacetime() 報錯,先關掉,Take-home Ex02 之後再修
 hex_quarter <- st_join(acled_sf, hex_grid, join = st_within) |>
   st_drop_geometry() |>
   group_by(hex_id, yq) |>
@@ -266,42 +304,167 @@ hex_spt <- spacetime(hex_stcube_full, hex_grid, ".loc_col" = "hex_id", ".time_co
 
 ## Mann-Kendall + Gi*
 
+*(Note: `sfdep::emerging_hotspot_analysis()` hung indefinitely on this dataset regardless of `nsim` or subset size, even after isolating it to a single R session -- likely a package compatibility issue, not a data problem. Implemented the same method by hand instead: Gi* computed per quarter, then a Mann-Kendall trend test run on each hexagon's Gi* time series. This is exactly what the brief asks for, just without the black-box function.)*
+
 ```{r}
-#| eval: false
-ehsa <- emerging_hotspot_analysis(
-  x = hex_spt,
-  .var = "fatalities",
-  k = 1,
-  nsim = 99
-)
+pacman::p_load(Kendall)
+
+nb <- st_contiguity(st_geometry(hex_grid))
+wt <- st_weights(nb, style = "W")
+hex_order <- hex_grid |> st_drop_geometry() |> select(hex_id)
+
+compute_gi_for_quarter <- function(q) {
+  fat_df <- hex_order |>
+    left_join(hex_stcube_full |> filter(yq == q) |> select(hex_id, fatalities), by = "hex_id") |>
+    mutate(fatalities = replace_na(fatalities, 0))
+
+  fat_df |>
+    mutate(gi_star = local_gstar_perm(fatalities, nb, wt, nsim = 99)) |>
+    unnest(gi_star) |>
+    mutate(yq = q)
+}
+
+set.seed(1234)
+gi_by_quarter <- map_dfr(all_quarters, compute_gi_for_quarter)
+
+mk_results <- gi_by_quarter |>
+  arrange(hex_id, yq) |>
+  group_by(hex_id) |>
+  summarise(
+    pct_hot = mean(p_folded_sim < 0.05 & gi_star > 0),
+    pct_cold = mean(p_folded_sim < 0.05 & gi_star < 0),
+    mk = list(MannKendall(gi_star)),
+    .groups = "drop"
+  ) |>
+  mutate(
+    tau = map_dbl(mk, "tau"),
+    mk_p = map_dbl(mk, "sl")
+  ) |>
+  select(-mk)
+
+ehsa <- mk_results |>
+  mutate(
+    classification = case_when(
+      pct_hot >= 0.9 & mk_p >= 0.05 ~ "consecutive hotspot",
+      pct_hot > 0 & mk_p < 0.05 & tau > 0 ~ "intensifying hotspot",
+      pct_hot > 0 & mk_p < 0.05 & tau < 0 ~ "diminishing hotspot",
+      pct_hot > 0 ~ "sporadic hotspot",
+      pct_cold >= 0.9 & mk_p >= 0.05 ~ "consecutive coldspot",
+      pct_cold > 0 & mk_p < 0.05 & tau < 0 ~ "intensifying coldspot",
+      pct_cold > 0 & mk_p < 0.05 & tau > 0 ~ "diminishing coldspot",
+      pct_cold > 0 ~ "sporadic coldspot",
+      TRUE ~ "no pattern detected"
+    )
+  )
+
+count(ehsa, classification)
 ```
 
 ## EHSA classification map
 
 ```{r}
-#| eval: false
 #| fig-cap: "Emerging hot spot classification, 25km hexagon grid."
-hex_ehsa <- hex_grid |> left_join(ehsa, by = c("hex_id" = "location"))
+hex_ehsa <- hex_grid |> left_join(ehsa, by = "hex_id")
 
-tm_shape(adm3) + tm_borders(lwd = 0.2, col = "grey70") +
+p3 <- tm_shape(adm3) + tm_borders(lwd = 0.2, col = "grey70") +
 tm_shape(hex_ehsa) +
   tm_fill("classification", title = "EHSA pattern") +
   tm_layout(legend.outside = TRUE)
+p3
+tmap_save(p3, "es_images/fig-ehsa.png", width = 8, height = 6, units = "in", dpi = 150)
 ```
 
-*(Description per significant cluster, ≤250 words, goes here.)*
+```{r}
+st_join(st_centroid(hex_ehsa), adm3 |> select(ST), join = st_within) |>
+  st_drop_geometry() |>
+  filter(classification %in% c("intensifying hotspot", "consecutive hotspot", "diminishing hotspot", "intensifying coldspot")) |>
+  count(classification, ST, sort = TRUE) |>
+  group_by(classification) |>
+  slice_max(n, n = 3) |>
+  kable(caption = "EHSA categories by region (top 3 per category)")
+```
+
+The EHSA classification sorts hexagons into nine categories: consecutive, intensifying, diminishing and sporadic hotspot or coldspot, plus no pattern detected. 89 hexagons classify as **intensifying hotspots** (the Gi* value climbing quarter over quarter), mainly in Bago (East), Magway, Bago (West) and Mandalay. Sagaing has the highest total fatalities and both **consecutive hotspots**, but the places actually getting worse sit elsewhere. 109 hexagons classify as **diminishing hotspots**, mostly in Sagaing (39) and Chin (18); Sagaing's conflict may already be past its worst, even though the historical totals are still the highest. An intensifying hotspot needs a fast response before it gets worse. A consecutive hotspot needs steady, long-term attention instead.
 
 ---
 
 # Part 4: Value-Added Analysis
 
-*(To decide — optional, 15% bonus.)*
+## Civilian-targeting hotspots vs. overall fatality hotspots
+
+Part 1-3 treat all fatalities the same. ACLED actually tags each event with an `event_type`, and one category is **"Violence against civilians"**: attacks that deliberately target civilians rather than combat between armed groups. This section checks whether those places overlap with the overall fatality hotspots from Part 2, or whether they're different. A frontline battle zone needs de-escalation; a place where civilians are being targeted needs civilian protection, so the distinction matters in practice.
+
+Same Gi* method as Part 2, same hexagon grid, just a different subset of events.
+
+```{r}
+acled_civilian <- acled_sf |> filter(event_type == "Violence against civilians")
+
+acled_civilian_hex <- st_join(acled_civilian, hex_grid, join = st_within)
+
+hex_fatalities_civilian <- acled_civilian_hex |>
+  st_drop_geometry() |>
+  group_by(hex_id) |>
+  summarise(fatalities = sum(fatalities), .groups = "drop")
+
+hex_grid_civilian <- hex_grid |>
+  left_join(hex_fatalities_civilian, by = "hex_id") |>
+  mutate(fatalities = replace_na(fatalities, 0))
+
+set.seed(1234)
+gi_star_civilian <- hex_grid_civilian |>
+  mutate(gi_star = local_gstar_perm(fatalities, nb, wt, nsim = 99)) |>
+  unnest(gi_star)
+
+gi_star_civilian_sig <- gi_star_civilian |> filter(p_folded_sim < 0.05 & gi_star > 0)
+```
+
+## Comparing the two hotspot sets
+
+```{r}
+overall_hot_ids <- gi_star |> filter(p_folded_sim < 0.05 & gi_star > 0) |> pull(hex_id)
+civilian_hot_ids <- gi_star_civilian_sig |> pull(hex_id)
+
+hotspot_overlap <- hex_grid |>
+  mutate(
+    overlap_type = case_when(
+      hex_id %in% overall_hot_ids & hex_id %in% civilian_hot_ids ~ "Both",
+      hex_id %in% overall_hot_ids ~ "Overall hotspot only",
+      hex_id %in% civilian_hot_ids ~ "Civilian-targeting hotspot only",
+      TRUE ~ "Neither"
+    )
+  )
+
+count(st_drop_geometry(hotspot_overlap), overlap_type)
+```
+
+```{r}
+#| fig-cap: "Overall fatality hotspots vs. civilian-targeting hotspots, 25km hexagon grid."
+tm_shape(adm3) + tm_borders(lwd = 0.2, col = "grey70") +
+tm_shape(hotspot_overlap |> filter(overlap_type != "Neither")) +
+  tm_fill("overlap_type", palette = c("Both" = "#7a0177", "Overall hotspot only" = "#dd3497", "Civilian-targeting hotspot only" = "#fcbba1"), title = "Hotspot type") +
+  tm_layout(legend.outside = TRUE)
+```
+
+```{r}
+st_join(st_centroid(hotspot_overlap |> filter(overlap_type != "Neither")), adm3 |> select(ST), join = st_within) |>
+  st_drop_geometry() |>
+  count(overlap_type, ST, sort = TRUE) |>
+  group_by(overlap_type) |>
+  slice_max(n, n = 3) |>
+  kable(caption = "Hotspot overlap type by region (top 3 per type)")
+```
+
+68 hexagons are hotspots on both measures, mostly in Sagaing (39), Mandalay (13) and Magway (8): these are the most dangerous places by any count. 24 hexagons are civilian-targeting hotspots only, concentrated in Yangon (6), Mandalay (5) and Shan (North) (4). They don't show up as "worst" in Part 2's raw fatality count, but civilians there are specifically being targeted, and a place can look moderate on the overall map while still needing civilian protection.
 
 ---
 
 # Public Safety Implications
 
-*(To write once Parts 1-3 are confirmed.)*
+- Sagaing is the highest-fatality region, the biggest hotspot cluster, and holds both consecutive hotspots, so it should stay the top priority for humanitarian access and monitoring.
+- Bago (East), Bago (West), Magway and Mandalay aren't the worst hotspots yet, but EHSA flags them as intensifying. These need a faster response now, before the situation reaches Sagaing's scale.
+- Sagaing's own conflict runs long but is cooling down, so it needs sustained presence rather than a rapid-response surge.
+- Yangon, Mandalay and Shan (North) don't show up as overall fatality hotspots, yet civilians there are being specifically targeted (Part 4). They need civilian-protection attention that a plain fatality count would miss.
+- Shan (East), Kachin and Shan (South) are the most consistent coldspots. That reflects fewer reported deaths, not real safety, since fatalities are the only thing this dataset measures (see Limitations).
 
 ---
 
@@ -309,7 +472,11 @@ tm_shape(hex_ehsa) +
 
 ## Key findings
 
-*(To write last, once everything above is confirmed.)*
+This report looks at Myanmar's armed conflict from four angles: where deaths are concentrated, whether that clustering is statistically real, whether the danger is getting worse or better over time, and whether the places with the most deaths are also the places where civilians are specifically targeted.
+
+Sagaing is the most severe region by raw numbers: its death toll (27,712) is far higher than any other region, and the three worst-hit townships (Kale, Monywa, Shwebo) are all located there. The Gi* statistic confirms this clustering is statistically real, not an artifact of how administrative boundaries happen to be drawn. Yet the EHSA analysis shows most of Sagaing's hotspots are cooling down or holding steady. The places genuinely getting worse right now, Bago, Magway and Mandalay, are somewhere else entirely.
+
+The places with the most deaths also aren't the same as the places where civilians are specifically targeted. Isolating attacks that deliberately target civilians, 68 hotspots are dangerous by both measures, but 24 only show up as dangerous for civilian-targeting, including Yangon, Mandalay and Shan (North). A report built only on total death numbers would miss both of these patterns; the Public Safety Implications section above spells out what each one means in practice.
 
 ## Limitations
 

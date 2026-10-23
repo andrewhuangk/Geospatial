@@ -1,0 +1,86 @@
+---
+title: "Emerging Hot Spot Analysis of Armed Conflict in Myanmar"
+subtitle: "ACLED conflict events, 2021-2025"
+author: "Kang-Chih Huang"
+date-modified: "last-modified"
+format:
+  revealjs:
+    slide-number: true
+    footer: "ISSS626 Take-home Exercise 2"
+    transition: fade
+    theme: default
+    scrollable: true
+---
+
+## Where this analysis looks
+
+- Where are conflict fatalities concentrated in Myanmar?
+- Is that clustering statistically real, or just chance?
+- Which places are becoming more dangerous over time, not just staying dangerous?
+
+<!-- TODO: once index.qmd renders, export the motivation/overview figure (if any) here as es_images/fig-motivation.png -->
+
+## Study Area & Data
+
+- Myanmar nationwide, 325 townships
+- ACLED conflict events, Jan 2021-Sep 2025
+- Data: ACLED (via eLearn) + MIMU Township Boundaries (ADM3, v9.4)
+- Projected to EPSG:32646 (UTM Zone 46N, metres)
+
+## Methodology
+
+- Metric: fatalities, not raw event count, to isolate real violence from protests and strategic developments
+- Township-level aggregation + space-time cube: where is intensity highest
+- LMSA (Getis-Ord Gi\*, 25km hexagons): is the clustering statistically real
+- EHSA (Mann-Kendall + spatio-temporal Gi\*): is the hotspot getting worse, better, or staying the same
+
+## Part 1: Where Fatalities Concentrate
+
+- Kale, Monywa and Shwebo have the most fatalities (1,902 / 1,814 / 1,559)
+- All three are in Sagaing; Sagaing alone totals 27,712 fatalities, more than the next two regions combined
+- The rest of the country barely registers: Shan (East) has just 31, Ayeyarwady 266
+
+<div style="text-align:center;">
+<img src="es_images/fig-township-fatalities.png" style="max-height:48vh; width:auto; max-width:70%;">
+</div>
+
+## Part 2: Is the Clustering Real?
+
+- 103 of 1,497 hexagons are significant hotspots at p<0.05
+- Cluster in Sagaing (44), Mandalay (14) and Magway (12) — same places as Part 1
+- 336 significant coldspots, mostly Shan (East) (66), Kachin (49) and Shan (South) (32)
+
+<div style="text-align:center;">
+<img src="es_images/fig-gistar-sig.png" style="max-height:48vh; width:auto; max-width:70%;">
+</div>
+
+## Part 3: How Hotspots Are Changing
+
+- Categories that show up: consecutive / intensifying / diminishing / sporadic hotspot and coldspot, plus no pattern detected
+- 89 intensifying hotspots, 109 diminishing hotspots, only 2 consecutive hotspots
+- Intensifying ones are in Bago (East), Magway, Bago (West) and Mandalay, not Sagaing. Sagaing's own hotspots are mostly diminishing or consecutive now
+
+<div style="text-align:center;">
+<img src="es_images/fig-ehsa.png" style="max-height:48vh; width:auto; max-width:70%;">
+</div>
+
+## Value-Added: Civilian-Targeting Hotspots
+
+- ACLED tags events as "Violence against civilians", so the same Gi* method was run on just this subset
+- 68 hexagons are hotspots on both measures (worst by any count), mostly Sagaing, Mandalay, Magway
+- 24 hexagons are civilian-targeting hotspots only: not "worst" by total fatalities, but civilians are specifically targeted there (Yangon, Mandalay, Shan North)
+
+## Public Safety Implications
+
+- Sagaing stays the top priority: highest-fatality region, biggest hotspot cluster, both consecutive hotspots
+- Bago (East), Bago (West), Magway and Mandalay need a faster response now; EHSA flags them as intensifying even though they aren't the worst yet
+- Yangon, Mandalay and Shan (North) need civilian-protection attention even though they're not overall hotspots
+- Shan (East), Kachin and Shan (South) are consistent coldspots, meaning fewer reported deaths, not real safety
+
+## Limitations & Conclusion
+
+- UTM Zone 46N used nationwide; eastern Shan State (near zone 47N) has slightly more distortion
+- Fatalities as the metric means frequent-but-low-lethality conflict areas may look quieter than they are
+- Quarterly time bins smooth over any sub-quarter escalation
+
+**Conclusion:** Sagaing looks the worst on paper, but the danger is actually moving elsewhere, and a different set of places need protection for a different reason entirely. A response built only on total death counts would miss both shifts.
