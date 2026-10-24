@@ -26,7 +26,7 @@ The brief has three required parts plus one open-ended one:
 1. **Geospatial data wrangling**: aggregate conflict fatalities to the township (ADM3) level, build a space-time cube, and geovisualise the distribution and pattern.
 2. **Local Measures of Spatial Association (LMSA)**: compute a local spatial association statistic on a hexagon grid, and map the statistically significant results (p < 0.05).
 3. **Emerging Hot Spot Analysis (EHSA)**: run the Mann-Kendall trend test on spatio-temporal Gi* values to classify how each location's hotspot status evolves over time.
-4. **Value-added analysis**: my own extension using a geospatial method not covered in the core exercise. *(to be decided — not written yet)*
+4. **Value-added analysis**: civilian-targeting hotspots compared against overall fatality hotspots (see [Part 4](#part-4-value-added-analysis)).
 
 **Study area and scope.** The data covers Myanmar nationwide (325 townships), 1 January 2021 to 30 September 2025. I use **conflict fatalities** (not raw event counts) as the intensity measure throughout — see [Choosing the conflict metric](#choosing-the-conflict-metric) for why.
 

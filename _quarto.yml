@@ -42,6 +42,10 @@ website:
             text: "Ex01: Thailand Road Accident Spatio-temporal Analysis"
           - href: Take-home_Ex/Take-home_Ex01/executive-summary.qmd
             text: "Ex01: Executive Summary"
+          - href: Take-home_Ex/Take-home_Ex02/index.qmd
+            text: "Ex02: Myanmar Armed Conflict EHSA"
+          - href: Take-home_Ex/Take-home_Ex02/executive-summary.qmd
+            text: "Ex02: Executive Summary"
 
       - text: "In-class Exercise"
         menu:
