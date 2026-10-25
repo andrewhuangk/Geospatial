@@ -1,7 +1,8 @@
 ---
 title: "Emerging Hot Spot Analysis of Armed Conflict in Myanmar"
 subtitle: "ACLED conflict events, 2021-2025"
-author: "Kang-Chih Huang"
+author: "Huang Kang-Chih"
+date: "2026-10-16"
 date-modified: "last-modified"
 format:
   revealjs:
@@ -18,14 +19,19 @@ format:
 - Is that clustering statistically real, or just chance?
 - Which places are becoming more dangerous over time, not just staying dangerous?
 
-<!-- TODO: once index.qmd renders, export the motivation/overview figure (if any) here as es_images/fig-motivation.png -->
 
 ## Study Area & Data
 
+:::: {.columns}
+::: {.column width="40%"}
 - Myanmar nationwide, 325 townships
 - ACLED conflict events, Jan 2021-Sep 2025
-- Data: ACLED (via eLearn) + MIMU Township Boundaries (ADM3, v9.4)
 - Projected to EPSG:32646 (UTM Zone 46N, metres)
+:::
+::: {.column width="60%"}
+<img src="es_images/fig-study-area.png" style="max-height:60vh; width:auto; max-width:100%;">
+:::
+::::
 
 ## Methodology
 
@@ -36,33 +42,39 @@ format:
 
 ## Part 1: Where Fatalities Concentrate
 
-- Kale, Monywa and Shwebo have the most fatalities (1,902 / 1,814 / 1,559)
-- All three are in Sagaing; Sagaing alone totals 27,712 fatalities, more than the next two regions combined
-- The rest of the country barely registers: Shan (East) has just 31, Ayeyarwady 266
-
-<div style="text-align:center;">
-<img src="es_images/fig-township-fatalities.png" style="max-height:48vh; width:auto; max-width:70%;">
-</div>
+:::: {.columns}
+::: {.column width="40%"}
+- Kale, Monywa and Shwebo have the most fatalities (1,902 / 1,814 / 1,559), all in Sagaing
+- Sagaing alone totals 27,712 fatalities, more than Magway and Mandalay combined; the rest of the country barely registers (Shan East: 31, Ayeyarwady: 266)
+:::
+::: {.column width="60%"}
+<img src="es_images/fig-township-fatalities.png" style="max-height:65vh; width:auto; max-width:100%;">
+:::
+::::
 
 ## Part 2: Is the Clustering Real?
 
-- 103 of 1,497 hexagons are significant hotspots at p<0.05
-- Cluster in Sagaing (44), Mandalay (14) and Magway (12) — same places as Part 1
+:::: {.columns}
+::: {.column width="40%"}
+- 103 of 1,497 hexagons are significant hotspots at p<0.05, clustering in Sagaing (44), Mandalay (14) and Magway (12) — same places as Part 1
 - 336 significant coldspots, mostly Shan (East) (66), Kachin (49) and Shan (South) (32)
-
-<div style="text-align:center;">
-<img src="es_images/fig-gistar-sig.png" style="max-height:48vh; width:auto; max-width:70%;">
-</div>
+:::
+::: {.column width="60%"}
+<img src="es_images/fig-gistar-sig.png" style="max-height:65vh; width:auto; max-width:100%;">
+:::
+::::
 
 ## Part 3: How Hotspots Are Changing
 
-- Categories that show up: consecutive / intensifying / diminishing / sporadic hotspot and coldspot, plus no pattern detected
-- 89 intensifying hotspots, 109 diminishing hotspots, only 2 consecutive hotspots
-- Intensifying ones are in Bago (East), Magway, Bago (West) and Mandalay, not Sagaing. Sagaing's own hotspots are mostly diminishing or consecutive now
-
-<div style="text-align:center;">
-<img src="es_images/fig-ehsa.png" style="max-height:48vh; width:auto; max-width:70%;">
-</div>
+:::: {.columns}
+::: {.column width="40%"}
+- 89 intensifying hotspots, 109 diminishing, only 2 consecutive (out of 9 EHSA categories)
+- Intensifying ones are in Bago (East), Magway, Bago (West) and Mandalay, not Sagaing — Sagaing's own hotspots are now mostly diminishing or consecutive
+:::
+::: {.column width="60%"}
+<img src="es_images/fig-ehsa.png" style="max-height:65vh; width:auto; max-width:100%;">
+:::
+::::
 
 ## Value-Added: Civilian-Targeting Hotspots
 

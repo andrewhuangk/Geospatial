@@ -1,7 +1,7 @@
 ---
 title: "Take-home Exercise 2: Emerging Hot Spot Analysis of Armed Conflict in Myanmar"
 subtitle: "Geospatial data wrangling, local spatial association, and emerging hot spot analysis of ACLED conflict events, 2021-2025"
-author: "Andrew Huang"
+author: "Huang Kang-Chih"
 date: "2026-10-16"
 date-modified: "last-modified"
 format:
@@ -84,6 +84,13 @@ The boundaries come in WGS84 (EPSG:4326). Myanmar spans UTM zones 46N and 47N (r
 
 ```{r}
 adm3 <- adm3 |> st_transform(32646)
+```
+
+```{r}
+#| fig-cap: "Myanmar township boundaries (ADM3), study area."
+p0 <- tm_shape(adm3) + tm_borders(lwd = 0.3, col = "grey40") + tm_layout(frame = FALSE)
+p0
+tmap_save(p0, "es_images/fig-study-area.png", width = 8, height = 6, units = "in", dpi = 150)
 ```
 
 ## Aspatial: ACLED conflict events
@@ -384,7 +391,7 @@ st_join(st_centroid(hex_ehsa), adm3 |> select(ST), join = st_within) |>
   kable(caption = "EHSA categories by region (top 3 per category)")
 ```
 
-The EHSA classification sorts hexagons into nine categories: consecutive, intensifying, diminishing and sporadic hotspot or coldspot, plus no pattern detected. 89 hexagons classify as **intensifying hotspots** (the Gi* value climbing quarter over quarter), mainly in Bago (East), Magway, Bago (West) and Mandalay. Sagaing has the highest total fatalities and both **consecutive hotspots**, but the places actually getting worse sit elsewhere. 109 hexagons classify as **diminishing hotspots**, mostly in Sagaing (39) and Chin (18); Sagaing's conflict may already be past its worst, even though the historical totals are still the highest. An intensifying hotspot needs a fast response before it gets worse. A consecutive hotspot needs steady, long-term attention instead.
+The EHSA classification sorts hexagons into nine categories: consecutive, intensifying, diminishing and sporadic hotspot or coldspot, plus no pattern detected. 89 hexagons classify as **intensifying hotspots** (the Gi* value climbing quarter over quarter), mainly in Bago (East), Magway, Bago (West) and Mandalay. Sagaing has the highest total fatalities and both **consecutive hotspots**, but the places actually getting worse sit elsewhere. 109 hexagons classify as **diminishing hotspots**, mostly in Sagaing (39) and Chin (18); Sagaing's conflict may already be past its worst, even though the historical totals are still the highest. An intensifying hotspot needs a fast response before it gets worse, while a consecutive hotspot needs steady, long-term attention instead.
 
 ---
 
@@ -392,7 +399,7 @@ The EHSA classification sorts hexagons into nine categories: consecutive, intens
 
 ## Civilian-targeting hotspots vs. overall fatality hotspots
 
-Part 1-3 treat all fatalities the same. ACLED actually tags each event with an `event_type`, and one category is **"Violence against civilians"**: attacks that deliberately target civilians rather than combat between armed groups. This section checks whether those places overlap with the overall fatality hotspots from Part 2, or whether they're different. A frontline battle zone needs de-escalation; a place where civilians are being targeted needs civilian protection, so the distinction matters in practice.
+Parts 1-3 treat all fatalities the same. ACLED actually tags each event with an `event_type`, and one category is **"Violence against civilians"**: attacks that deliberately target civilians rather than combat between armed groups. This section checks whether those places overlap with the overall fatality hotspots from Part 2, or whether they're different: a frontline battle zone needs de-escalation, a place where civilians are being targeted needs civilian protection.
 
 Same Gi* method as Part 2, same hexagon grid, just a different subset of events.
 
@@ -474,7 +481,7 @@ st_join(st_centroid(hotspot_overlap |> filter(overlap_type != "Neither")), adm3 
 
 This report looks at Myanmar's armed conflict from four angles: where deaths are concentrated, whether that clustering is statistically real, whether the danger is getting worse or better over time, and whether the places with the most deaths are also the places where civilians are specifically targeted.
 
-Sagaing is the most severe region by raw numbers: its death toll (27,712) is far higher than any other region, and the three worst-hit townships (Kale, Monywa, Shwebo) are all located there. The Gi* statistic confirms this clustering is statistically real, not an artifact of how administrative boundaries happen to be drawn. Yet the EHSA analysis shows most of Sagaing's hotspots are cooling down or holding steady. The places genuinely getting worse right now, Bago, Magway and Mandalay, are somewhere else entirely.
+Sagaing is the most severe region by raw numbers: its death toll (27,712) is far higher than any other region, and the three worst-hit townships (Kale, Monywa, Shwebo) are all located there. The Gi* statistic confirms this clustering is statistically real, not an artifact of how administrative boundaries happen to be drawn. The EHSA analysis, though, shows most of Sagaing's hotspots are cooling down or holding steady. The places genuinely getting worse right now, Bago, Magway and Mandalay, are somewhere else entirely.
 
 The places with the most deaths also aren't the same as the places where civilians are specifically targeted. Isolating attacks that deliberately target civilians, 68 hotspots are dangerous by both measures, but 24 only show up as dangerous for civilian-targeting, including Yangon, Mandalay and Shan (North). A report built only on total death numbers would miss both of these patterns; the Public Safety Implications section above spells out what each one means in practice.
 
