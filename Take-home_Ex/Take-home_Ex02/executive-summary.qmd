@@ -19,7 +19,6 @@ format:
 - Is that clustering statistically real, or just chance?
 - Which places are becoming more dangerous over time, not just staying dangerous?
 
-
 ## Study Area & Data
 
 :::: {.columns}
