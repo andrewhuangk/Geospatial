@@ -35,6 +35,8 @@ website:
             text: "Ex07: Modelling Geographical Accessibility"
           - href: Hands-on_Ex/Hands-on_Ex08/Hands-on_Ex08.qmd
             text: "Ex08: Market Area Analysis (Huff Model)"
+          - href: Hands-on_Ex/Hands-on_Ex09/Hands-on_Ex09.qmd
+            text: "Ex09: Hedonic Pricing Model with GWR"
 
       - text: "Take-home Exercise"
         menu:
