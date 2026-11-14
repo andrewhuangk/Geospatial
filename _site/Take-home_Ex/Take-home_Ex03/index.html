@@ -319,7 +319,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Modified</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">November 14, 2026</p>
+      <p class="date-modified">November 15, 2026</p>
     </div>
   </div>
     
@@ -467,7 +467,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>jrl_crl <span class="ot">&lt;-</span> future_raw <span class="sc">|&gt;</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(station_code, <span class="st">"^(JS|JE|JW|CR|CP)"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><em>(Note: <code>operational_and_future_stations.csv</code> mixes JRL/CRL with other lines’ extensions (e.g.&nbsp;TE, NS, DT, CC, DE codes that belong to other lines, not JRL/CRL). The regex above keeps only JRL (JS/JE/JW) and CRL (CR/CP) prefixes.)</em></p>
 </section>
 <section id="importing-hdb-building-footprints" class="level2" data-number="2.4">
 <h2 data-number="2.4" class="anchored" data-anchor-id="importing-hdb-building-footprints"><span class="header-section-number">2.4</span> Importing HDB building footprints</h2>
@@ -479,7 +478,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="passenger-volume-by-o-d" class="level2" data-number="2.5">
 <h2 data-number="2.5" class="anchored" data-anchor-id="passenger-volume-by-o-d"><span class="header-section-number">2.5</span> Passenger volume by O-D</h2>
 <p>The API key is stored in <code>.Renviron</code> in this folder, which is git-ignored and never committed; it is read with <code>Sys.getenv()</code> and never hardcoded in this file.</p>
-<p><em>(Note: the fetch below only needs to run once; the CSV is already saved at <code>data/aspatial/origin_destination_train_202609.csv</code>, so this chunk is <code>eval: false</code> to avoid re-hitting the API (and its 5-minute download link) on every render. Flip to <code>eval: true</code> only if the raw CSV needs to be re-pulled for a newer month. Two things that tripped this up: the endpoint rejects plain <code>http://</code> with a CDN-level 403 (must be <code>https://</code>), and it requires a <code>Date=YYYYMM</code> query parameter or it also 403s.)</em></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -934,9 +932,9 @@ log(distance_m)         -0.728042508 0.010925568 -66.636582  0.000000e+00</code>
 <section id="summary" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Summary</h1>
 <p>This analysis calibrated a Huff-type spatial interaction model for MRT ridership in Singapore using one month of LTA passenger volume data, two station attraction variables (nearby bus stop count and HDB building footprint area), and Euclidean distance.</p>
-<p>Destination bus stop count was a strong positive predictor, and distance showed the expected decay, consistent with Huff’s theory. HDB footprint area had a negligible effect: the highest-volume destinations are major interchange and CBD stations, which attract high ridership despite limited residential density nearby. Neither attraction variable captures interchange status or the number of lines served, which is probably the dominant driver of hub-station volume. The calibrated model explained roughly 21% of pair-level variance (R-squared = 0.214) and underestimated ridership at the busiest interchanges.</p>
-<p>Applying the calibrated attraction and distance-decay terms to the planned JRL and CRL stations, predicted ridership is highest at stations near existing major interchanges, including Choa Chu Kang, Punggol, and Jurong East. This is consistent with distance decay drawing riders from the nearest large hub.</p>
-<p>Treating the planned stations as new competing destinations and holding total trip-making constant, every existing station’s predicted market area shrinks modestly, by 15 to 24 percent. The largest losses fall on stations physically closest to the new lines, particularly Bukit Panjang LRT and the western stretch of the East-West Line. Central interchanges such as City Hall, Raffles Place, and Dhoby Ghaut are barely affected, a pattern consistent with the geographic footprint of the two new lines: JRL in the west, CRL in the north and northeast.</p>
+<p>Destination bus stop count was a strong positive predictor, and distance showed the expected decay, matching Huff’s theory. HDB footprint area had a negligible effect: the highest-volume destinations are major interchange and CBD stations, which attract high ridership despite limited residential density nearby. Neither attraction variable captures interchange status or the number of lines served; this omission likely explains part of the underprediction at hub stations. The calibrated model explained roughly 21% of pair-level variance (R-squared = 0.214) and underestimated ridership at the busiest interchanges. Euclidean distance also understates travel distance for stations separated by physical barriers such as rivers.</p>
+<p>Applying the calibrated attraction and distance-decay terms to the planned JRL and CRL stations, predicted ridership is highest at stations near existing major interchanges, including Choa Chu Kang, Punggol, and Jurong East. Distance decay accounts for this: these stations draw riders away from the nearest large hub.</p>
+<p>Treating the planned stations as new competing destinations and holding total trip-making constant, every existing station’s predicted market area shrinks modestly, by 15 to 24 percent. The largest losses fall on stations physically closest to the new lines, particularly Bukit Panjang LRT and the western stretch of the East-West Line. Central interchanges such as City Hall, Raffles Place, and Dhoby Ghaut are barely affected. This matches the geographic footprint of the two new lines: JRL in the west, CRL in the north and northeast.</p>
 </section>
 <section id="data-sources-1" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> Data sources</h1>

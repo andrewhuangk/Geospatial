@@ -76,8 +76,6 @@ jrl_crl <- future_raw |>
   filter(str_detect(station_code, "^(JS|JE|JW|CR|CP)"))
 ```
 
-*(Note: `operational_and_future_stations.csv` mixes JRL/CRL with other lines' extensions (e.g. TE, NS, DT, CC, DE codes that belong to other lines, not JRL/CRL). The regex above keeps only JRL (JS/JE/JW) and CRL (CR/CP) prefixes.)*
-
 ## Importing HDB building footprints
 
 ```{r}
@@ -88,8 +86,6 @@ hdb <- st_read("data/geospatial/HDBExistingBuilding.geojson", quiet = TRUE) |>
 ## Passenger volume by O-D
 
 The API key is stored in `.Renviron` in this folder, which is git-ignored and never committed; it is read with `Sys.getenv()` and never hardcoded in this file.
-
-*(Note: the fetch below only needs to run once; the CSV is already saved at `data/aspatial/origin_destination_train_202609.csv`, so this chunk is `eval: false` to avoid re-hitting the API (and its 5-minute download link) on every render. Flip to `eval: true` only if the raw CSV needs to be re-pulled for a newer month. Two things that tripped this up: the endpoint rejects plain `http://` with a CDN-level 403 (must be `https://`), and it requires a `Date=YYYYMM` query parameter or it also 403s.)*
 
 ```{r}
 #| eval: false
@@ -414,7 +410,7 @@ tmap_save(map_impact, "es_images/fig-market-impact.png", width = 1600, height = 
 
 This analysis calibrated a Huff-type spatial interaction model for MRT ridership in Singapore using one month of LTA passenger volume data, two station attraction variables (nearby bus stop count and HDB building footprint area), and Euclidean distance.
 
-Destination bus stop count was a strong positive predictor, and distance showed the expected decay, matching Huff's theory. HDB footprint area had a negligible effect: the highest-volume destinations are major interchange and CBD stations, which attract high ridership despite limited residential density nearby. Neither attraction variable captures interchange status or the number of lines served; this omission likely explains part of the underprediction at hub stations. The calibrated model explained roughly 21% of pair-level variance (R-squared = 0.214) and underestimated ridership at the busiest interchanges.
+Destination bus stop count was a strong positive predictor, and distance showed the expected decay, matching Huff's theory. HDB footprint area had a negligible effect: the highest-volume destinations are major interchange and CBD stations, which attract high ridership despite limited residential density nearby. Neither attraction variable captures interchange status or the number of lines served; this omission likely explains part of the underprediction at hub stations. The calibrated model explained roughly 21% of pair-level variance (R-squared = 0.214) and underestimated ridership at the busiest interchanges. Euclidean distance also understates travel distance for stations separated by physical barriers such as rivers.
 
 Applying the calibrated attraction and distance-decay terms to the planned JRL and CRL stations, predicted ridership is highest at stations near existing major interchanges, including Choa Chu Kang, Punggol, and Jurong East. Distance decay accounts for this: these stations draw riders away from the nearest large hub.
 

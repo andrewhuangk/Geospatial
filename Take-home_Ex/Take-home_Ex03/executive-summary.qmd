@@ -71,5 +71,6 @@ format:
 - Attraction variables do not capture number of lines served, likely the dominant driver of hub-station ridership
 - R-squared = 0.214: results are directional, not precise forecasts
 - New-station predictions estimate alighting volume only; boarding assumed symmetric
+- Euclidean distance understates travel distance across physical barriers such as rivers
 
 **Conclusion:** JRL and CRL draw the most new ridership near today's busiest hubs. Every existing station loses some predicted market share, concentrated in the west (JRL) and north/northeast (CRL), while central interchanges remain largely unaffected.
