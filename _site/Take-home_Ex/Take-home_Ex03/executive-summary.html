@@ -151,9 +151,9 @@ Huang Kang-Chih
 <section id="where-this-analysis-looks" class="slide level2">
 <h2>Where this analysis looks</h2>
 <ul>
-<li>How many riders will the planned Jurong Region Line (JRL) and Cross Island Line (CRL) stations draw?</li>
-<li>How does adding them change the catchment (“market area”) of existing stations?</li>
-<li>Can a Huff-type spatial interaction model, calibrated on real ridership, answer both?</li>
+<li>Predicted ridership at the new JRL and CRL stations</li>
+<li>Predicted ridership loss at existing stations once the new lines open</li>
+<li>Both estimated with a Huff model calibrated on observed ridership data</li>
 </ul>
 </section>
 <section id="study-area-data" class="slide level2">
@@ -168,41 +168,42 @@ Huang Kang-Chih
 <section id="methodology" class="slide level2">
 <h2>Methodology</h2>
 <ul>
-<li>Model: Huff model – destination choice is attraction divided by distance, normalized across competing destinations</li>
-<li>Calibrated as a Poisson regression with an origin fixed effect (the fixed effect absorbs Huff’s per-origin normalization term)</li>
-<li>Distance: straight-line (Euclidean); validated with R-squared / RMSE against observed ridership</li>
+<li>Huff model: destination choice as a function of attraction and distance</li>
+<li>Calibrated as a Poisson regression with an origin fixed effect</li>
+<li>Distance: straight-line between stations</li>
+<li>Fit assessed against observed ridership using R-squared and RMSE</li>
 </ul>
 </section>
 <section id="calibration-results" class="slide level2">
 <h2>Calibration Results</h2>
 <ul>
-<li>Nearby bus stop count: strong positive effect (coefficient 0.77, highly significant)</li>
-<li>Nearby HDB footprint area: negligible effect (coefficient -0.008). Major interchange/CBD stations draw huge ridership despite little surrounding housing</li>
-<li>Distance: strong decay (coefficient -0.73), as expected</li>
-<li>Pair-level R-squared = 0.214; the model underestimates a few mega-interchange stations that our attraction variables don’t explain</li>
+<li>Bus stop count: strong positive effect (coefficient = 0.77)</li>
+<li>HDB footprint area: negligible effect (coefficient = -0.008); top destinations are interchange/CBD stations with limited housing nearby</li>
+<li>Distance: expected decay, higher ridership at shorter distances</li>
+<li>R-squared = 0.214; underestimates ridership at several mega-interchange stations</li>
 </ul>
 </section>
-<section id="part-3-predicting-ridership-at-new-stations" class="slide level2">
-<h2>Part 3: Predicting Ridership at New Stations</h2>
+<section id="predicted-ridership-at-new-stations" class="slide level2">
+<h2>Predicted Ridership at New Stations</h2>
 <div class="columns">
 <div class="column" style="width:45%;">
 <ul>
-<li>Planned stations treated as new competing destinations for every existing origin</li>
-<li>Highest predicted ridership: Choa Chu Kang, Punggol, Jurong East-area stations</li>
-<li>These sit right next to today’s biggest interchanges, so distance decay pulls riders from the nearest large hub</li>
+<li>Each planned station treated as a new competing destination</li>
+<li>Highest predicted ridership: Choa Chu Kang, Punggol, stations near Jurong East</li>
+<li>These sit beside today’s largest interchanges; distance decay draws riders from the nearest hub</li>
 </ul>
 </div><div class="column" style="width:55%;">
 <p><img src="es_images/fig-ridership-comparison.png" style="max-height:65vh; width:auto; max-width:100%;"></p>
 </div></div>
 </section>
-<section id="part-4-market-area-impact" class="slide level2">
-<h2>Part 4: Market Area Impact</h2>
+<section id="market-area-impact-on-existing-stations" class="slide level2">
+<h2>Market Area Impact on Existing Stations</h2>
 <div class="columns">
 <div class="column" style="width:45%;">
 <ul>
-<li>Every existing station loses some share once JRL/CRL enter the choice set: 15-24% across the board</li>
-<li>Biggest losers: Bukit Panjang LRT and the western East-West Line, closest to JRL</li>
-<li>Barely affected: City Hall, Raffles Place, Dhoby Ghaut, far from both new lines</li>
+<li>Every existing station loses ridership share once JRL/CRL enter the choice set: 15-24%</li>
+<li>Largest losses: Bukit Panjang LRT, western East-West Line (closest to JRL)</li>
+<li>Least affected: City Hall, Raffles Place, Dhoby Ghaut (farthest from both new lines)</li>
 </ul>
 </div><div class="column" style="width:55%;">
 <p><img src="es_images/fig-market-impact.png" style="max-height:65vh; width:auto; max-width:100%;"></p>
@@ -211,11 +212,11 @@ Huang Kang-Chih
 <section id="limitations-conclusion" class="slide level2">
 <h2>Limitations &amp; Conclusion</h2>
 <ul>
-<li>HDB footprint area is a weak attraction proxy; neither variable captures interchange status or number of lines served, likely the real driver of hub-station volume</li>
-<li>R-squared is only 0.214, so treat the numbers as directional, not exact</li>
-<li>Alighting-side ridership is estimated for new stations; boarding is assumed roughly symmetric</li>
+<li>Attraction variables do not capture number of lines served, likely the dominant driver of hub-station ridership</li>
+<li>R-squared = 0.214: results are directional, not precise forecasts</li>
+<li>New-station predictions estimate alighting volume only; boarding assumed symmetric</li>
 </ul>
-<p><strong>Conclusion:</strong> JRL and CRL will draw the most new ridership where they sit closest to today’s biggest hubs. Every existing station gives up some market share for it, concentrated in the west (JRL) and north/northeast (CRL) – the central interchanges barely notice.</p>
+<p><strong>Conclusion:</strong> JRL and CRL draw the most new ridership near today’s busiest hubs. Every existing station loses some predicted market share, concentrated in the west (JRL) and north/northeast (CRL), while central interchanges remain largely unaffected.</p>
 
 
 </section>
