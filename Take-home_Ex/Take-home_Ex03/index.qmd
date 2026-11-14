@@ -1,0 +1,435 @@
+---
+title: "Take-home Exercise 3: Spatial Interaction Model for MRT Station Ridership"
+subtitle: "Calibrating a Huff model for existing and planned (JRL/CRL) MRT stations in Singapore"
+author: "Huang Kang-Chih"
+date: "2026-11-10"
+date-modified: "last-modified"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: false
+    code-copy: true
+execute:
+  eval: true
+  echo: true
+  warning: false
+  message: false
+  freeze: auto
+---
+
+# Overview
+
+The brief asks for a probabilistic spatial interaction model to estimate station-level MRT ridership, then use it to predict ridership at two planned lines, the Jurong Region Line (JRL) and the Cross Island Line (CRL), and assess how the new stations change market areas for existing stations.
+
+**Methodology choices made up front:**
+
+| Choice | Decision |
+|---|---|
+| Model | Huff model |
+| Attraction variable | HDB building footprint area (proxy for unit count; the HDB dataset has no unit-count field) + bus stop count nearby |
+| Distance | Straight-line (Euclidean) |
+| Ridership time window | Single month |
+| Local market potential (origin side) | Nearby HDB footprint area, summed |
+| Geographic scope | All existing stations + JRL + CRL planned stations |
+| Validation | R² / RMSE against observed ridership |
+| CRS | SVY21 / EPSG:3414 |
+
+# Getting Started
+
+## Data sources
+
+| Dataset | Type | Source | Notes |
+|---|---|---|---|
+| Existing MRT/LRT station locations | Geospatial (point) | LTA DataMall | `RapidTransitSystemStation.shp` |
+| Bus stop locations | Geospatial (point) | LTA DataMall | `BusStop.shp` |
+| Future station coordinates (JRL/CRL) | Aspatial (lat/lon columns) | [singapore_train_station_coordinates](https://github.com/elliotwutingfeng/singapore_train_station_coordinates) | filter `station_code` prefix: JRL = JS/JE/JW, CRL = CR/CP |
+| HDB existing building footprints | Geospatial (polygon) | data.gov.sg | no unit-count field, using `SHAPE.AREA` as a size proxy |
+| Passenger volume by O-D (train) | Aspatial (CSV) | LTA DataMall dynamic API | not yet downloaded -- see `PassengerVolumeByOriginDestination` endpoint |
+
+```{r}
+pacman::p_load(sf, tidyverse, tmap, httr)
+```
+
+```{r}
+list.files("data/geospatial")
+list.files("data/aspatial")
+```
+
+## Importing existing stations and bus stops
+
+```{r}
+mrt <- st_read("data/geospatial/RapidTransitSystemStation.shp", quiet = TRUE) |>
+  st_transform(3414)
+
+bus_stops <- st_read("data/geospatial/BusStop.shp", quiet = TRUE) |>
+  st_transform(3414)
+```
+
+## Importing future (JRL/CRL) station coordinates
+
+```{r}
+future_raw <- read_csv("data/aspatial/operational_and_future_stations.csv", show_col_types = FALSE)
+
+jrl_crl <- future_raw |>
+  filter(str_detect(station_code, "^(JS|JE|JW|CR|CP)"))
+```
+
+*(Note: `operational_and_future_stations.csv` mixes JRL/CRL with other lines' extensions (e.g. TE, NS, DT, CC, DE codes that belong to other lines, not JRL/CRL). The regex above keeps only JRL (JS/JE/JW) and CRL (CR/CP) prefixes.)*
+
+## Importing HDB building footprints
+
+```{r}
+hdb <- st_read("data/geospatial/HDBExistingBuilding.geojson", quiet = TRUE) |>
+  st_transform(3414)
+```
+
+## Passenger volume by O-D
+
+API key is stored in `.Renviron` in this folder (git-ignored, never committed -- read it with `Sys.getenv()`, never hardcode the key in this file).
+
+*(Note: the fetch below only needs to run once; the CSV is already saved at `data/aspatial/origin_destination_train_202609.csv`, so this chunk is `eval: false` to avoid re-hitting the API (and its 5-minute download link) on every render. Flip to `eval: true` only if the raw CSV needs to be re-pulled for a newer month. Two things that tripped this up: the endpoint rejects plain `http://` with a CDN-level 403 (must be `https://`), and it requires a `Date=YYYYMM` query parameter or it also 403s.)*
+
+```{r}
+#| eval: false
+library(httr)
+
+request_date <- format(Sys.Date() - 60, "%Y%m")
+
+res <- GET(
+  "https://datamall2.mytransport.sg/ltaodataservice/PV/ODTrain",
+  add_headers(AccountKey = Sys.getenv("LTA_API_KEY"), accept = "application/json"),
+  query = list(Date = request_date)
+)
+
+link <- content(res, as = "parsed")$value[[1]]$Link
+download.file(link, destfile = "data/aspatial/od_train_raw.zip", mode = "wb")
+unzip("data/aspatial/od_train_raw.zip", exdir = "data/aspatial")
+```
+
+```{r}
+od_train <- read_csv("data/aspatial/origin_destination_train_202609.csv", show_col_types = FALSE)
+
+od_summary <- od_train |>
+  group_by(ORIGIN_PT_CODE, DESTINATION_PT_CODE) |>
+  summarise(total_trips = sum(TOTAL_TRIPS), .groups = "drop")
+
+nrow(od_summary)
+```
+
+### Resolving station codes
+
+Interchange stations use compound codes joined by `/` (e.g. `EW12/DT14`), which don't match the shapefile's one-code-per-line format directly. The shapefile also stores some interchanges as separate points per line and is missing a few major stations entirely (coordinates for those come from `operational_stations.csv`). Points within 200m are merged into one physical station; a couple of resulting groups needed manual correction, checked against which compound codes actually appear in the O-D data.
+
+```{r}
+pacman::p_load(igraph)
+
+mrt_clean <- mrt |> filter(str_detect(STN_NAM, "[0-9]"))
+
+operational <- read_csv("data/aspatial/operational_stations.csv", show_col_types = FALSE)
+missing_codes <- c("DT16", "EW13", "EW14", "EW24", "NS1", "NS25", "NS26", "TE11")
+
+supplement <- operational |>
+  filter(station_code %in% missing_codes) |>
+  rename(STN_NAM = station_code) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  st_transform(crs = st_crs(mrt)) |>
+  select(STN_NAM, geometry)
+
+mrt2 <- bind_rows(mrt_clean |> select(STN_NAM, geometry), supplement)
+
+nb <- st_is_within_distance(mrt2, dist = 200)
+edges <- as.data.frame(do.call(rbind, lapply(seq_along(nb), function(i) cbind(i, nb[[i]]))))
+names(edges) <- c("from", "to")
+edges <- edges[edges$from != edges$to, ]
+g <- graph_from_data_frame(edges, vertices = data.frame(id = seq_len(nrow(mrt2))))
+mrt2$station_group <- components(g)$membership
+
+max_group <- max(mrt2$station_group)
+mrt2 <- mrt2 |>
+  mutate(station_group = case_when(
+    STN_NAM == "CC3" ~ max_group + 1,
+    STN_NAM == "NE5" ~ max_group + 2,
+    TRUE ~ station_group
+  ))
+
+ne4_group <- unique(mrt2$station_group[mrt2$STN_NAM == "NE4"])
+mrt2$station_group[mrt2$STN_NAM == "DT19"] <- ne4_group
+
+station_lookup <- mrt2 |>
+  st_drop_geometry() |>
+  group_by(station_group) |>
+  summarise(canonical_code = paste(sort(unique(STN_NAM)), collapse = "/"), .groups = "drop")
+
+stations <- mrt2 |>
+  group_by(station_group) |>
+  summarise(geometry = st_union(geometry), .groups = "drop") |>
+  st_centroid() |>
+  left_join(station_lookup, by = "station_group")
+
+code_to_group <- mrt2 |>
+  st_drop_geometry() |>
+  select(STN_NAM, station_group) |>
+  distinct()
+
+cc34_group <- code_to_group$station_group[code_to_group$STN_NAM == "DT16"]
+code_to_group <- bind_rows(code_to_group, tibble(STN_NAM = "CC34", station_group = cc34_group))
+
+map_to_group <- function(code) {
+  parts <- str_split(code, "/")[[1]]
+  groups <- unique(na.omit(code_to_group$station_group[match(parts, code_to_group$STN_NAM)]))
+  if (length(groups) == 1) groups else NA_integer_
+}
+
+nrow(stations)
+```
+
+### Attraction variables and distances
+
+```{r}
+hdb <- hdb |> mutate(area_m2 = as.numeric(st_area(geometry)))
+
+buffer_dist <- 400
+stations_buf <- st_buffer(stations, buffer_dist)
+
+stations$bus_count <- lengths(st_intersects(stations_buf, bus_stops))
+stations$hdb_area <- sapply(st_intersects(stations_buf, hdb), function(idx) sum(hdb$area_m2[idx]))
+
+stations |> st_drop_geometry() |> select(canonical_code, bus_count, hdb_area) |> arrange(desc(hdb_area)) |> head(10)
+```
+
+```{r}
+dist_matrix <- st_distance(stations, stations) |> as.numeric() |> matrix(nrow = nrow(stations))
+
+dist_long <- as_tibble(dist_matrix) |>
+  setNames(stations$station_group) |>
+  mutate(origin_group = stations$station_group) |>
+  pivot_longer(-origin_group, names_to = "dest_group", values_to = "distance_m") |>
+  mutate(dest_group = as.numeric(dest_group)) |>
+  filter(origin_group != dest_group)
+
+nrow(dist_long)
+```
+
+```{r}
+od_clean <- od_summary |>
+  mutate(
+    origin_group = map_dbl(ORIGIN_PT_CODE, map_to_group),
+    dest_group = map_dbl(DESTINATION_PT_CODE, map_to_group)
+  ) |>
+  filter(!is.na(origin_group), !is.na(dest_group))
+
+nrow(od_clean)
+```
+
+---
+
+# Part 1: Data Preparation
+
+The O-D table, station attraction variables, and station-to-station distances are combined into one table: one row per observed origin-destination pair, carrying observed trips, distance, destination attraction, origin attraction (local market potential), and the origin's total outgoing trips (used as an offset in calibration).
+
+```{r}
+station_attr <- stations |> st_drop_geometry() |> select(station_group, canonical_code, bus_count, hdb_area)
+
+interaction_df <- od_clean |>
+  select(origin_group, dest_group, total_trips) |>
+  left_join(dist_long, by = c("origin_group", "dest_group")) |>
+  left_join(station_attr, by = c("dest_group" = "station_group")) |>
+  rename(dest_code = canonical_code, dest_bus_count = bus_count, dest_hdb_area = hdb_area) |>
+  left_join(station_attr |> select(station_group, origin_code = canonical_code, origin_hdb_area = hdb_area), by = c("origin_group" = "station_group"))
+
+origin_totals <- interaction_df |>
+  group_by(origin_group) |>
+  summarise(O_i = sum(total_trips), .groups = "drop")
+
+interaction_df <- interaction_df |>
+  left_join(origin_totals, by = "origin_group")
+
+nrow(interaction_df)
+summary(interaction_df)
+```
+
+# Part 2: Huff Model Calibration
+
+The Huff model's destination choice probability is attraction divided by distance, normalized across all competing destinations from the same origin. That normalization term is origin-specific, so it is captured here as an origin fixed effect in a Poisson regression. This is the standard way to calibrate a production-constrained (Huff-type) spatial interaction model. The coefficients of interest are the destination attraction variables and the distance decay term.
+
+```{r}
+model_df <- interaction_df |> filter(!is.na(distance_m))
+
+huff_model <- glm(
+  total_trips ~ factor(origin_group) + log(dest_bus_count + 1) + log(dest_hdb_area + 1) + log(distance_m),
+  family = quasipoisson(),
+  data = model_df
+)
+
+coef_table <- summary(huff_model)$coefficients
+coef_table[c("log(dest_bus_count + 1)", "log(dest_hdb_area + 1)", "log(distance_m)"), ]
+```
+
+```{r}
+model_df$predicted_trips <- predict(huff_model, type = "response")
+
+rmse <- sqrt(mean((model_df$total_trips - model_df$predicted_trips)^2))
+r2 <- cor(model_df$total_trips, model_df$predicted_trips)^2
+
+rmse
+r2
+```
+
+# Part 3: Prediction at Existing + Planned Stations
+
+Planned (JRL/CRL) stations have no historical ridership, so an origin-side fixed effect can't be estimated for them the way it was for existing stations. Instead, each planned station is treated as a new competing destination: the calibrated attraction and distance-decay coefficients are applied to every existing station's already-estimated origin scale factor, and the resulting predicted trips are summed across all origins to get predicted inbound ridership at the new station. This approximates alighting volume; boarding volume is assumed roughly symmetric over a full day.
+
+```{r}
+valid_origins <- sort(unique(model_df$origin_group))
+stations_valid <- stations |> filter(station_group %in% valid_origins)
+
+origin_effects <- tibble(
+  origin_group = stations_valid$station_group,
+  dest_bus_count = 0,
+  dest_hdb_area = 0,
+  distance_m = 1
+)
+origin_effects$scale_i <- predict(huff_model, newdata = origin_effects, type = "response")
+
+beta_bus <- coef(huff_model)["log(dest_bus_count + 1)"]
+beta_hdb <- coef(huff_model)["log(dest_hdb_area + 1)"]
+beta_dist <- coef(huff_model)["log(distance_m)"]
+```
+
+### Validation at the station level
+
+```{r}
+station_validation <- model_df |>
+  group_by(dest_group, dest_code) |>
+  summarise(actual = sum(total_trips), predicted = sum(predicted_trips), .groups = "drop") |>
+  arrange(desc(actual))
+
+cor(station_validation$actual, station_validation$predicted)^2
+head(station_validation, 10)
+```
+
+### Predicting ridership at planned (JRL/CRL) stations
+
+```{r}
+jrl_crl_sf <- jrl_crl |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  st_transform(crs = st_crs(stations)) |>
+  select(station_code, station_name, geometry)
+
+jrl_crl_buf <- st_buffer(jrl_crl_sf, buffer_dist)
+jrl_crl_sf$bus_count <- lengths(st_intersects(jrl_crl_buf, bus_stops))
+jrl_crl_sf$hdb_area <- sapply(st_intersects(jrl_crl_buf, hdb), function(idx) sum(hdb$area_m2[idx]))
+
+dist_to_new <- st_distance(stations_valid, jrl_crl_sf) |> as.numeric() |> matrix(nrow = nrow(stations_valid))
+
+attract_new <- (jrl_crl_sf$bus_count + 1)^beta_bus * (jrl_crl_sf$hdb_area + 1)^beta_hdb
+
+predicted_matrix <- sweep(dist_to_new^beta_dist, 2, attract_new, "*")
+predicted_matrix <- sweep(predicted_matrix, 1, origin_effects$scale_i, "*")
+
+jrl_crl_sf$predicted_ridership <- colSums(predicted_matrix)
+
+jrl_crl_sf |>
+  st_drop_geometry() |>
+  select(station_code, station_name, bus_count, hdb_area, predicted_ridership) |>
+  arrange(desc(predicted_ridership))
+```
+
+### Visualizing predicted ridership
+
+```{r}
+tmap_mode("plot")
+
+existing_map <- stations |>
+  left_join(station_validation |> st_drop_geometry() |> select(dest_group, actual), by = c("station_group" = "dest_group")) |>
+  mutate(actual = replace_na(actual, 0))
+
+map_ridership <- tm_shape(existing_map) +
+  tm_dots(size = "actual", fill = "steelblue", size.legend = tm_legend(title = "Observed ridership (existing)")) +
+tm_shape(jrl_crl_sf) +
+  tm_dots(size = "predicted_ridership", fill = "firebrick", size.legend = tm_legend(title = "Predicted ridership (planned)")) +
+tm_title("Ridership: existing stations vs planned JRL/CRL stations")
+
+map_ridership
+
+dir.create("es_images", showWarnings = FALSE)
+tmap_save(map_ridership, "es_images/fig-ridership-comparison.png", width = 1600, height = 1000, dpi = 150)
+```
+
+# Part 4: Market Area Impact Assessment
+
+Holding each origin's total trip-making constant, the destination choice set is expanded from existing stations only to existing + planned stations. Each existing station's predicted ridership shifts because some of its market share is now captured by nearby planned stations. This is the direct Huff market-area reallocation, using the calibrated attraction and distance-decay terms explicitly (rather than the model's fixed-effect shortcut used in Part 3).
+
+```{r}
+attract_existing <- (stations$bus_count + 1)^beta_bus * (stations$hdb_area + 1)^beta_hdb
+
+origin_O <- stations_valid |>
+  st_drop_geometry() |>
+  select(station_group) |>
+  left_join(interaction_df |> distinct(origin_group, O_i), by = c("station_group" = "origin_group"))
+
+dist_existing <- st_distance(stations_valid, stations) |> as.numeric() |> matrix(nrow = nrow(stations_valid))
+
+weight_existing <- sweep(dist_existing^beta_dist, 2, attract_existing, "*")
+weight_existing[outer(stations_valid$station_group, stations$station_group, "==")] <- 0
+weight_new <- sweep(dist_to_new^beta_dist, 2, attract_new, "*")
+
+denom_before <- rowSums(weight_existing)
+denom_after <- denom_before + rowSums(weight_new)
+
+trips_before <- sweep(weight_existing, 1, origin_O$O_i / denom_before, "*")
+trips_after <- sweep(weight_existing, 1, origin_O$O_i / denom_after, "*")
+
+market_area <- tibble(
+  station_group = stations$station_group,
+  canonical_code = stations$canonical_code,
+  ridership_before = colSums(trips_before),
+  ridership_after = colSums(trips_after)
+) |>
+  mutate(pct_change = (ridership_after - ridership_before) / ridership_before * 100)
+
+market_area |> arrange(pct_change) |> head(10)
+market_area |> arrange(pct_change) |> tail(10)
+```
+
+The stations losing the largest share of ridership are the existing stations geographically closest to the new JRL/CRL alignment; stations far from both new lines see negligible change.
+
+```{r}
+market_sf <- stations |>
+  left_join(market_area |> st_drop_geometry() |> select(station_group, pct_change), by = "station_group") |>
+  mutate(impact_magnitude = abs(pct_change))
+
+map_impact <- tm_shape(market_sf) +
+  tm_dots(fill = "impact_magnitude", fill.scale = tm_scale_continuous(values = "brewer.reds"), size = 0.3, fill.legend = tm_legend(title = "Ridership loss (%)")) +
+tm_title("Market area impact of JRL/CRL on existing stations")
+
+map_impact
+
+tmap_save(map_impact, "es_images/fig-market-impact.png", width = 1600, height = 1000, dpi = 150)
+```
+
+# Summary
+
+This analysis calibrated a Huff-type spatial interaction model for MRT ridership in Singapore, using a month of LTA passenger volume data, station attraction variables (nearby bus stop count and HDB building footprint area), and Euclidean distance.
+
+The destination's bus stop count was a strong positive predictor and distance showed the expected decay, consistent with Huff's theory. HDB footprint area had a negligible effect, likely because the highest-volume destinations are major interchange and CBD stations, which draw heavy ridership despite having little surrounding residential footprint. This is a real limitation of the attraction variables used here: neither captures interchange status or the number of lines served, which is plausibly the single biggest driver of hub-station volume. The calibrated model explained about 21% of pair-level variance (R-squared = 0.214) and specifically underestimated ridership at the busiest interchanges.
+
+Applying the calibrated attraction and distance-decay terms to the planned JRL and CRL stations, predicted ridership is highest at stations close to existing major interchanges (Choa Chu Kang, Punggol, Jurong East), consistent with the model's distance decay pulling riders from the nearest large hub.
+
+Treating the planned stations as new competing destinations and holding total trip-making constant, every existing station's predicted market area shrinks modestly (15 to 24 percent). Stations physically close to the new lines, particularly Bukit Panjang LRT and the western East-West Line, lose the most share, while central interchanges (City Hall, Raffles Place, Dhoby Ghaut) are barely affected. This matches the geographic footprint of the two new lines: JRL in the west, CRL in the north and northeast.
+
+# Data sources
+
+- Land Transport Authority (LTA) DataMall: train station locations, bus stop locations, passenger volume by origin-destination (train)
+- data.gov.sg: HDB Existing Building
+- [singapore_train_station_coordinates](https://github.com/elliotwutingfeng/singapore_train_station_coordinates): future station coordinates (JRL/CRL)
+
+# References
+
+**R packages**
+
+- Pebesma, E. (2018). Simple Features for R. *sf*. <https://CRAN.R-project.org/package=sf>
+- Tennekes, M. (2018). tmap: Thematic Maps in R. *Journal of Statistical Software*. <https://CRAN.R-project.org/package=tmap>
+- Wickham, H., et al. (2019). Welcome to the tidyverse. *Journal of Open Source Software*.
