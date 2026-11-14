@@ -48,6 +48,10 @@ website:
             text: "Ex02: Myanmar Armed Conflict EHSA"
           - href: Take-home_Ex/Take-home_Ex02/executive-summary.qmd
             text: "Ex02: Executive Summary"
+          - href: Take-home_Ex/Take-home_Ex03/index.qmd
+            text: "Ex03: MRT Ridership Spatial Interaction Model"
+          - href: Take-home_Ex/Take-home_Ex03/executive-summary.qmd
+            text: "Ex03: Executive Summary"
 
       - text: "In-class Exercise"
         menu:
